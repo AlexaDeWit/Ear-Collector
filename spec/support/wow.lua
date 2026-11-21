@@ -72,7 +72,17 @@ function wow.reset(overrides)
 		zone = "Hillsbrad Foothills",
 		subzone = "Tarren Mill",
 		now = 1795293660,
-		players = {}, -- guid -> { name, realm, class, race, level }
+		players = {}, -- guid -> { name, realm, class, race, sex, level }
+		group = {}, -- guid -> true for players in your party/raid
+		units = {}, -- extra unit tokens -> guid, e.g. pet = "Pet-...", partypet1 = "Pet-..."
+		atlases = { -- atlases the client has; Skyborne is left out to exercise the fallback
+			["raceicon-orc-male"] = true,
+			["raceicon-orc-female"] = true,
+			["raceicon-undead-male"] = true,
+			["raceicon-undead-female"] = true,
+			["raceicon-troll-male"] = true,
+			["raceicon-tauren-male"] = true,
+		},
 		printed = {},
 	}
 	for k, v in pairs(overrides or {}) do
@@ -92,8 +102,22 @@ function wow.reset(overrides)
 		if unit == "player" then
 			return state.playerGUID
 		end
-		return nil
+		return state.units[unit]
 	end
+	_G.C_PartyInfo = {
+		IsGUIDInGroup = function(guid)
+			return state.group[guid] == true
+		end,
+	}
+	_G.C_Texture = {
+		-- Returns an AtlasInfo table, or nothing when the atlas doesn't exist.
+		GetAtlasInfo = function(atlas)
+			if state.atlases[atlas] then
+				return { width = 64, height = 64, file = 0 }
+			end
+			return nil
+		end,
+	}
 	_G.UnitLevel = function(unit)
 		if unit == "player" then
 			return state.playerLevel
@@ -126,7 +150,7 @@ function wow.reset(overrides)
 		if not p then
 			return nil
 		end
-		return p.class, p.class:upper(), p.race, p.race, 2, p.name, p.realm or "", p.level
+		return p.class, p.class:upper(), p.race, p.race, p.sex or 2, p.name, p.realm or "", p.level
 	end
 	_G.GetServerTime = function()
 		return state.now

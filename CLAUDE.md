@@ -2,8 +2,8 @@
 
 A World of Warcraft addon for **WoW Forever only** (Interface `16001`, the
 Classic-style game on the modern Retail engine). It records the enemy players
-you kill in the open world as Diablo-style "ears". Battlegrounds, arenas and
-other instances never count.
+you or your group kill in the open world as Diablo-style "ears". Battlegrounds,
+arenas and other instances never count: group kills there would be noise.
 
 The game client can't run here. Correctness comes from the headless checks
 below, then a human test in game.
@@ -76,7 +76,16 @@ addon. Treat an escaped error as a serious bug.
   localizedRace, englishRace, sex, name, realmName, level`. `realmName` is ""
   for your own realm. `level` is the 8th return and may be nil. The pinned
   annotations list only 7.
+- Who counts: the killer may be you, your pet, a group member
+  (`C_PartyInfo.IsGUIDInGroup`; the global `IsGUIDInGroup` is only a
+  deprecation shim on Forever) or a group member's pet (`partypetN`/`raidpetN`).
+  See `ns.ClassifyKiller`.
 - Use `C_PvP.GetZonePVPInfo()`, not the deprecated global `GetZonePVPInfo`.
+- Race icons are atlases `raceicon-<race>-<male|female>` (Blizzard's
+  `GetRaceAtlas` in `Blizzard_SharedXML`). `Scourge` maps to `undead`. Forever's
+  race tokens are Human, Dwarf, Gnome, NightElf, Scourge, Orc, Troll, Tauren and
+  Skyborne. Check `C_Texture.GetAtlasInfo` before using an atlas: an icon for
+  Skyborne isn't confirmed.
 - Death recap (`C_DeathRecap.GetRecapEvents`) exposes `sourceName` for what
   killed you. It's the likely source for future Rivals/Vengeance features.
   Its behaviour in PvP is unverified.
@@ -147,11 +156,15 @@ in-game steps in the PR description.
 2. Turn on `/console scriptErrors 1`, or use BugSack, then `/reload`. No errors
    at login, and `/ears` prints a summary.
 3. Run `/ears debug`, then kill an enemy player in the open world. The chat
-   shows the decision "new ear" and a "You collected ..." line.
+   shows the decision "new ear (you)" and a "You collected ..." line with the
+   victim's race icon.
    `/dump EarCollectorDB.ears[#EarCollectorDB.ears]` shows the right name,
    class, level and zone.
-4. A groupmate's killing blow says "not your killing blow". A battleground kill
-   says "instance:pvp". A pet's killing blow: note what happens.
+4. A groupmate's killing blow in the open world says "new ear (group)". A
+   battleground kill says "instance:pvp". For a pet's killing blow (yours or a
+   groupmate's), note whether the attacker GUID is the pet or its owner. For a
+   kill where someone outside your group lands the blow, note whether
+   PARTY_KILL fires at all.
 5. Ears survive `/reload` and relog. `/ears errors` says "No errors recorded".
 6. No "action blocked" or taint messages, in combat or out.
 7. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.

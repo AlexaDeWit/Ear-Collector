@@ -19,7 +19,9 @@ globals = {
 -- deliberate choice, and lua-language-server checks that each one exists.
 read_globals = {
 	"C_Map",
+	"C_PartyInfo",
 	"C_PvP",
+	"C_Texture",
 	"CreateFrame",
 	"GetPlayerInfoByGUID",
 	"GetRealZoneText",

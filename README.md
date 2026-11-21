@@ -1,16 +1,17 @@
 # Ear Collector
 
 A World of Warcraft addon for **WoW Forever** that collects an ear from every
-enemy player you kill in the open world, like the ears that PvP kills dropped in
-Diablo II.
+enemy player you or your group kill in the open world, like the ears that PvP
+kills dropped in Diablo II.
 
 Kills in battlegrounds, arenas and other instances don't count, so your
 collection stays a record of real world PvP.
 
 ## Status
 
-Early development. The first version records your open-world killing blows on
-enemy players and reports them in chat. It has not yet been tested in game.
+Early development. The first version records open-world kills of enemy players
+by you, your pet or your group, and reports them in chat with the victim's race
+icon. It has not yet been tested in game.
 
 ## Commands
 

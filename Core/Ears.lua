@@ -10,9 +10,12 @@ ns.Ears = Ears
 ---@field name string
 ---@field realm string? nil for your own realm
 ---@field class string? English class token, e.g. "WARRIOR"
----@field race string? English race token
+---@field race string? English race token, e.g. "Scourge"
+---@field sex number? 2 male, 3 female (GetPlayerInfoByGUID)
 ---@field level number? nil when the client doesn't say
 ---@field yourLevel number?
+---@field by "you"|"group" who landed the killing blow: you (or your pet), or your group
+---@field killer string? the group member's name, when by == "group" and known
 ---@field mapID number?
 ---@field zone string?
 ---@field subzone string?
@@ -71,8 +74,11 @@ function Ears.Record(db, kill, now)
 		realm = kill.realm,
 		class = kill.class,
 		race = kill.race,
+		sex = kill.sex,
 		level = kill.level,
 		yourLevel = kill.yourLevel,
+		by = kill.by,
+		killer = kill.killer,
 		mapID = kill.mapID,
 		zone = kill.zone,
 		subzone = kill.subzone,

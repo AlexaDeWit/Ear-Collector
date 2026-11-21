@@ -9,3 +9,10 @@
 --- chat frame code; addons add `SlashCmdList.NAME = fn` with `SLASH_NAME1 = "/cmd"`.
 ---@type table<string, fun(message: string, editBox: table?)>
 SlashCmdList = {}
+
+--- Whether `guid` is in the player's group. Blizzard_APIDocumentationGenerated/PartyInfoDocumentation.lua;
+--- the global IsGUIDInGroup is only a deprecation shim on Forever.
+---@param guid WOWGUID
+---@param category number? party category; the active party when nil
+---@return boolean isInGroup
+function C_PartyInfo.IsGUIDInGroup(guid, category) end
