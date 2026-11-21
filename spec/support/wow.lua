@@ -432,6 +432,7 @@ function wow.reset(overrides)
 		regionalNames = true, -- Forever: first name + surname instead of realms
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active
 		bagsOpen = false,
+		recap = nil, -- death recap events, newest first
 		inCombat = false,
 		gameMenuShown = false,
 		gameErrors = {}, -- errors that reached the game's error handler (see securecall)
@@ -555,6 +556,38 @@ function wow.reset(overrides)
 		end
 		return state.units[unit]
 	end
+	-- Units: a unit exists when state.units (or "player") names a GUID. Players
+	-- are GUIDs starting "Player-". You can attack players who aren't you or in
+	-- your group. UnitName returns name, server (the surname on Forever).
+	_G.UnitExists = function(unit)
+		return _G.UnitGUID(unit) ~= nil
+	end
+	_G.UnitIsPlayer = function(unit)
+		local guid = _G.UnitGUID(unit)
+		return type(guid) == "string" and guid:find("^Player%-") ~= nil
+	end
+	_G.UnitCanAttack = function(_, target)
+		local guid = _G.UnitGUID(target)
+		return guid ~= nil and guid ~= state.playerGUID and not state.group[guid]
+	end
+	_G.UnitName = function(unit)
+		local guid = _G.UnitGUID(unit)
+		local p = guid ~= nil and state.players[guid]
+		if not p then
+			return nil
+		end
+		return p.name, p.realm or ""
+	end
+	-- Death recap: state.recap is the event list, newest first (the first caused
+	-- the death), or nil when there is none.
+	_G.C_DeathRecap = {
+		HasRecapEvents = function()
+			return state.recap ~= nil and #state.recap > 0
+		end,
+		GetRecapEvents = function()
+			return state.recap or {}
+		end,
+	}
 	_G.RegionalUniqueNamesEnabled = function()
 		return state.regionalNames
 	end

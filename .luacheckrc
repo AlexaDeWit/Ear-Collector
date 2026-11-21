@@ -26,6 +26,7 @@ globals = {
 -- deliberate choice, and lua-language-server checks that each one exists.
 read_globals = {
 	"C_ClassColor",
+	"C_DeathRecap",
 	"C_Map",
 	"C_PartyInfo",
 	"C_PvP",
@@ -56,8 +57,12 @@ read_globals = {
 	"RegionalUniqueNamesEnabled",
 	"UIParent",
 	"UISpecialFrames", -- the addon appends its pouch's name; see UI/Pouch.lua closeOnEscape
+	"UnitCanAttack",
+	"UnitExists",
 	"UnitGUID",
+	"UnitIsPlayer",
 	"UnitLevel",
+	"UnitName",
 	"debugstack",
 	"geterrorhandler",
 	"hooksecurefunc",

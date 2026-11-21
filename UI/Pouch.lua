@@ -114,6 +114,13 @@ function Pouch.TooltipLines(ear)
 	else
 		add("Killing blow: you")
 	end
+	if ear.vengeance then
+		local legendary = ns.QUALITY[5]
+		add(
+			("Vengeance: they had killed you %d times since you last took their ear"):format(ear.vengeance),
+			{ legendary.r, legendary.g, legendary.b }
+		)
+	end
 	if ear.yourLevel then
 		add(("You were level %d"):format(ear.yourLevel), GREY)
 	end

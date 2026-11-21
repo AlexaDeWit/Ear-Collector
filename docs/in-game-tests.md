@@ -55,7 +55,14 @@ Type `/etrace` and filter for `PARTY_KILL`, then `UNIT_DIED`, `PLAYER_PVP_KILLS_
 
 ## T4: does the death recap name who killed you?
 
-This is needed for Rivals and Vengeance. Right after an enemy player (or their pet) kills you, run these, then again 2 seconds later:
+This is needed for the Rivals "Deaths" column, Nemesis and Vengeance. The quick way: turn on `/ears debug`, have an enemy player kill you in the open world while they're your target or their nameplate is showing, and read the chat line that starts `PLAYER_DEAD`:
+
+- `death recorded (...)`: it works.
+- `no death recap`: Forever doesn't fill the recap. Deaths can't be tracked this way.
+- `recap names no killer`: the recap is there but the killing blow has no name.
+- `killer isn't an enemy player you could see`: the name didn't match. Note the name it shows next to `PLAYER_DEAD` and the killer's name on screen (with or without a surname?).
+
+For the details, right after the death run these, then again 2 seconds later:
 
 ```
 /run print(S(C_DeathRecap.HasRecapEvents()))
@@ -217,6 +224,22 @@ reads inside `securecall`. This test checks that nothing else gets tainted.
 5. Collect an ear with the Ledger open: the numbers update.
 6. Note anything that overlaps or runs off the window: the layout was made
    without seeing it.
+
+## T15: deaths, Rivals and Vengeance
+
+Needs T4 to pass.
+
+1. Die to an enemy player in the open world: chat says "<name> killed you."
+   They appear on the Rivals tab with 1 under Deaths.
+2. Die to the same player three times without killing them: chat says
+   "Vengeance owed", and their Rivals row shows "Avenge" in orange.
+3. Kill them: the ear is Legendary, the toast says "Vengeance!" and plays the
+   legendary sound, and the ear's tooltip says how many deaths it avenged.
+   Their row loses the "Avenge" mark.
+4. A player who has killed you more often than you've killed them (at least
+   twice) shows "Nemesis" in red.
+5. The Ledger's "Ears lost" box counts your deaths.
+6. Die in a battleground or dungeon: nothing is recorded.
 
 ## Reporting back
 

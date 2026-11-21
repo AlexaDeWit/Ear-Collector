@@ -18,12 +18,14 @@ Core\Context.lua
 Core\Ears.lua
 Core\Ledger.lua
 Core\Rivals.lua
+Core\Deaths.lua
 Core\Assists.lua
 UI\Chat.lua
 UI\Art.lua
 Detectors\Shared.lua
 Detectors\PartyKill.lua
 Detectors\HonorKill.lua
+Detectors\Death.lua
 UI\Pouch.lua
 UI\LedgerTab.lua
 UI\RivalsTab.lua

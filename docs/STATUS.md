@@ -24,6 +24,7 @@ Last updated: 2026-11-21.
 | Loot toast | A pop-up for each new ear (not camped repeats), with a loot sound by grade. Up to 3 stack. Click to open the pouch on it. `/ears toast` and `/ears sound` toggle it. |
 | Pouch tabs | Ears, Ledger, Rivals, with Blizzard's tab style. Ledger: Ears, Last 7 days (rolling), Players, Assists; grades; classes; top 5 zones. Rivals: per player by GUID, most kills first (repeat kills count), 10 a page, "Prey" at 3+ kills; click opens their latest ear. The pouch keeps the last tab for the session. |
 | Options page | Options > AddOns > Ear Collector, built with Blizzard's Settings API for addons. Also `/ears options` (or `config`, `settings`) and right-click in the minimap drawer. Debug stays slash-only. The repeat-kill window shows minutes (0 to 60) and saves seconds. In combat it says it can't open instead of calling a restricted function. |
+| Deaths and Vengeance | Deaths come from the death recap, matched by name to an enemy player in view at the moment of death (target, focus, mouseover, nameplates) to get a GUID. No match, no record. 3 deaths to a player since you last killed them make their next ear Legendary ("Vengeance"), even inside the repeat-kill window; that clears the debt. Rivals marks: Avenge (vengeance owed) > Nemesis (killed you 2+ times, more than you've killed them) > Prey (3+ kills, never killed you). The Ledger's fourth box is "Ears lost"; the player count moved to the Rivals header. |
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
 | Workflow | One branch per piece of work from `main`, a PR, and the user merges. Never push to `main` directly. |
@@ -38,11 +39,12 @@ Last updated: 2026-11-21.
 - **PR #5** (merged): Escape closes the pouch.
 - **PR #6** (merged): the options page; checks now skip Claude Code worktrees under `.claude/worktrees/`; README status refreshed.
 - **PR #7** (open, `ledger`): the pouch's tabs, with the Ledger and the Rivals list.
+- **PR #8** (open, `deaths`, builds on #7): deaths from the death recap, the Rivals "Deaths" column, Nemesis, and Legendary Vengeance ears.
 
 ## Waiting on the user
 
 1. **Turn CI on**: move `ci/workflows/ci.yml` and `release.yml` to `.github/workflows/` on `main` in GitHub's web editor (steps in `ci/README.md`), then delete `ci/`.
-2. **Merge PR #7** (Ledger and Rivals tabs).
+2. **Merge PR #7, then PR #8** (#8 builds on #7).
 3. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
    - T1: does `PARTY_KILL` fire with readable IDs for your and your group's open-world kills?
    - T2: do honorable kills arrive within about 2 s of the death, so assists match?
@@ -52,13 +54,14 @@ Last updated: 2026-11-21.
    - T12: Escape closes the pouch, in combat too, with a clean taint log.
    - T13: the options page, including the Defaults button and combat.
    - T14: the Ledger and Rivals tabs, including whether the layout fits.
-   - T4: does the death recap name who killed you? It gates Rivals and Vengeance.
+   - T15: deaths, Nemesis and Vengeance (needs T4).
+   - T4: does the death recap name who killed you? It gates deaths, Nemesis and Vengeance. `/ears debug` now answers it from a single death.
    - T6: is the 7th `GetPlayerInfoByGUID` value the surname?
 
 ## Next up (in order)
 
-1. **Deaths, Rivals and Vengeance**: record who killed you from the death recap (if T4 passes), then Legendary "Vengeance" ears.
-2. **Adversarial review** of everything before v1.0. The first run was stopped before it reported; run it again (read-only, in a worktree) once deaths are in.
+1. **Adversarial review** of everything before v1.0. The first run was stopped before it reported; run it again (read-only, in a worktree) once deaths are in.
+2. **README install section**, then the first release once CI is on: `v1.0.0` tag, CurseForge and Wago project IDs in the TOC, their API tokens as repository secrets (the user's steps).
 3. Later: export ears as text, inspect another Ear Collector user's pouch, CurseForge and Wago publishing.
 
 Reading Forever's UI source: `.cache/wow-ui-source` is a sparse, blob-less checkout, so `git grep` there fetches one file at a time and stalls. Instead, add a worktree in the scratchpad (`git -C .cache/wow-ui-source worktree add --no-checkout <dir> HEAD`), set a sparse pattern such as `'/Interface/**/*.lua'`, and `git checkout`: it fetches in one batch (about 35 MB, a minute).

@@ -218,9 +218,27 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
     tell the player instead of calling it in combat.
   - The minimap drawer passes the mouse button name on click
     (`Blizzard_Minimap/Mainline/AddonCompartment.lua`); right-click opens options.
-- Death recap (`C_DeathRecap.GetRecapEvents`) exposes `sourceName` for what
-  killed you. It's the likely source for future Rivals/Vengeance features.
-  Its behaviour in PvP is unverified.
+- **Deaths** (`Detectors/Death.lua`, `Core/Deaths.lua`). The death recap is the
+  only record of who killed you.
+  - `C_DeathRecap.HasRecapEvents()` / `GetRecapEvents()` with no ID read the
+    latest recap. Events come newest first, and Blizzard_DeathRecap marks the
+    first as the one that caused the death.
+  - Event fields Blizzard's UI reads: `sourceName` (no GUID), `spellName`,
+    `amount`, `overkill`, `timestamp`, `hideCaster`, `currentHP`. The structure
+    is undocumented, and NPCs appear too.
+  - Blizzard's recap window loads only on Retail
+    (`[AllowLoadGameType mainline]` in its TOC), though `C_DeathRecap` is
+    documented for every client. Whether Forever fills it is test T4.
+  - On `PLAYER_DEAD` the addon notes the enemy players in view (target, focus,
+    mouseover, `nameplate1..40`; `UnitIsPlayer` and `UnitCanAttack`), then after
+    `Deaths.RECAP_DELAY` matches the recap's killing blow to one by name. It
+    tries the name as given, then its first word. A match gives a GUID; no
+    match, or a name two players in view share, records nothing.
+  - Vengeance: `Deaths.VENGEANCE` (3) deaths to one player since you last killed
+    them make their next ear Legendary (quality 5, `ear.vengeance`), even inside
+    the repeat-kill window. `ns.Collect` sets `kill.vengeance` from
+    `Deaths.Debt`; taking the ear clears the debt.
+  - `/ears debug` logs every death's decision, which turns T4 into fixtures.
 - **API references, offline.** warcraft.wiki.gg is blocked from cloud sessions.
   - Blizzard's own docs for the pinned Forever build:
     `.cache/wow-ui-source/Interface/AddOns/Blizzard_APIDocumentationGenerated/`.
@@ -249,9 +267,11 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `Core/Assists.lua` | pure assist matching (honor credit to deaths) |
 | `Core/Ledger.lua` | pure totals for the Ledger tab |
 | `Core/Rivals.lua` | pure per-player rows for the Rivals tab |
+| `Core/Deaths.lua` | pure death recording, recap reading, killer matching, vengeance debt |
 | `Detectors/Shared.lua` | victim details, debug trace, `ns.Collect` |
 | `Detectors/PartyKill.lua` | kills by you, your pet, your group |
 | `Detectors/HonorKill.lua` | assists: `UNIT_DIED` + honorable-kill steps |
+| `Detectors/Death.lua` | your deaths: the death recap matched to an enemy in view |
 | `UI/Chat.lua` | chat output, ear links, race icons |
 | `UI/Art.lua` | race to ear-texture mapping |
 | `UI/Pouch.lua` | the Ear Pouch window (built on first open), its tabs and the Ears grid |
@@ -290,6 +310,10 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 - `CreateFrame(..., "PanelTabButtonTemplate")` adds the tab to its parent's
   `Tabs` (read it with `rawget` in the fake: unknown capitalised fields are
   no-op methods there). `PanelTemplates_SetTab` errors if a tab is missing.
+- Units: `wow.state().units[token] = guid` makes a unit exist (target, focus,
+  mouseover, `nameplateN`). Players are `Player-` GUIDs; you can attack anyone
+  not you or in `state.group`. `wow.state().recap` is the death recap's events,
+  newest first; fire `PLAYER_DEAD`, then `wow.advance(ns.Deaths.RECAP_DELAY)`.
 - `wow.pressEscape()` follows Forever's Escape chain: it closes the game menu if
   it's open, otherwise closes the bags and hides shown `UISpecialFrames`, and
   opens the game menu (`state.gameMenuShown`) only if nothing closed.

@@ -80,8 +80,44 @@ function Chat.Announce(ear, isNew)
 		elseif ear.by == "assist" then
 			by = " Assist."
 		end
+		if ear.vengeance then
+			Chat.Print(
+				("Vengeance! You collected %s (%s). They had killed you %d times.%s"):format(
+					Chat.EarLink(ear),
+					quality.name,
+					ear.vengeance,
+					by
+				)
+			)
+			return
+		end
 		Chat.Print(("You collected %s (%s).%s"):format(Chat.EarLink(ear), quality.name, by))
 	else
 		Chat.Print(("Camped %s again (kill %d). No new ear."):format(ear.name, ear.camped + 1))
+	end
+end
+
+--- "Grimbash killed you." plus the vengeance tally.
+---@param death table
+---@param debt integer deaths to them since you last killed them, this one included
+function Chat.AnnounceDeath(death, debt)
+	local atlas = Chat.RaceAtlas(death.race, death.sex)
+	local icon = atlas and ("|A:%s:14:14|a "):format(atlas) or ""
+	local color = death.class and C_ClassColor.GetClassColor(death.class)
+	local hex = color and color:GenerateHexColor() or "ffffffff"
+	local who = ("%s|c%s%s|r"):format(icon, hex, death.name)
+	if debt >= ns.Deaths.VENGEANCE then
+		local legendary = ns.QUALITY[5]
+		Chat.Print(
+			("%s killed you (%d times since you last killed them). |c%sVengeance owed:|r their next ear is Legendary."):format(
+				who,
+				debt,
+				legendary.color
+			)
+		)
+	elseif debt > 1 then
+		Chat.Print(("%s killed you (%d times since you last killed them)."):format(who, debt))
+	else
+		Chat.Print(("%s killed you."):format(who))
 	end
 end

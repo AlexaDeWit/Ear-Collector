@@ -49,6 +49,20 @@ local function repairEars(ears)
 	return kept
 end
 
+-- Keep only deaths with the fields Rivals and vengeance rely on.
+local function repairDeaths(deaths)
+	local kept = {}
+	for _, death in ipairs(deaths) do
+		if type(death) == "table" and type(death.guid) == "string" and type(death.at) == "number" then
+			if type(death.name) ~= "string" then
+				death.name = "Unknown"
+			end
+			kept[#kept + 1] = death
+		end
+	end
+	return kept
+end
+
 --- Return a database table in the current schema, keeping everything usable already saved.
 ---@param saved any the SavedVariables value from disk, if any
 ---@return table
@@ -75,6 +89,7 @@ function Database.Migrate(saved)
 	if db.ui.pouch ~= nil and type(db.ui.pouch) ~= "table" then
 		db.ui.pouch = nil
 	end
+	db.deaths = repairDeaths(tableOrNew(db.deaths))
 	db.debugLog = tableOrNew(db.debugLog)
 	db.errors = tableOrNew(db.errors)
 	return db
