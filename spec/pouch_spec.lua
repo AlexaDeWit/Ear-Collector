@@ -66,18 +66,18 @@ describe("Ear Pouch", function()
 			assert.are.equal("Victim2", slots[1].ear.name)
 			assert.are.equal("Victim1", slots[2].ear.name)
 			assert.is_nil(slots[3].ear)
-			assert.are.equal("raceicon-orc-male", slots[1].icon.atlas)
+			assert.are.equal("Interface\\AddOns\\EarCollector\\Media\\Ears\\orc", slots[1].icon.texture)
 			assert.are.equal("3", slots[1].count:GetText())
 			local rare = ns.QUALITY[3]
 			assert.are.same({ rare.r, rare.g, rare.b, 1 }, slots[2].edges[1].color)
 		end)
 
-		it("falls back to a plain icon when the race has none, and greys out Poor ears", function()
-			collect(1, { race = "Skyborne" })
+		it("uses the generic ear for an unknown race, and greys out Poor ears", function()
+			collect(1, { race = "Pandaren" })
 			ns.db.ears[1].quality = 0
 			wow.slash("/ears")
 			local slot = Pouch.Slots()[1]
-			assert.are.equal("Interface\\Icons\\INV_Misc_QuestionMark", slot.icon.texture)
+			assert.are.equal("Interface\\AddOns\\EarCollector\\Media\\Ears\\generic", slot.icon.texture)
 			assert.is_true(slot.icon.desaturated)
 		end)
 
@@ -132,7 +132,7 @@ describe("Ear Pouch", function()
 				"Grimbash's Ear",
 				"Trophy | Uncommon",
 				"Grimbash Ironhide",
-				"Level 60 Orc |cffc69b6dWarrior|r",
+				"Level 60 |A:raceicon-orc-male:14:14|a Orc |cffc69b6dWarrior|r",
 				" ",
 				"Taken at Tarren Mill",
 				"Hillsbrad Foothills",
@@ -151,7 +151,7 @@ describe("Ear Pouch", function()
 				text[#text + 1] = line.text or line.left
 			end
 			text = table.concat(text, "\n")
-			assert.matches("Level %?%? Orc", text)
+			assert.matches("Level %?%? |A:raceicon%-orc%-male:14:14|a Orc", text)
 			assert.matches("Killing blow: Brakka %(your group%)", text)
 			assert.matches("Camped: 1 more kill within the window", text)
 

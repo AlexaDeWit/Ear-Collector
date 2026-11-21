@@ -41,7 +41,8 @@ Requires Ubuntu (or another Debian-based Linux) for the setup script.
 
 ```bash
 scripts/setup-tools.sh   # install the pinned toolchain
-scripts/check.sh         # run every check: lint, types, format, tests
+scripts/check.sh         # run every check: lint, types, art, format, tests
+scripts/build-art.sh     # rebuild Media/Ears/*.tga after editing art/ears/*.svg
 ```
 
 See [CLAUDE.md](CLAUDE.md) for how the checks work, the error-handling rules,

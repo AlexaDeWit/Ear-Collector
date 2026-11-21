@@ -19,6 +19,7 @@ below, then a human test in game.
   - `names`: event and script-handler names against Blizzard's Forever docs
   - `luals`: lua-language-server with WoW API annotations
   - `xml`: XML against `UI.xsd`
+  - `art`: ear textures exist, are valid 64x64 32-bit TGAs, and match their SVG sources
   - `format`: StyLua
   - `test`: busted
 - `scripts/check.sh --fix` formats first. `scripts/check.sh luals test` runs only the named steps.
@@ -65,6 +66,21 @@ addon. Treat an escaped error as a serious bug.
 - Tests: every new failure path gets a spec. `spec/errors_spec.lua` shows how
   to assert an error is contained. `wow.secret()` makes a value that errors when
   misused, so specs catch unguarded access.
+
+## Ear art
+
+- Sources are SVGs in `art/ears/`, one per race plus `generic.svg` for unknown
+  races. They share one structure: shadow, skin gradient, inner ear, rim
+  highlight, and an optional race detail.
+- `scripts/build-art.sh` renders them with Chromium (Playwright), downscales
+  with Pillow, and writes `Media/Ears/<name>.tga` plus `Media/Ears/sources.sha256`.
+  Run it after changing an SVG and commit both. The `art` check fails on a
+  stale texture.
+- `UI/Art.lua` maps race tokens to files (`Scourge` -> `undead`). WoW loads
+  addon textures by path without the extension:
+  `Interface\AddOns\EarCollector\Media\Ears\orc`.
+- Pouch slots show the ear art. Tooltips and chat lines use Blizzard's race
+  icons. The minimap drawer icon is `Media/Ears/human`.
 
 ## GitHub workflow files: the human moves them
 
@@ -162,10 +178,12 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `Detectors/PartyKill.lua` | kills by you, your pet, your group |
 | `Detectors/HonorKill.lua` | assists: `UNIT_DIED` + honorable-kill steps |
 | `UI/Chat.lua` | chat output, ear links, race icons |
+| `UI/Art.lua` | race to ear-texture mapping |
 | `UI/Pouch.lua` | the Ear Pouch window (built on first open) |
 | `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
 | `UI/Slash.lua` | `/ears` commands |
 | `Bindings.xml` | the "Toggle Ear Pouch" key binding |
+| `art/ears/*.svg` -> `Media/Ears/*.tga` | ear art sources and the textures built from them |
 
 Keep game-touching code thin and decisions in plain functions that specs call directly.
 
@@ -233,7 +251,7 @@ The basic checklist:
 6. No "action blocked" or taint messages, in combat or out. Open and close
    your bags in combat too.
 7. The pouch: `/ears` opens it. It also opens from the minimap addon drawer
-   (with a bag icon), from Key Bindings > AddOns > Ear Collector, from your bags
+   (with an ear icon), from Key Bindings > AddOns > Ear Collector, from your bags
    (B), and by clicking an ear name in chat. It keeps its position after a drag
    and `/reload`.
 8. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.

@@ -5,7 +5,7 @@
 #   scripts/check.sh --fix            # format with StyLua first, then check
 #   scripts/check.sh luacheck test    # only the named steps
 #
-# Steps: syntax toc luacheck names luals xml format test
+# Steps: syntax toc luacheck names luals xml art format test
 # Missing tools or data? Run scripts/setup-tools.sh.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
@@ -27,7 +27,7 @@ for a in "$@"; do
 	*) STEPS+=("$a") ;;
 	esac
 done
-[ ${#STEPS[@]} -eq 0 ] && STEPS=(syntax toc luacheck names luals xml format test)
+[ ${#STEPS[@]} -eq 0 ] && STEPS=(syntax toc luacheck names luals xml art format test)
 
 # Plain output (no colour codes) unless stdout is a terminal.
 if [ -t 1 ]; then decolor() { cat; }; else decolor() { sed 's/\x1b\[[0-9;]*m//g'; }; fi
@@ -105,6 +105,7 @@ step_xml() {
 	fi
 	return $rc
 }
+step_art() { need lua5.1 sha256sum && "$LUA" scripts/check_art.lua; }
 step_format() {
 	need stylua || return 1
 	if [ "$FIX" = 1 ]; then stylua . && return 0; fi
