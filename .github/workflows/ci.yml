@@ -65,5 +65,7 @@ jobs:
         with:
           name: EarCollector-${{ github.sha }}
           path: .release/*.zip
+          # .release is a dot directory, which upload-artifact skips by default.
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
