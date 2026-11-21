@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Every headless check for the addon. Claude, humans and CI all run this.
+# Every headless check for the addon. Contributors and CI both run this.
 #
 #   scripts/check.sh                  # all steps; non-zero exit if any fails
 #   scripts/check.sh --fix            # format with StyLua first, then check
@@ -140,7 +140,7 @@ done
 echo
 if [ ${#FAILED[@]} -eq 0 ]; then
 	echo "All checks passed (${STEPS[*]})."
-	echo "Not covered: anything that needs the game client. See CLAUDE.md, 'In-game checklist'."
+	echo "Not covered: anything that needs the game client. See docs/in-game-tests.md."
 else
 	echo "Failed: ${FAILED[*]}"
 	exit 1

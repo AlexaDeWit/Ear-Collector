@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest something Ear Collector could do.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do?
+      description: What you're trying to do, and where Ear Collector falls short today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should happen?
+      description: Ear Collector never shows anything to other players, so anything shared has to be opt-in.

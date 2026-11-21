@@ -75,7 +75,7 @@ function Chat.ShowTooltip(owner, anchor, lines)
 	GameTooltip:Show()
 end
 
---- "Name's Ear" in the ear's quality color, after the victim's race icon when there is one.
+--- "Name's Ear" in the ear's quality colour, after the victim's race icon when there is one.
 ---@param ear table
 ---@return string
 function Chat.EarName(ear)

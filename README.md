@@ -1,100 +1,76 @@
 # Ear Collector
 
 A World of Warcraft addon for **WoW Forever** that collects an ear from every
-enemy player you or your group kill in the open world, like the ears that PvP
-kills dropped in Diablo II. Assists count too: when someone outside your group
-lands the killing blow and you earn honorable-kill credit, you still get the ear.
+enemy player you or your group kill in the open world, like the ears PvP kills
+dropped in Diablo II.
 
-Kills in battlegrounds, arenas and other instances don't count, so your
-collection stays a record of real world PvP.
+- Kills by you, your pet, your group and their pets count. So do assists: honor
+  for a kill someone outside your group finished.
+- Battlegrounds, arenas and dungeons never count.
+- Each ear shows the victim's race and a grade set by the level gap. Ears go in
+  an Ear Pouch, with a Ledger of totals and a list of Rivals.
+- Everything stays on your screen. Ear Collector never posts to chat or sends
+  anything other players can see.
 
-## Status
+## Install
 
-In development, and not yet tested in game. It records open-world kills of
-enemy players by you, your pet or your group, plus assists. Each ear has painted
-art for the victim's race and a grade by level gap. You get a chat line and a
-loot toast when you collect one, and your ears go in an Ear Pouch window, with
-a Ledger of totals and a list of Rivals. When an enemy player kills you three
-times, their next ear is a Legendary Vengeance ear. Its options are in
-Options > AddOns > Ear Collector.
-
-## Installing
-
-1. Download `EarCollector-<version>.zip` from this repository's Releases page.
-   (CurseForge and Wago listings are planned.)
+1. Download `EarCollector-<version>.zip` from the
+   [releases page](https://github.com/AlexaDeWit/Ear-Collector/releases).
 2. Unzip it into `World of Warcraft/_<flavor>_/Interface/AddOns/`, so that you
    have `Interface/AddOns/EarCollector/EarCollector.toc`.
-3. Start the game, or `/reload` if it's running. On the AddOns screen, Ear
-   Collector should be listed and enabled.
+3. Start the game, or type `/reload`.
 
-To update, delete the old `EarCollector` folder and unzip the new one. Your
-data is saved outside the addon folder, so it survives updates. Each character
-has its own collection (`WTF/Account/<account>/<realm>/<character>/SavedVariables/EarCollector.lua`);
-settings are shared by all your characters (`WTF/Account/<account>/SavedVariables/EarCollector.lua`).
+To update, delete the `EarCollector` folder and unzip the new one. Your ears are
+saved outside it. Each character keeps its own collection, and the settings are
+shared by all your characters.
 
-## Grades
+## Use
 
-| Grade | When |
-|---|---|
-| Poor (grey) | The victim was 10 or more levels below you. No honor, no assists. |
-| Common (white) | 5 to 9 levels below you |
-| Uncommon (green) | A fair fight |
-| Rare (blue) | 3 or more levels above you |
-| Legendary (orange) | Vengeance: they had killed you 3 or more times since you last killed them |
-
-Killing the same player again within 10 minutes adds to that ear's count
-instead of dropping a new one (the window is in the options).
-
-## Rivals
-
-The Rivals tab lists everyone you've taken an ear from or died to. Marks:
-**Avenge** (vengeance owed: their next ear is Legendary), **Nemesis** (they've
-killed you more often than you've killed them) and **Prey** (you've killed them
-three or more times, and they've never killed you).
-
-## Commands
+Open the pouch with `/ears`, your bags, the minimap addon drawer, a key binding
+(Key Bindings > AddOns), or by clicking an ear's name in chat. Escape closes it.
+The options are in Options > AddOns > Ear Collector.
 
 | Command | What it does |
 |---|---|
-| `/ears` | Open or close your Ear Pouch |
-| `/ears options` | Open the options (also in Options > AddOns, or right-click Ear Collector in the minimap addon drawer) |
-| `/ears stats` | Totals and your latest ear |
-| `/ears recent [n]` | Your newest ears (default 5) |
-| `/ears bags on\|off` | Open the pouch with your bags (on by default) |
+| `/ears` | Open or close the pouch |
+| `/ears options` | Open the options |
+| `/ears stats` | Your totals and latest ear |
+| `/ears recent [n]` | Your newest ears (5 unless you give a number) |
+| `/ears bags on\|off` | Open the pouch with your bags |
 | `/ears toast on\|off` | The pop-up when you collect an ear |
-| `/ears sound on\|off` | The pop-up's loot sound |
-| `/ears debug` | Print and save each kill, honorable kill and death the addon sees, and why it did or didn't count. For testing and bug reports |
-| `/ears errors` | Errors the addon caught. It keeps running; include these in bug reports |
+| `/ears sound on\|off` | The pop-up's sound |
+| `/ears debug` | Print and save what the addon sees, for testing and bug reports |
+| `/ears errors` | Errors the addon caught (it keeps running) |
 
-The pouch also opens from the minimap addon drawer, a key binding (Key
-Bindings > AddOns > Ear Collector), your bags, and by clicking an ear's name in
-chat. Escape closes it.
+### Grades
 
-Found a bug? `/ears errors` lists what the addon caught; please include it in
-the report.
+| Grade | The victim was |
+|---|---|
+| Poor | 10 or more levels below you |
+| Common | 5 to 9 levels below you |
+| Uncommon | From 4 levels below you to 2 above |
+| Rare | 3 or more levels above you |
+| Legendary | Owed vengeance: they had killed you 3 times since you last killed them |
 
-## Installing a development copy
+Killing the same player again within 10 minutes adds to that ear instead of
+dropping a new one. The options set the window.
 
-Copy or symlink this folder into the WoW Forever client's `Interface/AddOns/`
-folder, inside the game's install directory (`World of Warcraft/_<flavor>_/`). The
-folder must be named `EarCollector`.
+### Rivals
 
-## Development
+The Rivals tab lists everyone you've taken an ear from or died to. **Avenge**
+means their next ear is Legendary, **Nemesis** means they've killed you more
+often than you've killed them, and **Prey** means you've killed them three times
+or more and they've never killed you.
 
-Requires Ubuntu (or another Debian-based Linux) for the setup script.
+## Reporting a bug
 
-```bash
-scripts/setup-tools.sh   # install the pinned toolchain
-scripts/check.sh         # run every check: lint, types, art, format, tests
-scripts/build-art.sh     # repaint Media/Ears/*.tga after editing art/paint_ears.py
-```
+Open an [issue](https://github.com/AlexaDeWit/Ear-Collector/issues) and include
+what `/ears errors` lists.
 
-See [CLAUDE.md](CLAUDE.md) for how the checks work, the error-handling rules,
-and the in-game test checklist.
+## Contributing
 
-Releases: push a tag like `v0.1.0`. CI runs the checks, then publishes the zip
-as a GitHub Release.
+See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## License
+## Licence
 
 [MIT](LICENSE)

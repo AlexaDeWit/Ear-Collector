@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SessionStart hook: make the check toolchain available in Claude Code cloud
-# sessions. Local sessions are left alone (install tools yourself; see CLAUDE.md).
+# sessions. Local sessions are left alone (see CONTRIBUTING.md, "Development").
 # Always exits 0 so a network hiccup never blocks the session; stdout is added
 # to Claude's context, so it says plainly whether the tools are ready.
 set -uo pipefail

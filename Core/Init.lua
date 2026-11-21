@@ -8,7 +8,7 @@ ns.name = addonName
 local version = "@project-version@"
 ns.version = version:find("^@") and "dev" or version
 
--- Ear grades use the familiar item-quality colors.
+-- Ear grades use the familiar item-quality colours.
 ns.QUALITY = {
 	[0] = { name = "Poor", color = "ff9d9d9d" },
 	[1] = { name = "Common", color = "ffffffff" },
