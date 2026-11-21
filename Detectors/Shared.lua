@@ -91,8 +91,9 @@ end
 ---@return EarCollector.Kill|nil
 function ns.VictimDetails(guid)
 	-- The 8th return (level) exists on Forever and Retail 12.x but may be nil.
-	-- The 7th is the realm on most clients, but Forever characters have a first
-	-- name and a surname instead of realms, and it holds the surname there.
+	-- The 7th is the realm on most clients. Forever has surnames instead of
+	-- realms, and in play its name is "First Surname" with the 7th empty, so a
+	-- non-empty 7th is kept as the surname in case another build splits them.
 	local className, class, raceName, race, sex, name, nameSuffix, level = GetPlayerInfoByGUID(guid)
 	if not Readable(name) then
 		return nil
