@@ -75,6 +75,23 @@ describe("Database", function()
 			assert.are.equal(0, db.ears[2].camped)
 			assert.are.equal(0, db.stats.hiddenKills)
 		end)
+
+		it("drops wrong-typed optional fields from saved ears and deaths", function()
+			local ns = wow.loadAddon("EarCollector.toc", {
+				EarCollectorCharDB = {
+					ears = { { guid = GRIMBASH, at = 100, level = "sixty", zone = 5, class = {} } },
+					deaths = { { guid = GRIMBASH, at = 50, spell = 7 } },
+				},
+			})
+			local ear = ns.db.ears[1]
+			assert.is_nil(ear.level)
+			assert.is_nil(ear.zone)
+			assert.is_nil(ear.class)
+			assert.is_nil(ns.db.deaths[1].spell)
+			assert.has_no.errors(function()
+				ns.Pouch.TooltipLines(ear)
+			end)
+		end)
 	end)
 
 	describe("loading", function()
@@ -111,7 +128,7 @@ describe("Database", function()
 			assert.is_false(ns.db.settings.toast)
 		end)
 
-		it("moves ears saved account-wide by an older version to the first character", function()
+		it("moves ears saved account-wide (schema 1) to the first character that loads", function()
 			wow.reset()
 			local ears = { { guid = GRIMBASH, name = "Grimbash", at = 100 } }
 			local deaths = { { guid = GRIMBASH, name = "Grimbash", at = 50 } }

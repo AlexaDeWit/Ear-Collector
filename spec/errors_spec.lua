@@ -12,6 +12,77 @@ describe("error containment", function()
 		ns = wow.loadAddon("EarCollector.toc")
 	end)
 
+	describe("a UI error never switches off kill detection", function()
+		local victims = {}
+
+		before_each(function()
+			for i = 1, 4 do
+				victims[i] = ("Player-1-%08X"):format(i)
+				wow.addPlayer(victims[i], { name = "V" .. i, class = "Mage", race = "Orc", level = 60 })
+			end
+		end)
+
+		local function killAll()
+			for i = 1, 4 do
+				wow.fireEvent("PARTY_KILL", ME, victims[i])
+			end
+		end
+
+		it("keeps collecting when the pouch fails to build", function()
+			_G.PanelTemplates_SetNumTabs = function()
+				error("template differs")
+			end
+			wow.slash("/ears")
+			wow.slash("/ears")
+			killAll()
+			assert.are.equal(4, #ns.db.ears)
+			assert.is_false(ns.Errors.IsDisabled("PARTY_KILL handler 1"))
+			assert.is_false(ns.Pouch.IsShown())
+			assert.are.equal(1, #ns.db.errors) -- built once, not retried on every refresh
+			assert.are.equal("pouch", ns.db.errors[1].where)
+		end)
+
+		it("keeps collecting and recording deaths when the pouch refresh fails", function()
+			ns.Pouch.Refresh = function()
+				error("refresh bug")
+			end
+			killAll()
+			for _ = 1, 3 do
+				ns.RecordDeath(ns.db, { guid = GRIMBASH, name = "Grimbash" })
+			end
+			assert.are.equal(4, #ns.db.ears)
+			assert.are.equal(3, #ns.db.deaths)
+			assert.is_false(ns.Errors.IsDisabled("PARTY_KILL handler 1"))
+		end)
+
+		it("keeps collecting when the toast or chat line fails", function()
+			ns.Toast.Show = function()
+				error("toast bug")
+			end
+			ns.Chat.Announce = function()
+				error("chat bug")
+			end
+			killAll()
+			assert.are.equal(4, #ns.db.ears)
+			assert.is_false(ns.Errors.IsDisabled("PARTY_KILL handler 1"))
+		end)
+	end)
+
+	it("stays quiet if reporting an error fails", function()
+		local realPrint = _G.print
+		_G.print = function()
+			error("chat frame gone")
+		end
+		local ok
+		assert.has_no.errors(function()
+			ok = ns.Errors.Call("x", function()
+				error("boom")
+			end)
+		end)
+		_G.print = realPrint
+		assert.is_false(ok)
+	end)
+
 	local function printedMatching(pattern)
 		local n = 0
 		for _, line in ipairs(wow.state().printed) do
