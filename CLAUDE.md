@@ -163,6 +163,13 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
   - Chat links: `|Haddon:EarCollector:ear:<guid>:<time>|h`. Blizzard's "addon"
     link handler fires `EventRegistry` "SetItemRef" `(owner, link, text, button, frame)`.
   - The window uses `BasicFrameTemplateWithInset` (`.TitleText`, `.CloseButton`).
+  - Tabs use Blizzard's `PanelTabButtonTemplate`, which adds each tab to its
+    parent's `Tabs` array, with `PanelTemplates_SetNumTabs` / `PanelTemplates_SetTab`
+    (`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.lua`). A tab registers
+    with `Pouch.AddTab{ title, build, refresh, pages?, setPage? }` while the addon
+    loads. Each tab's build and refresh run in their own `Errors.Call`, so a
+    failing tab is skipped and the rest of the pouch works. The page buttons
+    page whichever tab is showing.
 - **Escape** (`closeOnEscape` in `UI/Pouch.lua`). On Forever the Escape binding
   runs `ToggleGameMenu` (`Blizzard_GameMenuEsc`). It offers the key to handlers
   registered with `RegisterGameMenuEscHandler`, in `GameMenuEscPriority` order:
@@ -240,12 +247,16 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `Core/Context.lua` | open-world decision; secret-safe reads |
 | `Core/Ears.lua` | pure grading and recording logic |
 | `Core/Assists.lua` | pure assist matching (honor credit to deaths) |
+| `Core/Ledger.lua` | pure totals for the Ledger tab |
+| `Core/Rivals.lua` | pure per-player rows for the Rivals tab |
 | `Detectors/Shared.lua` | victim details, debug trace, `ns.Collect` |
 | `Detectors/PartyKill.lua` | kills by you, your pet, your group |
 | `Detectors/HonorKill.lua` | assists: `UNIT_DIED` + honorable-kill steps |
 | `UI/Chat.lua` | chat output, ear links, race icons |
 | `UI/Art.lua` | race to ear-texture mapping |
-| `UI/Pouch.lua` | the Ear Pouch window (built on first open) |
+| `UI/Pouch.lua` | the Ear Pouch window (built on first open), its tabs and the Ears grid |
+| `UI/LedgerTab.lua` | the Ledger tab: totals, grades, classes, top zones |
+| `UI/RivalsTab.lua` | the Rivals tab: players you've taken ears from |
 | `UI/Toast.lua` | the loot toast when you collect an ear |
 | `UI/Options.lua` | the options page in Blizzard's Settings screen |
 | `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
@@ -276,6 +287,9 @@ Keep game-touching code thin and decisions in plain functions that specs call di
   `CreateAnimationGroup()` returns a group with `Play`/`Stop`/`IsPlaying`, and
   `wow.finishAnimations()` completes playing groups and fires `OnFinished`.
   `PlaySound` calls are recorded in `wow.state().sounds`.
+- `CreateFrame(..., "PanelTabButtonTemplate")` adds the tab to its parent's
+  `Tabs` (read it with `rawget` in the fake: unknown capitalised fields are
+  no-op methods there). `PanelTemplates_SetTab` errors if a tab is missing.
 - `wow.pressEscape()` follows Forever's Escape chain: it closes the game menu if
   it's open, otherwise closes the bags and hides shown `UISpecialFrames`, and
   opens the game menu (`state.gameMenuShown`) only if nothing closed.
@@ -339,5 +353,5 @@ The basic checklist:
    and `/reload`. Escape closes it without opening the game menu, in combat
    too, and the taint log stays clean (T12 in `docs/in-game-tests.md`).
    `/ears options` and right-clicking in the minimap drawer open Options >
-   AddOns > Ear Collector (T13).
+   AddOns > Ear Collector (T13). The Ledger and Rivals tabs fill in (T14).
 8. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.

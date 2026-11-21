@@ -189,6 +189,15 @@ newWidget = function(widgetType, name, parent, template)
 		w.TitleText = newWidget("FontString", nil, w)
 		w.CloseButton = newWidget("Button", nil, w)
 	end
+	if template == "PanelTabButtonTemplate" then
+		-- parentArray="Tabs": the client adds each tab to its parent's Tabs array.
+		w.Text = newWidget("FontString", nil, w)
+		w.Left = newWidget("Texture", nil, w)
+		w.Right = newWidget("Texture", nil, w)
+		local tabs = rawget(parent, "Tabs") or {}
+		tabs[#tabs + 1] = w
+		rawset(parent, "Tabs", tabs)
+	end
 	return w
 end
 
@@ -287,6 +296,21 @@ function widgetMethods:SetSize(width, height)
 end
 function widgetMethods:GetWidth()
 	return self.width or 0
+end
+function widgetMethods:SetWidth(width)
+	self.width = width
+end
+function widgetMethods:SetHeight(height)
+	self.height = height
+end
+function widgetMethods:GetHeight()
+	return self.height or 0
+end
+function widgetMethods:SetID(id)
+	self.id = id
+end
+function widgetMethods:GetID()
+	return self.id or 0
 end
 function widgetMethods:LockHighlight()
 	self.highlightLocked = true
@@ -425,6 +449,7 @@ function wow.reset(overrides)
 		UI_RAID_LOOT_TOAST_LESSER_ITEM_WON = 51402,
 		UI_EPICLOOT_TOAST = 31578,
 		UI_LEGENDARY_LOOT_TOAST = 63971,
+		IG_CHARACTER_INFO_TAB = 841,
 	}
 	_G.PlaySound = function(soundKitID, channel)
 		state.sounds[#state.sounds + 1] = { id = soundKitID, channel = channel }
@@ -472,6 +497,18 @@ function wow.reset(overrides)
 	_G.Settings = settingsRegistry.api
 	_G.CreateSettingsListSectionHeaderInitializer = function(name, tooltip)
 		return { header = name, tooltip = tooltip }
+	end
+	-- Tabs (SharedUIPanelTemplates.lua). UpdateTabs indexes frame.Tabs[1..numTabs],
+	-- so a missing tab errors there as it would in the client.
+	_G.PanelTemplates_SetNumTabs = function(frame, numTabs)
+		frame.numTabs = numTabs
+	end
+	_G.PanelTemplates_SetTab = function(frame, id)
+		frame.selectedTab = id
+		for i = 1, frame.numTabs do
+			local tabs = rawget(frame, "Tabs")
+			assert(tabs and tabs[i], "no tab " .. i).selected = i == id
+		end
 	end
 	_G.MinimalSliderWithSteppersMixin = { Label = { Left = 1, Right = 2, Top = 3, Min = 4, Max = 5 } }
 	-- Frames Escape hides, as Forever's UIParentPanelManager.lua starts it.

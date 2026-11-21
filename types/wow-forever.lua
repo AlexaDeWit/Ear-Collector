@@ -131,6 +131,16 @@ MinimalSliderWithSteppersMixin = {
 	Label = { Left = 1, Right = 2, Top = 3, Min = 4, Max = 5 },
 }
 
+--- Tab helpers for frames whose tabs use PanelTabButtonTemplate (which adds each
+--- tab to its parent's `Tabs` array). Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.lua.
+---@param frame Frame
+---@param numTabs integer
+function PanelTemplates_SetNumTabs(frame, numTabs) end
+
+---@param frame Frame
+---@param id integer
+function PanelTemplates_SetTab(frame, id) end
+
 --- Names of frames that Escape hides: CloseSpecialWindows, run inside securecall
 --- by CloseAllWindows, the AddOnPost Escape handler.
 --- Blizzard_UIParentPanelManager/Shared/UIParentPanelManager.lua.

@@ -17,6 +17,11 @@ local SLOT, GAP, PAD = 36, 4, 12
 local GREY = { 0.62, 0.62, 0.62 }
 local FRAME_NAME = addonName .. "Pouch"
 
+-- The window's size, from the grid. Other tabs lay out inside it.
+Pouch.PAD = PAD
+Pouch.WIDTH = PAD * 2 + Pouch.COLUMNS * SLOT + (Pouch.COLUMNS - 1) * GAP
+Pouch.HEIGHT = 36 + Pouch.ROWS * (SLOT + GAP) + 34
+
 ---@class EarCollector.PouchFrame : Frame
 ---@field TitleText FontString
 ---@field CloseButton Button
@@ -260,6 +265,103 @@ local function closeOnEscape(name)
 	end
 end
 
+-- Ears tab: the grid of ears, newest first.
+local function buildEars(panel)
+	countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	countText:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -PAD, -30)
+	countText:SetJustifyH("RIGHT")
+
+	for i = 1, Pouch.PER_PAGE do
+		slots[i] = newSlot(panel, i)
+	end
+
+	emptyText = panel:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+	emptyText:SetPoint("CENTER", panel, "CENTER", 0, 0)
+	emptyText:SetWidth(Pouch.WIDTH - 2 * PAD - 20)
+	emptyText:SetText("No ears yet. Kill an enemy player in the open world, with your group or on your own.")
+end
+
+local function refreshEars()
+	local ears = ordered()
+	local pages = pageCount(#ears)
+	page = math.min(math.max(page, 1), pages)
+	local first = (page - 1) * Pouch.PER_PAGE
+	for i, slot in ipairs(slots) do
+		fillSlot(slot, ears[first + i])
+		if focused and slot.ear == focused then
+			slot:LockHighlight()
+		else
+			slot:UnlockHighlight()
+		end
+	end
+	local assists = 0
+	for _, ear in ipairs(ears) do
+		if ear.by == "assist" then
+			assists = assists + 1
+		end
+	end
+	countText:SetText(("%d ears, %d assists"):format(#ears, assists))
+	emptyText:SetShown(#ears == 0)
+end
+
+---@class EarCollector.PouchTab
+---@field title string
+---@field build fun(panel: Frame) creates the tab's widgets on `panel`, once
+---@field refresh fun() redraws the tab while it is showing
+---@field pages (fun(): integer, integer)? current page and page count, for a paged tab
+---@field setPage fun(n: integer)? turns to page n (the tab clamps it when it refreshes)
+---@field panel Frame?
+---@field button Button?
+---@field broken boolean? set when build failed: the tab is skipped
+
+---@type EarCollector.PouchTab[]
+local tabs = {
+	{
+		title = "Ears",
+		build = buildEars,
+		refresh = refreshEars,
+		pages = function()
+			return page, pageCount(ns.db and #ns.db.ears or 0)
+		end,
+		setPage = function(n)
+			page = n
+		end,
+	},
+}
+local activeIndex = 1
+
+--- Add a tab to the pouch (UI/LedgerTab.lua, UI/RivalsTab.lua). Tabs are built
+--- with the window, so call this while the addon loads.
+---@param tab EarCollector.PouchTab
+---@return boolean added
+function Pouch.AddTab(tab)
+	if frame then
+		return false
+	end
+	tabs[#tabs + 1] = tab
+	return true
+end
+
+-- The page buttons belong to the window and page whichever tab is showing;
+-- a tab without pages hides them.
+local function updatePaging()
+	local tab = tabs[activeIndex]
+	local current, pages = 1, 1
+	local paged = tab.pages ~= nil and not tab.broken
+	if paged then
+		local ok, p, n = Errors.Call("pouch " .. tab.title, tab.pages)
+		if ok and type(p) == "number" and type(n) == "number" then
+			current, pages = p, n
+		end
+	end
+	prevButton:SetShown(paged)
+	nextButton:SetShown(paged)
+	pageText:SetShown(paged)
+	pageText:SetText(("Page %d / %d"):format(current, pages))
+	prevButton:SetEnabled(current > 1)
+	nextButton:SetEnabled(current < pages)
+end
+
 local function build()
 	local f = CreateFrame("Frame", FRAME_NAME, UIParent, "BasicFrameTemplateWithInset")
 	---@cast f EarCollector.PouchFrame
@@ -267,7 +369,7 @@ local function build()
 	-- New frames start shown. Hide before the OnHide script exists, so building
 	-- the window doesn't run its close handler (which clears a focused ear).
 	f:Hide()
-	f:SetSize(PAD * 2 + Pouch.COLUMNS * SLOT + (Pouch.COLUMNS - 1) * GAP, 36 + Pouch.ROWS * (SLOT + GAP) + 34)
+	f:SetSize(Pouch.WIDTH, Pouch.HEIGHT)
 	f:SetFrameStrata("HIGH")
 	f:SetClampedToScreen(true)
 	f:SetMovable(true)
@@ -290,7 +392,7 @@ local function build()
 	f:SetScript(
 		"OnMouseWheel",
 		Errors.Wrap("pouch paging", function(_, delta)
-			Pouch.SetPage(page - delta)
+			Pouch.SetPage((Pouch.GetPage()) - delta)
 		end)
 	)
 	f:SetScript(
@@ -303,18 +405,33 @@ local function build()
 	)
 	f.TitleText:SetText("Ear Pouch")
 
-	countText = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	countText:SetPoint("TOPRIGHT", f, "TOPRIGHT", -PAD, -30)
-	countText:SetJustifyH("RIGHT")
-
-	for i = 1, Pouch.PER_PAGE do
-		slots[i] = newSlot(f, i)
+	-- One panel per tab, the size of the window, and Blizzard's tab buttons under it.
+	for i, tab in ipairs(tabs) do
+		local panel = CreateFrame("Frame", nil, f)
+		panel:SetAllPoints()
+		panel:SetShown(i == activeIndex)
+		tab.panel = panel
+		if not Errors.Call("pouch " .. tab.title, tab.build, panel) then
+			tab.broken = true
+		end
+		local button = CreateFrame("Button", nil, f, "PanelTabButtonTemplate") --[[@as Button]]
+		button:SetID(i)
+		button:SetText(tab.title)
+		button:SetScript(
+			"OnClick",
+			Errors.Wrap("pouch tabs", function()
+				hideTooltip()
+				if SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then
+					PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB, "SFX")
+				end
+				Pouch.SelectTab(i)
+			end)
+		)
+		tab.button = button
 	end
-
-	emptyText = f:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-	emptyText:SetPoint("CENTER", f, "CENTER", 0, 0)
-	emptyText:SetWidth(f:GetWidth() - 2 * PAD - 20)
-	emptyText:SetText("No ears yet. Kill an enemy player in the open world, with your group or on your own.")
+	tabs[1].button:SetPoint("TOPLEFT", f, "BOTTOMLEFT", 11, 2)
+	PanelTemplates_SetNumTabs(f, #tabs)
+	PanelTemplates_SetTab(f, activeIndex)
 
 	prevButton = CreateFrame("Button", nil, f)
 	prevButton:SetSize(26, 26)
@@ -325,7 +442,7 @@ local function build()
 	prevButton:SetScript(
 		"OnClick",
 		Errors.Wrap("pouch paging", function()
-			Pouch.SetPage(page - 1)
+			Pouch.SetPage((Pouch.GetPage()) - 1)
 		end)
 	)
 
@@ -338,7 +455,7 @@ local function build()
 	nextButton:SetScript(
 		"OnClick",
 		Errors.Wrap("pouch paging", function()
-			Pouch.SetPage(page + 1)
+			Pouch.SetPage((Pouch.GetPage()) + 1)
 		end)
 	)
 
@@ -349,45 +466,69 @@ local function build()
 	closeOnEscape(FRAME_NAME)
 end
 
---- Redraw the grid if the pouch is open.
+--- Redraw the showing tab, if the pouch is open.
 function Pouch.Refresh()
 	if not frame or not frame:IsShown() then
 		return
 	end
-	local ears = ordered()
-	local pages = pageCount(#ears)
-	page = math.min(math.max(page, 1), pages)
-	local first = (page - 1) * Pouch.PER_PAGE
-	for i, slot in ipairs(slots) do
-		fillSlot(slot, ears[first + i])
-		if focused and slot.ear == focused then
-			slot:LockHighlight()
-		else
-			slot:UnlockHighlight()
-		end
+	local tab = tabs[activeIndex]
+	if not tab.broken then
+		Errors.Call("pouch " .. tab.title, tab.refresh)
 	end
-	local assists = 0
-	for _, ear in ipairs(ears) do
-		if ear.by == "assist" then
-			assists = assists + 1
-		end
-	end
-	countText:SetText(("%d ears, %d assists"):format(#ears, assists))
-	pageText:SetText(("Page %d / %d"):format(page, pages))
-	emptyText:SetShown(#ears == 0)
-	prevButton:SetEnabled(page > 1)
-	nextButton:SetEnabled(page < pages)
+	updatePaging()
 end
 
----@param n integer
-function Pouch.SetPage(n)
-	page = n
+--- Show a tab, by index or title. Before the window is built, it is the tab the
+--- window will open on.
+---@param which integer|string
+function Pouch.SelectTab(which)
+	for i, tab in ipairs(tabs) do
+		if i == which or tab.title == which then
+			activeIndex = i
+		end
+	end
+	if not frame then
+		return
+	end
+	for i, tab in ipairs(tabs) do
+		tab.panel:SetShown(i == activeIndex)
+	end
+	PanelTemplates_SetTab(frame, activeIndex)
 	Pouch.Refresh()
 end
 
+---@return string title of the showing tab
+function Pouch.ActiveTab()
+	return tabs[activeIndex].title
+end
+
+---@return string[] titles in tab order
+function Pouch.TabTitles()
+	local titles = {}
+	for i, tab in ipairs(tabs) do
+		titles[i] = tab.title
+	end
+	return titles
+end
+
+--- Turn the showing tab to page n.
+---@param n integer
+function Pouch.SetPage(n)
+	local tab = tabs[activeIndex]
+	if tab.setPage then
+		tab.setPage(n)
+	end
+	Pouch.Refresh()
+end
+
+--- The showing tab's page and page count (1, 1 for a tab without pages).
 ---@return integer page, integer pages
 function Pouch.GetPage()
-	return page, pageCount(#ordered())
+	local tab = tabs[activeIndex]
+	if tab.pages then
+		return tab.pages()
+	end
+	return 1, 1
 end
 
 function Pouch.IsShown()
@@ -438,7 +579,8 @@ function Pouch.HideWithBags()
 	end
 end
 
---- Open the pouch on one ear: turn to its page, highlight it and show its tooltip.
+--- Open the pouch on one ear: the Ears tab, turned to its page, with the ear
+--- highlighted and its tooltip showing.
 ---@param guid string
 ---@param at number
 ---@return boolean found
@@ -448,6 +590,7 @@ function Pouch.FocusEar(guid, at)
 		if ear.guid == guid and ear.at == at then
 			focused = ear
 			page = math.floor((index - 1) / Pouch.PER_PAGE) + 1
+			Pouch.SelectTab(1)
 			Pouch.Show()
 			local slot = slots[(index - 1) % Pouch.PER_PAGE + 1]
 			if slot then

@@ -13,8 +13,9 @@ collection stays a record of real world PvP.
 In development, and not yet tested in game. It records open-world kills of
 enemy players by you, your pet or your group, plus assists. Each ear has painted
 art for the victim's race and a grade by level gap. You get a chat line and a
-loot toast when you collect one, and your ears go in an Ear Pouch window. Its
-options are in Options > AddOns > Ear Collector.
+loot toast when you collect one, and your ears go in an Ear Pouch window, with
+a Ledger of totals and a list of Rivals. Its options are in Options > AddOns >
+Ear Collector.
 
 ## Commands
 
