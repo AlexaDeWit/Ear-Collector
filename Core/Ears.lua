@@ -8,7 +8,8 @@ ns.Ears = Ears
 ---@class EarCollector.Kill
 ---@field guid string the victim's GUID
 ---@field name string
----@field realm string? nil for your own realm
+---@field surname string? Forever characters have a surname instead of a realm
+---@field realm string? other clients: nil for your own realm
 ---@field class string? English class token, e.g. "WARRIOR"
 ---@field race string? English race token, e.g. "Scourge"
 ---@field sex number? 2 male, 3 female (GetPlayerInfoByGUID)
@@ -71,6 +72,7 @@ function Ears.Record(db, kill, now)
 	local ear = {
 		guid = kill.guid,
 		name = kill.name,
+		surname = kill.surname,
 		realm = kill.realm,
 		class = kill.class,
 		race = kill.race,

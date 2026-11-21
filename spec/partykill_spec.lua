@@ -29,12 +29,21 @@ describe("PARTY_KILL detection", function()
 		assert.matches("You collected .*Grimbash's Ear.* %(Uncommon%)", wow.state().printed[1])
 	end)
 
-	it("keeps the realm of a player from another realm", function()
+	it("stores the victim's surname (Forever has surnames instead of realms)", function()
+		wow.addPlayer(VELARIA, { name = "Velaria", realm = "Duskwhisper", class = "Rogue", race = "Scourge" })
+		wow.fireEvent("PARTY_KILL", ME, VELARIA)
+		assert.are.equal("Duskwhisper", ns.db.ears[1].surname)
+		assert.is_nil(ns.db.ears[1].realm)
+		assert.is_nil(ns.db.ears[1].level) -- level unknown
+		assert.are.equal(2, ns.db.ears[1].quality)
+	end)
+
+	it("stores a realm instead on clients without surnames", function()
+		wow.state().regionalNames = false
 		wow.addPlayer(VELARIA, { name = "Velaria", realm = "Stonemaul", class = "Rogue", race = "Scourge" })
 		wow.fireEvent("PARTY_KILL", ME, VELARIA)
 		assert.are.equal("Stonemaul", ns.db.ears[1].realm)
-		assert.is_nil(ns.db.ears[1].level) -- level unknown
-		assert.are.equal(2, ns.db.ears[1].quality)
+		assert.is_nil(ns.db.ears[1].surname)
 	end)
 
 	it("collects an ear when a group member lands the killing blow", function()
@@ -138,6 +147,15 @@ describe("PARTY_KILL detection", function()
 		end
 		assert.are.same({ "hidden by the client", "not you or your group", "new ear (you)" }, decisions)
 		assert.are.equal("<secret>", ns.db.debugLog[1].target)
+		assert.are.equal("none", ns.db.debugLog[3].restrictions)
+	end)
+
+	it("logs which addon restrictions were active, to explain hidden kills", function()
+		ns.db.settings.debug = true
+		wow.state().restrictions = { Map = true, PvPMatch = true }
+		wow.fireEvent("PARTY_KILL", wow.secret(), wow.secret())
+		assert.are.equal("PvPMatch,Map", ns.db.debugLog[1].restrictions)
+		assert.matches("%[restrictions: PvPMatch,Map%]", wow.state().printed[1])
 	end)
 
 	it("replays a recorded open-world skirmish", function()

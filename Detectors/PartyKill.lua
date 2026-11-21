@@ -24,6 +24,20 @@ local function describe(value)
 	return tostring(value)
 end
 
+-- Addon restrictions the client is enforcing right now, e.g. "Map,PvPMatch".
+-- Logged with each decision so a hidden kill can be explained afterwards.
+local function activeRestrictions()
+	local active = {}
+	for _, name in ipairs({ "Combat", "PvPMatch", "Map" }) do
+		local kind = Enum.AddOnRestrictionType[name]
+		local on = kind and C_RestrictedActions.IsAddOnRestrictionActive(kind)
+		if Readable(on) and on then
+			active[#active + 1] = name
+		end
+	end
+	return #active > 0 and table.concat(active, ",") or "none"
+end
+
 local function trace(db, attackerGUID, targetGUID, decision)
 	if not db.settings.debug then
 		return
@@ -33,9 +47,17 @@ local function trace(db, attackerGUID, targetGUID, decision)
 		attacker = describe(attackerGUID),
 		target = describe(targetGUID),
 		decision = decision,
+		restrictions = activeRestrictions(),
 	}
 	Database.LogDebug(db, entry)
-	Chat.Print(("PARTY_KILL %s -> %s: %s"):format(entry.attacker, entry.target, decision))
+	Chat.Print(
+		("PARTY_KILL %s -> %s: %s [restrictions: %s]"):format(
+			entry.attacker,
+			entry.target,
+			decision,
+			entry.restrictions
+		)
+	)
 end
 
 local function unitIs(unit, guid)
@@ -102,17 +124,23 @@ function ns.OnPartyKill(attackerGUID, targetGUID)
 	end
 
 	-- The 8th return (level) exists on Forever and Retail 12.x but may be nil.
-	local _, class, _, race, sex, name, realm, level = GetPlayerInfoByGUID(targetGUID)
+	-- The 7th is the realm on most clients, but Forever characters have a first
+	-- name and a surname instead of realms, and it holds the surname there.
+	local _, class, _, race, sex, name, nameSuffix, level = GetPlayerInfoByGUID(targetGUID)
 	if not Readable(name) then
 		trace(db, attackerGUID, targetGUID, "victim details hidden")
 		return
 	end
+	local suffix = Readable(nameSuffix) and nameSuffix ~= "" and nameSuffix or nil
+	local regionalNames = RegionalUniqueNamesEnabled()
+	local usesSurnames = Readable(regionalNames) and regionalNames
 	local yourLevel = UnitLevel("player")
 	local location = Context.Location()
 	local ear, isNew = Ears.Record(db, {
 		guid = targetGUID,
 		name = name,
-		realm = Readable(realm) and realm ~= "" and realm or nil,
+		surname = usesSurnames and suffix or nil,
+		realm = not usesSurnames and suffix or nil,
 		class = Readable(class) and class or nil,
 		race = Readable(race) and race or nil,
 		sex = Readable(sex) and sex or nil,

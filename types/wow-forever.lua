@@ -16,3 +16,8 @@ SlashCmdList = {}
 ---@param category number? party category; the active party when nil
 ---@return boolean isInGroup
 function C_PartyInfo.IsGUIDInGroup(guid, category) end
+
+--- True when characters have a first name and a surname instead of realms
+--- (WoW Forever). Blizzard_APIDocumentationGenerated/UnitDocumentation.lua.
+---@return boolean result
+function RegionalUniqueNamesEnabled() end

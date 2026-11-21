@@ -72,7 +72,7 @@ function wow.reset(overrides)
 		zone = "Hillsbrad Foothills",
 		subzone = "Tarren Mill",
 		now = 1795293660,
-		players = {}, -- guid -> { name, realm, class, race, sex, level }
+		players = {}, -- guid -> { name, realm (the surname on Forever), class, race, sex, level }
 		group = {}, -- guid -> true for players in your party/raid
 		units = {}, -- extra unit tokens -> guid, e.g. pet = "Pet-...", partypet1 = "Pet-..."
 		atlases = { -- atlases the client has; Skyborne is left out to exercise the fallback
@@ -83,6 +83,8 @@ function wow.reset(overrides)
 			["raceicon-troll-male"] = true,
 			["raceicon-tauren-male"] = true,
 		},
+		regionalNames = true, -- Forever: first name + surname instead of realms
+		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active
 		printed = {},
 	}
 	for k, v in pairs(overrides or {}) do
@@ -104,6 +106,22 @@ function wow.reset(overrides)
 		end
 		return state.units[unit]
 	end
+	_G.RegionalUniqueNamesEnabled = function()
+		return state.regionalNames
+	end
+	_G.Enum = {
+		AddOnRestrictionType = { Combat = 0, Encounter = 1, ChallengeMode = 2, PvPMatch = 3, Map = 4, Chat = 5 },
+	}
+	_G.C_RestrictedActions = {
+		IsAddOnRestrictionActive = function(kind)
+			for name, value in pairs(_G.Enum.AddOnRestrictionType) do
+				if value == kind then
+					return state.restrictions[name] == true
+				end
+			end
+			return false
+		end,
+	}
 	_G.C_PartyInfo = {
 		IsGUIDInGroup = function(guid)
 			return state.group[guid] == true

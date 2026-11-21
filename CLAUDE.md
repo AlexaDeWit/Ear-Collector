@@ -73,9 +73,18 @@ addon. Treat an escaped error as a serious bug.
   which fires for your and your group's killing blows. There is no damage,
   assist or spell data.
 - `GetPlayerInfoByGUID(guid)` returns `localizedClass, englishClass,
-  localizedRace, englishRace, sex, name, realmName, level`. `realmName` is ""
-  for your own realm. `level` is the 8th return and may be nil. The pinned
-  annotations list only 7.
+  localizedRace, englishRace, sex, name, realmName, level`. `level` is the 8th
+  return and may be nil. The pinned annotations list only 7.
+- **Surnames.** Forever characters have a first name and a surname instead of
+  realms (`RegionalUniqueNamesEnabled()` is true; see Blizzard's
+  `Blizzard_FrameXMLUtil/Camelot/NameUtil.lua`). The 7th return then holds the
+  surname; it's stored as `surname`. Key players by GUID, never by "Name-Realm".
+- **Identity secrecy.** `PARTY_KILL` is `SecretWhenUnitIdentityRestricted`.
+  Blizzard documents that rule as secret "when the unit isn't player-controlled
+  or in the party/raid", so enemy players should be readable in the open world.
+  Community addons report the GUIDs secret inside battlegrounds and instances.
+  The debug log records active addon restrictions (`C_RestrictedActions`) to
+  explain hidden kills.
 - Who counts: the killer may be you, your pet, a group member
   (`C_PartyInfo.IsGUIDInGroup`; the global `IsGUIDInGroup` is only a
   deprecation shim on Forever) or a group member's pet (`partypetN`/`raidpetN`).
@@ -148,6 +157,11 @@ Report work as "verified headlessly: ...; needs in-game check: ...", and put the
 in-game steps in the PR description.
 
 ## In-game checklist (for the human)
+
+`docs/in-game-tests.md` has copy-paste `/run` probes for each open question:
+whether `PARTY_KILL` fires and for whom, honorable kills, the death recap,
+restrictions, surnames, the group check, and whether SavedVariables persist.
+The basic checklist:
 
 1. Copy or symlink the checkout to `Interface/AddOns/EarCollector/` inside the
    WoW Forever client's folder (`World of Warcraft/_<flavor>_/`). The folder name must match the `.toc`. On the AddOns screen it

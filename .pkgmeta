@@ -8,5 +8,6 @@ ignore:
   - scripts
   - types
   - ci
+  - docs
   - CLAUDE.md
   - README.md
