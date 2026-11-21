@@ -4,10 +4,9 @@
 #
 #   scripts/build-zip.sh        # writes .release/EarCollector-dev-<commit>.zip
 #
-# It packages the committed files only (git ls-files), leaving out what
-# .pkgmeta ignores (spec, scripts, types, art, ci, docs, CLAUDE.md, README.md)
-# and every dotfile, and stamps the TOC version with the commit. Unzip it into
-# World of Warcraft/_<flavor>_/Interface/AddOns/.
+# It packages the committed files only, leaving out every dotfile and whatever
+# .pkgmeta's ignore list names, and stamps the TOC version with the commit.
+# Unzip it into World of Warcraft/_<flavor>_/Interface/AddOns/.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
@@ -27,7 +26,9 @@ mkdir -p "$stage/EarCollector"
 git archive HEAD | tar -x -C "$stage/EarCollector"
 (
 	cd "$stage/EarCollector"
-	rm -rf spec scripts types art ci docs CLAUDE.md README.md
+	# The "ignore:" list in .pkgmeta: the indented "- path" lines after it.
+	awk '/^ignore:/ {on = 1; next} on && /^[[:space:]]+- / {sub(/^[[:space:]]+- /, ""); print; next} {on = 0}' .pkgmeta |
+		while read -r path; do rm -rf -- "$path"; done
 	find . -name '.*' -not -name '.' -prune -exec rm -rf {} +
 	sed -i "s/@project-version@/dev-$sha/" EarCollector.toc
 	# Every file the TOC lists must be in the zip.
