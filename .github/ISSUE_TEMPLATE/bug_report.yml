@@ -1,0 +1,31 @@
+name: Bug report
+description: Something in Ear Collector behaves wrongly.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: errors
+    attributes:
+      label: What `/ears errors` prints
+      description: Type `/ears errors` in game and paste what it lists. "No errors recorded" is useful too.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The first line of `/ears help`.

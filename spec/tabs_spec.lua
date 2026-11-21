@@ -105,6 +105,15 @@ describe("pouch tabs", function()
 	end)
 
 	describe("Ledger", function()
+		it("shows your deaths even before your first ear", function()
+			table.insert(ns.db.deaths, { guid = "Player-4395-0B1C2D3E", name = "Grimbash", at = NOW })
+			wow.slash("/ears")
+			Pouch.SelectTab("Ledger")
+			local w = ns.LedgerTab.Widgets()
+			assert.is_false(w.empty:IsShown())
+			assert.are.equal("1", w.stats[4]:GetText())
+		end)
+
 		it("shows totals, a grade bar, classes and top zones", function()
 			collect({
 				{ guid = "A", class = "ROGUE", zone = "Hillsbrad Foothills", quality = 3 },

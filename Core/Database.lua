@@ -145,7 +145,7 @@ function Database.MigrateCharacter(saved)
 	return db
 end
 
---- Ears used to be saved account-wide. Move them (and deaths and stats) to the
+--- Schema 1 saved ears account-wide. Move them (and deaths and stats) to the
 --- first character that loads. A character that already has its own keeps them,
 --- and the shared ones stay where they are for the next character: nothing is
 --- dropped. Runs on the raw saved tables, before the Migrate functions.

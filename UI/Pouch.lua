@@ -179,7 +179,7 @@ local function newSlot(parent, index)
 	slot.icon:SetPoint("TOPLEFT", 2, -2)
 	slot.icon:SetPoint("BOTTOMRIGHT", -2, 2)
 
-	-- A quality-colored border from four thin textures: no art assets needed.
+	-- A quality-coloured border from four thin textures: no art assets needed.
 	slot.edges = {}
 	for _, side in ipairs({ "TOP", "BOTTOM", "LEFT", "RIGHT" }) do
 		local edge = slot:CreateTexture(nil, "OVERLAY")

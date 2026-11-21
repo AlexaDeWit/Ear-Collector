@@ -11,10 +11,10 @@
 -- player. No match, no record: a wrong rival is worse than none. A pet's
 -- killing blow names the pet, which matches nobody.
 --
--- Unverified in game (T4): whether Forever fills the recap at all (Blizzard's
--- recap window only loads on Retail, though C_DeathRecap is documented for every
--- client), and how sourceName is written. With /ears debug on, every death logs
--- what the recap held and why it did or didn't count.
+-- Whether Forever fills the recap at all is for the game to show: Blizzard's
+-- recap window loads only on Retail, though C_DeathRecap is documented for every
+-- client. With /ears debug on, every death logs what the recap held and why it
+-- did or didn't count.
 local _, ns = ...
 
 local Context, Deaths, Errors = ns.Context, ns.Deaths, ns.Errors

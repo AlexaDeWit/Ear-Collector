@@ -1,0 +1,154 @@
+# Contributing
+
+How we work on Ear Collector: the contribution process, the repository's
+requirements, and the rules the code follows. How the addon works is in
+[`docs/architecture.md`](docs/architecture.md).
+
+## Working language
+
+Write issues and discussion in **English**, so the next person with the same
+problem can find them. Rough English is welcome, and so is your own language
+run through a translator. If English is a real barrier, I also read **French**
+and **Swedish**. Source code, identifiers, comments, and commit messages stay
+in English.
+
+## Development
+
+The tools install on Ubuntu or another Debian-based Linux:
+
+```bash
+scripts/setup-tools.sh   # the pinned toolchain and Blizzard's Forever API data
+scripts/check.sh         # every check: lint, types, art, format, tests
+```
+
+`scripts/check.sh` must pass before you push, and CI runs the same command.
+[`docs/testing.md`](docs/testing.md) explains each step and the fake game client
+the specs run against.
+
+To run your working copy in the game, link the checkout into the client's
+AddOns folder under the name `EarCollector`:
+
+```bash
+ln -s "$PWD" "/path/to/World of Warcraft/_<flavor>_/Interface/AddOns/EarCollector"
+```
+
+Each CI run also attaches an installable zip to its summary page.
+`scripts/build-zip.sh` builds the same zip locally, and
+`scripts/build-art.sh` repaints the ear textures ([`docs/art.md`](docs/art.md)).
+
+What the headless checks can't see, a person checks in the game with
+[`docs/in-game-tests.md`](docs/in-game-tests.md).
+
+## Rules for the code
+
+These bind everyone, human or agent. The mechanisms behind them are in
+[`docs/architecture.md`](docs/architecture.md).
+
+- **No error reaches the player.** Run every entry point (event handler, slash
+  command, timer, script, hook) through `Errors.Call` or `Errors.Wrap`, under a
+  name narrow enough that switching it off breaks nothing else. Then prevent the
+  error anyway: check `Context.Readable` before touching any value from the
+  game, check every API return for nil, and expect saved data to be damaged.
+  Every new failure path gets a spec.
+- **No taint.** Don't write to Blizzard globals or frames, don't call protected
+  functions, and don't replace Blizzard functions (use `hooksecurefunc`). The
+  one sanctioned write is the pouch's entry in `UISpecialFrames`.
+- **No frame-time cost.** No `OnUpdate` polling, no high-frequency event without
+  a reason, and a bound on every saved log.
+- **Nothing leaves the player's screen.** Ear Collector never sends chat,
+  emotes, whispers or addon messages. Any sharing feature needs the
+  maintainer's agreement and must be opt-in.
+- **Saved data changes in place.** `ns.db`'s fields are the saved tables, so
+  modify them rather than reassign them.
+- **WoW Forever only.** Interface `16001`, no Classic or Retail TOCs. The API
+  facts the code relies on are in [`docs/forever-api.md`](docs/forever-api.md).
+- **WoW's Lua is 5.1** without `io`, `require`, `dofile`, `loadfile`, `package`
+  or `debug`. Specs and scripts may use them, addon code may not.
+- Write `---@type Frame` above `CreateFrame` results, and pass event names as
+  string literals (`ns.On("PARTY_KILL", fn)`) so the `names` check sees them.
+
+## AI-assisted contributions
+
+AI-assisted work is welcome, but the bar does not change. **You are the
+author. You must understand and be able to explain every line. The
+contribution must be worth more than the time it takes to review.** We close
+low-effort, unreviewed AI output ("slop").
+
+- **Disclose non-trivial AI use**. Editor autocomplete needs no disclosure.
+  AI-generated or substantially AI-shaped code, prose, or commits do. Add an
+  `Assisted-by:` git trailer that names the tool, for example
+  `Assisted-by: <Agent Name> (<Vendor>)`, and mention it in the PR. The
+  trailer records a tool that helped. You remain the sole author, so it is
+  **not** `Co-authored-by:`.
+- **Verify before you file**. Never open an issue that an AI produced and you
+  have not reproduced yourself.
+
+## Developer Certificate of Origin (DCO)
+
+We accept contributions under the **[Developer Certificate of Origin](DCO)**
+(DCO, v1.1): a per-commit affirmation that you have the right to submit your
+work under the project's [MIT licence](LICENSE). It asks you only to certify
+provenance, and grants the project no power to relicense or close the code.
+
+**Sign off every commit**. `git commit -s` appends a `Signed-off-by` trailer
+from your git identity:
+
+```
+Signed-off-by: Your Name <you@example.com>
+```
+
+- **Every commit in a PR** needs a `Signed-off-by` that matches its author.
+- It is **separate from the GPG signature**. `-S` proves who committed. `-s`
+  certifies your right to contribute. Use both: `git commit -S -s`.
+- **Forgot one?** `git commit --amend -s --no-edit` fixes the last commit.
+  `git rebase --signoff main` signs off a whole branch.
+
+## Pull requests
+
+Open as a draft while work or review is moving, and mark it ready when it is
+not. The body is three headings, **What** (the goal), **Why** (the
+motivation), and **Consequences** (player-visible changes, trade-offs, one
+sentence each, and the section goes when there are none), plus a one-line
+AI-assistance disclosure. The template has them.
+
+A reviewer reads the body before the diff, so write it so someone who has not
+opened the diff understands the change on its own. Lead with what a player or
+reviewer gains. The mechanism comes second, and only as far as the diff does
+not already show it. No play-by-play of files, and no checklists: CI enforces
+its own. When a change needs testing in the game, say which steps of
+[`docs/in-game-tests.md`](docs/in-game-tests.md) apply. End with `Closes #NNN`
+where an issue completes.
+
+## Repository requirements
+
+- **Use [Conventional Commits](https://www.conventionalcommits.org/)**.
+  Subjects are `type(scope): summary`, where `type` is one of `feat`, `fix`,
+  `docs`, `chore`, `ci`, `refactor`, `test`, `build`, `perf`. The scope is
+  optional. Keep the summary short and imperative.
+- **Commits are GPG-signed, DCO signed off, and AI-disclosed** (see above).
+- **`main` takes changes through pull requests only**, with both CI jobs passing
+  on an up-to-date branch.
+- **Pin every GitHub Action to a full commit SHA**, with the version in a
+  trailing comment.
+- **Keep workflows injection-free**. Never interpolate untrusted
+  `${{ github.event.* }}` or `${{ github.head_ref }}` into `run:` blocks. Pass
+  them through `env:`.
+
+## Releases
+
+Releases are maintainer territory. A signed tag publishes one:
+
+```bash
+git tag -s v1.0.0 -m "Ear Collector 1.0.0"
+git push origin v1.0.0
+```
+
+The release workflow runs every check, then the
+[BigWigs packager](https://github.com/BigWigsMods/packager) builds
+`EarCollector-<tag>.zip` and attaches it to a GitHub Release. Tags can't be
+moved or deleted, so a bad release gets a new version. A tag containing `alpha`
+or `beta` (`v1.0.0-beta1`) makes a pre-release.
+
+Publishing to CurseForge or Wago needs the project's ID in the TOC
+(`## X-Curse-Project-ID`, `## X-Wago-ID`) and an API token as a repository secret
+(`CF_API_TOKEN`, `WAGO_API_TOKEN`) passed to the packager step.

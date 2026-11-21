@@ -9,5 +9,8 @@ ignore:
   - types
   - art
   - docs
+  - AGENTS.md
   - CLAUDE.md
+  - CONTRIBUTING.md
+  - DCO
   - README.md

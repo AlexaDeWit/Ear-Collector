@@ -206,6 +206,13 @@ describe("options page", function()
 			assert.are.equal(category().id, wow.state().settingsOpenedTo)
 		end)
 
+		it("waits for the Combat addon restriction to lift, not only lockdown", function()
+			wow.state().restrictions.Combat = true
+			wow.slash("/ears options")
+			assert.is_nil(wow.state().settingsOpenedTo)
+			assert.matches("during combat", wow.state().printed[#wow.state().printed])
+		end)
+
 		it("is listed in /ears help", function()
 			wow.slash("/ears help")
 			local found = false
