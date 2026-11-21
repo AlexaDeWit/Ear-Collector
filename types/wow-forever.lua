@@ -21,3 +21,12 @@ function C_PartyInfo.IsGUIDInGroup(guid, category) end
 --- (WoW Forever). Blizzard_APIDocumentationGenerated/UnitDocumentation.lua.
 ---@return boolean result
 function RegionalUniqueNamesEnabled() end
+
+--- Localized class names keyed by class token ("WARRIOR" -> "Warrior").
+--- Blizzard_FrameXMLBase/Constants.lua.
+---@type table<string, string>
+LOCALIZED_CLASS_NAMES_MALE = {}
+
+--- True when any bag frame is open. Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua.
+---@return boolean
+function IsAnyBagOpen() end

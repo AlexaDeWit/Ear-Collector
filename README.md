@@ -18,10 +18,16 @@ icon. It has not yet been tested in game.
 
 | Command | What it does |
 |---|---|
-| `/ears` | Totals and your latest ear |
+| `/ears` | Open or close your Ear Pouch |
+| `/ears stats` | Totals and your latest ear |
 | `/ears recent [n]` | Your newest ears (default 5) |
+| `/ears bags on\|off` | Open the pouch with your bags (on by default) |
 | `/ears debug` | Print every killing blow the addon sees, and why it did or didn't count |
 | `/ears errors` | Errors the addon caught. It keeps running; include these in bug reports |
+
+The pouch also opens from the minimap addon drawer, a key binding (Key
+Bindings > AddOns > Ear Collector), your bags, and by clicking an ear's name in
+chat.
 
 ## Installing a development copy
 

@@ -84,7 +84,7 @@ describe("error containment", function()
 	it("contains errors in slash commands", function()
 		ns.db.ears = "not a table" -- corrupt state at runtime
 		assert.has_no.errors(function()
-			wow.slash("/ears")
+			wow.slash("/ears stats")
 		end)
 		assert.are.equal("/ears", ns.db.errors[1].where)
 	end)

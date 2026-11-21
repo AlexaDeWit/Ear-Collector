@@ -89,10 +89,21 @@ step_luals() {
 }
 step_xml() {
 	[ -z "$XML_FILES" ] && return 0
-	need xmllint && need_data "$UI_XSD" || return 1
-	# shellcheck disable=SC2086
-	xmllint --noout --schema "$UI_XSD" $XML_FILES 2>&1 | grep -v ' validates$'
-	return "${PIPESTATUS[0]}"
+	need xmllint || return 1
+	# Bindings.xml has its own format (no schema ships with the UI source):
+	# check that it is well-formed. Everything else must validate against UI.xsd.
+	local ui_xml rc=0
+	ui_xml=$(printf '%s\n' "$XML_FILES" | grep -v '^Bindings\.xml$' || true)
+	if printf '%s\n' "$XML_FILES" | grep -qx 'Bindings.xml'; then
+		xmllint --noout Bindings.xml || rc=1
+	fi
+	if [ -n "$ui_xml" ]; then
+		need_data "$UI_XSD" || return 1
+		# shellcheck disable=SC2086
+		xmllint --noout --schema "$UI_XSD" $ui_xml 2>&1 | grep -v ' validates$'
+		[ "${PIPESTATUS[0]}" -eq 0 ] || rc=1
+	fi
+	return $rc
 }
 step_format() {
 	need stylua || return 1

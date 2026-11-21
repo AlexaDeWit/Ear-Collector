@@ -13,11 +13,19 @@ globals = {
 	"SLASH_EARCOLLECTOR1",
 	"SLASH_EARCOLLECTOR2",
 	SlashCmdList = { other_fields = true },
+	-- Key binding (Bindings.xml) and minimap addon drawer (TOC AddonCompartmentFunc*)
+	"BINDING_HEADER_EARCOLLECTOR",
+	"BINDING_NAME_EARCOLLECTOR_TOGGLE",
+	"EarCollector_TogglePouch",
+	"EarCollector_OnAddonCompartmentClick",
+	"EarCollector_OnAddonCompartmentEnter",
+	"EarCollector_OnAddonCompartmentLeave",
 }
 
 -- WoW API the addon reads. Keep this explicit: adding an entry should be a
 -- deliberate choice, and lua-language-server checks that each one exists.
 read_globals = {
+	"C_ClassColor",
 	"C_Map",
 	"C_PartyInfo",
 	"C_PvP",
@@ -26,18 +34,24 @@ read_globals = {
 	"C_Timer",
 	"CreateFrame",
 	"Enum",
+	"EventRegistry",
+	"GameTooltip",
 	"GetPVPLifetimeStats",
 	"GetPlayerInfoByGUID",
 	"GetRealZoneText",
 	"GetServerTime",
 	"GetSubZoneText",
 	"GetTime",
+	"IsAnyBagOpen",
 	"IsInInstance",
+	"LOCALIZED_CLASS_NAMES_MALE",
 	"RegionalUniqueNamesEnabled",
+	"UIParent",
 	"UnitGUID",
 	"UnitLevel",
 	"debugstack",
 	"geterrorhandler",
+	"hooksecurefunc",
 	"issecretvalue",
 	-- WoW additions to the Lua environment
 	"date",

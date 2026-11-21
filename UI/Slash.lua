@@ -28,7 +28,21 @@ end
 ---@type table<string, fun(db: table, args: string)>
 local commands = {}
 
-function commands.summary(db)
+function commands.pouch()
+	ns.Pouch.Toggle()
+end
+
+function commands.bags(db, args)
+	if args == "on" or args == "off" then
+		db.settings.openWithBags = args == "on"
+	end
+	Chat.Print(
+		db.settings.openWithBags and "The pouch opens with your bags. /ears bags off to stop."
+			or "The pouch doesn't open with your bags. /ears bags on to change."
+	)
+end
+
+function commands.stats(db)
 	local total = #db.ears
 	if total == 0 then
 		Chat.Print("No ears yet. Kill an enemy player in the open world to collect one.")
@@ -85,9 +99,11 @@ end
 
 function commands.help()
 	Chat.Print(("version %s"):format(ns.version))
-	Chat.Print("/ears: totals and your latest ear")
+	Chat.Print("/ears: open or close your Ear Pouch (also: minimap addon drawer, a key binding, your bags)")
+	Chat.Print("/ears stats: totals and your latest ear")
 	Chat.Print("/ears recent [n]: your newest ears (default 5)")
 	Chat.Print("/ears debug: print every killing blow the addon sees, and why it did or didn't count")
+	Chat.Print("/ears bags on|off: open the pouch with your bags")
 	Chat.Print("/ears errors: errors the addon caught (it keeps running); /ears errors clear")
 end
 
@@ -100,6 +116,6 @@ SlashCmdList.EARCOLLECTOR = Errors.Wrap("/ears", function(message)
 	end
 	local command, args = (message or ""):match("^%s*(%S*)%s*(.-)%s*$")
 	command = command:lower()
-	local handler = commands[command == "" and "summary" or command] or commands.help
+	local handler = commands[command == "" and "pouch" or command] or commands.help
 	handler(db, args)
 end)

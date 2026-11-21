@@ -15,6 +15,7 @@ Database.DEFAULT_SETTINGS = {
 	includeBattlefields = false, -- zone-wide battles (pvpType "combat") don't count by default
 	announce = true, -- print a chat line when you collect an ear
 	debug = false, -- print and log every PARTY_KILL decision (see /ears debug)
+	openWithBags = true, -- the pouch opens and closes with your bags
 }
 
 Database.DEBUG_LOG_SIZE = 100
@@ -67,6 +68,10 @@ function Database.Migrate(saved)
 		if type(db.settings[key]) ~= type(value) then
 			db.settings[key] = value
 		end
+	end
+	db.ui = tableOrNew(db.ui)
+	if db.ui.pouch ~= nil and type(db.ui.pouch) ~= "table" then
+		db.ui.pouch = nil
 	end
 	db.debugLog = tableOrNew(db.debugLog)
 	db.errors = tableOrNew(db.errors)

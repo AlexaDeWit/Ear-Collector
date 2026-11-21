@@ -107,6 +107,20 @@ addon. Treat an escaped error as a serious bug.
   race tokens are Human, Dwarf, Gnome, NightElf, Scourge, Orc, Troll, Tauren and
   Skyborne. Check `C_Texture.GetAtlasInfo` before using an atlas: an icon for
   Skyborne isn't confirmed.
+- **Opening the pouch** (`UI/Access.lua`); each way verified in Forever's UI source:
+  - Minimap addon drawer: TOC `AddonCompartmentFunc*` name globals that the
+    client calls as `(addonName, mouseButton | button)`.
+  - Key binding: `Bindings.xml` (loaded by the client, not the TOC) with
+    `category="ADDONS"`; the strings `BINDING_HEADER_*` / `BINDING_NAME_*`
+    are set in Lua.
+  - Bags: `hooksecurefunc` post-hooks on `ToggleAllBags`, `OpenAllBags`,
+    `CloseAllBags`, `ToggleBackpack`, `OpenBackpack`, `CloseBackpack`, then
+    `IsAnyBagOpen()`. The pouch closes with the bags only if the bags opened it.
+  - Chat links: `|Haddon:EarCollector:ear:<guid>:<time>|h`. Blizzard's "addon"
+    link handler fires `EventRegistry` "SetItemRef" `(owner, link, text, button, frame)`.
+  - The window uses `BasicFrameTemplateWithInset` (`.TitleText`, `.CloseButton`).
+    Escape doesn't close it yet: adding to `UISpecialFrames` writes a Blizzard
+    global, so it's left out until checked for taint.
 - Death recap (`C_DeathRecap.GetRecapEvents`) exposes `sourceName` for what
   killed you. It's the likely source for future Rivals/Vengeance features.
   Its behaviour in PvP is unverified.
@@ -139,7 +153,11 @@ addon. Treat an escaped error as a serious bug.
 | `Detectors/Shared.lua` | victim details, debug trace, `ns.Collect` |
 | `Detectors/PartyKill.lua` | kills by you, your pet, your group |
 | `Detectors/HonorKill.lua` | assists: `UNIT_DIED` + honorable-kill steps |
-| `UI/Chat.lua`, `UI/Slash.lua` | output and `/ears` |
+| `UI/Chat.lua` | chat output, ear links, race icons |
+| `UI/Pouch.lua` | the Ear Pouch window (built on first open) |
+| `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
+| `UI/Slash.lua` | `/ears` commands |
+| `Bindings.xml` | the "Toggle Ear Pouch" key binding |
 
 Keep game-touching code thin and decisions in plain functions that specs call directly.
 
@@ -154,6 +172,13 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 - `wow.advance(seconds)` moves both clocks and runs due `C_Timer` callbacks.
   `wow.honorableKill(n)` bumps the HK count and fires `PLAYER_PVP_KILLS_CHANGED`.
 - `wow.secret()` makes a secret value.
+- Widgets: `CreateFrame` returns a small widget model. Methods whose state specs
+  inspect are real (`Show`/`Hide`/`IsShown`, `SetText`, `SetAtlas`, points,
+  scripts...), and other capitalized methods are no-ops; lua-language-server
+  catches misspelled ones. `widget:Click()`, `:Enter()`, `:Leave()`, `:Drag()`
+  and `:Wheel(delta)` act like the player. `GameTooltip.lines` records tooltip
+  text. `wow.clickLink(link)` clicks a chat link, and
+  `wow.pressBinding("EARCOLLECTOR_TOGGLE")` runs a `Bindings.xml` body.
 - `wow.replay(dofile("spec/fixtures/x.lua"))` plays an event sequence. In a
   fixture, `"<secret>"` becomes a secret value, which matches how `/ears debug`
   logs one.
@@ -185,7 +210,7 @@ The basic checklist:
    must be listed and not marked out of date. `/dump select(4, GetBuildInfo())`
    should print `16001`.
 2. Turn on `/console scriptErrors 1`, or use BugSack, then `/reload`. No errors
-   at login, and `/ears` prints a summary.
+   at login, and `/ears stats` prints a summary.
 3. Run `/ears debug`, then kill an enemy player in the open world. The chat
    shows the decision "new ear (you)" and a "You collected ..." line with the
    victim's race icon.
@@ -197,5 +222,10 @@ The basic checklist:
    kill where someone outside your group lands the blow, note whether
    PARTY_KILL fires at all.
 5. Ears survive `/reload` and relog. `/ears errors` says "No errors recorded".
-6. No "action blocked" or taint messages, in combat or out.
-7. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.
+6. No "action blocked" or taint messages, in combat or out. Open and close
+   your bags in combat too.
+7. The pouch: `/ears` opens it. It also opens from the minimap addon drawer
+   (with a bag icon), from Key Bindings > AddOns > Ear Collector, from your bags
+   (B), and by clicking an ear name in chat. It keeps its position after a drag
+   and `/reload`.
+8. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.

@@ -11,7 +11,9 @@ ns.Ears = Ears
 ---@field surname string? Forever characters have a surname instead of a realm
 ---@field realm string? other clients: nil for your own realm
 ---@field class string? English class token, e.g. "WARRIOR"
+---@field className string? localized class name, for display
 ---@field race string? English race token, e.g. "Scourge"
+---@field raceName string? localized race name, for display
 ---@field sex number? 2 male, 3 female (GetPlayerInfoByGUID)
 ---@field level number? nil when the client doesn't say
 ---@field yourLevel number?
@@ -76,7 +78,9 @@ function Ears.Record(db, kill, now)
 		surname = kill.surname,
 		realm = kill.realm,
 		class = kill.class,
+		className = kill.className,
 		race = kill.race,
+		raceName = kill.raceName,
 		sex = kill.sex,
 		level = kill.level,
 		yourLevel = kill.yourLevel,

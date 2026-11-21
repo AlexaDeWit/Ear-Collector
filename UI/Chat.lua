@@ -1,5 +1,5 @@
 -- Chat output. Everything goes to the player's own chat frame.
-local _, ns = ...
+local addonName, ns = ...
 
 local Chat = {}
 ns.Chat = Chat
@@ -10,12 +10,17 @@ local PREFIX = "|cffc8402f[Ear Collector]|r "
 -- (Blizzard_SharedXML's GetRaceAtlas); a few race tokens use a shorter name.
 local ATLAS_RACE = { scourge = "undead" }
 
+-- Ear links: |Haddon:EarCollector:ear:<victim GUID>:<time>|h. Clicking one fires
+-- EventRegistry "SetItemRef" (Blizzard's handler for "addon" links); UI/Access.lua
+-- listens and opens the pouch on that ear. Player GUIDs contain no ":".
+local LINK_PREFIX = "addon:" .. addonName .. ":ear:"
+
 ---@param message string
 function Chat.Print(message)
 	print(PREFIX .. message)
 end
 
---- The atlas name for the victim's race icon, or nil when the client has none
+--- The atlas name for a race icon, or nil when the client has none
 --- (for example a race added after the icons were made).
 ---@param race string? English race token from GetPlayerInfoByGUID, e.g. "Scourge"
 ---@param sex number? 2 male, 3 female
@@ -42,6 +47,28 @@ function Chat.EarName(ear)
 	return ("%s|c%s%s's Ear|r"):format(icon, quality.color, ear.name)
 end
 
+--- A clickable "[Name's Ear]" that opens the pouch on this ear.
+---@param ear table
+---@return string
+function Chat.EarLink(ear)
+	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
+	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
+	local icon = atlas and ("|A:%s:14:14|a "):format(atlas) or ""
+	return ("%s|c%s|H%s%s:%d|h[%s's Ear]|h|r"):format(icon, quality.color, LINK_PREFIX, ear.guid, ear.at, ear.name)
+end
+
+--- The ear an ear link points at.
+---@param link any the link payload passed to SetItemRef, e.g. "addon:EarCollector:ear:Player-1-A:1795293660"
+---@return string|nil guid
+---@return number|nil at
+function Chat.ParseEarLink(link)
+	if type(link) ~= "string" or link:sub(1, #LINK_PREFIX) ~= LINK_PREFIX then
+		return nil, nil
+	end
+	local guid, at = link:sub(#LINK_PREFIX + 1):match("^([^:]+):(%d+)$")
+	return guid, tonumber(at)
+end
+
 ---@param ear table
 ---@param isNew boolean
 function Chat.Announce(ear, isNew)
@@ -53,7 +80,7 @@ function Chat.Announce(ear, isNew)
 		elseif ear.by == "assist" then
 			by = " Assist."
 		end
-		Chat.Print(("You collected %s (%s).%s"):format(Chat.EarName(ear), quality.name, by))
+		Chat.Print(("You collected %s (%s).%s"):format(Chat.EarLink(ear), quality.name, by))
 	else
 		Chat.Print(("Camped %s again (kill %d). No new ear."):format(ear.name, ear.camped + 1))
 	end

@@ -39,25 +39,190 @@ local function isSecret(value)
 	return type(value) == "table" and getmetatable(value) == secretMeta
 end
 
-local function newFrame(frameType, name)
-	local f = { frameType = frameType, name = name, events = {}, scripts = {}, shown = true }
-	function f:RegisterEvent(event)
-		self.events[event] = true
+-- Widgets: frames, buttons, textures and font strings. Methods whose state
+-- specs inspect are real; any other capitalized method is a no-op so UI code can
+-- run. lua-language-server, not these stubs, checks that method names exist.
+local widgetMethods = {}
+local function noop() end
+
+local function fire(self, script, ...)
+	local handler = self.scripts[script]
+	if handler then
+		return handler(self, ...)
 	end
-	function f:UnregisterEvent(event)
-		self.events[event] = nil
-	end
-	function f:IsEventRegistered(event)
-		return self.events[event] == true
-	end
-	function f:SetScript(script, handler)
-		self.scripts[script] = handler
-	end
-	function f:GetScript(script)
-		return self.scripts[script]
-	end
-	return f
 end
+
+local newWidget
+
+local widgetMeta = {
+	__index = function(_, key)
+		if widgetMethods[key] then
+			return widgetMethods[key]
+		end
+		if type(key) == "string" and key:find("^%u") then
+			return noop -- an unstubbed widget method
+		end
+		return nil -- an unset field, e.g. slot.ear
+	end,
+}
+
+newWidget = function(widgetType, name, parent, template)
+	local w = setmetatable({
+		widgetType = widgetType,
+		name = name,
+		parent = parent,
+		events = {},
+		scripts = {},
+		points = {},
+		shown = true,
+		enabled = true,
+	}, widgetMeta)
+	if template and template:find("BasicFrameTemplate") then
+		w.TitleText = newWidget("FontString", nil, w)
+		w.CloseButton = newWidget("Button", nil, w)
+	end
+	return w
+end
+
+function widgetMethods:RegisterEvent(event)
+	self.events[event] = true
+end
+function widgetMethods:UnregisterEvent(event)
+	self.events[event] = nil
+end
+function widgetMethods:IsEventRegistered(event)
+	return self.events[event] == true
+end
+function widgetMethods:SetScript(script, handler)
+	self.scripts[script] = handler
+end
+function widgetMethods:GetScript(script)
+	return self.scripts[script]
+end
+function widgetMethods:Show()
+	if not self.shown then
+		self.shown = true
+		fire(self, "OnShow")
+	end
+end
+function widgetMethods:Hide()
+	if self.shown then
+		self.shown = false
+		fire(self, "OnHide")
+	end
+end
+function widgetMethods:IsShown()
+	return self.shown
+end
+function widgetMethods:SetShown(shown)
+	if shown then
+		self:Show()
+	else
+		self:Hide()
+	end
+end
+function widgetMethods:SetText(text)
+	self.text = text
+end
+function widgetMethods:GetText()
+	return self.text
+end
+function widgetMethods:SetAtlas(atlas)
+	self.atlas, self.texture = atlas, nil
+end
+function widgetMethods:SetTexture(texture)
+	self.texture, self.atlas = texture, nil
+end
+function widgetMethods:SetColorTexture(r, g, b, a)
+	self.color = { r, g, b, a }
+end
+function widgetMethods:SetDesaturated(desaturated)
+	self.desaturated = desaturated
+end
+function widgetMethods:SetEnabled(enabled)
+	self.enabled = enabled
+end
+function widgetMethods:IsEnabled()
+	return self.enabled
+end
+function widgetMethods:SetPoint(...)
+	self.points[#self.points + 1] = { ... }
+end
+function widgetMethods:GetPoint(i)
+	local p = self.points[i or 1]
+	if p then
+		return unpack(p)
+	end
+end
+function widgetMethods:ClearAllPoints()
+	self.points = {}
+end
+function widgetMethods:SetSize(width, height)
+	self.width, self.height = width, height
+end
+function widgetMethods:GetWidth()
+	return self.width or 0
+end
+function widgetMethods:LockHighlight()
+	self.highlightLocked = true
+end
+function widgetMethods:UnlockHighlight()
+	self.highlightLocked = false
+end
+function widgetMethods:CreateTexture(name)
+	return newWidget("Texture", name, self)
+end
+function widgetMethods:CreateFontString(name)
+	return newWidget("FontString", name, self)
+end
+--- Spec helpers: act like the player.
+function widgetMethods:Click(button)
+	fire(self, "OnClick", button or "LeftButton")
+end
+function widgetMethods:Enter()
+	fire(self, "OnEnter")
+end
+function widgetMethods:Leave()
+	fire(self, "OnLeave")
+end
+function widgetMethods:Drag()
+	fire(self, "OnDragStart")
+	self.points = { { "CENTER", _G.UIParent, "CENTER", 100, -50 } }
+	fire(self, "OnDragStop")
+end
+function widgetMethods:Wheel(delta)
+	fire(self, "OnMouseWheel", delta)
+end
+
+-- The game tooltip records its lines.
+local function newTooltip()
+	local tip = newWidget("GameTooltip", "GameTooltip")
+	tip.shown = false
+	tip.lines = {}
+	function tip:SetOwner(owner)
+		self.owner = owner
+		self.lines = {}
+	end
+	function tip:AddLine(text)
+		self.lines[#self.lines + 1] = text
+	end
+	function tip:AddDoubleLine(left, right)
+		self.lines[#self.lines + 1] = left .. " | " .. right
+	end
+	return tip
+end
+
+local CLASS_COLORS = {
+	WARRIOR = "ffc69b6d",
+	ROGUE = "fffff468",
+	HUNTER = "ffaad372",
+	MAGE = "ff3fc7eb",
+	WARLOCK = "ff8788ee",
+	PRIEST = "ffffffff",
+	SHAMAN = "ff0070dd",
+	DRUID = "ffff7c0a",
+	PALADIN = "fff48cba",
+}
 
 --- Reset the fake client. Call from before_each. `overrides` sets initial state.
 function wow.reset(overrides)
@@ -88,20 +253,79 @@ function wow.reset(overrides)
 		},
 		regionalNames = true, -- Forever: first name + surname instead of realms
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active
+		bagsOpen = false,
 		printed = {},
 	}
 	for k, v in pairs(overrides or {}) do
 		state[k] = v
 	end
 
-	_G.CreateFrame = function(frameType, name)
-		local f = newFrame(frameType, name)
+	_G.UIParent = newWidget("Frame", "UIParent")
+	_G.GameTooltip = newTooltip()
+	_G.CreateFrame = function(frameType, name, parent, template)
+		local f = newWidget(frameType, name, parent, template)
 		frames[#frames + 1] = f
 		if name then
 			_G[name] = f
 		end
 		return f
 	end
+	_G.hooksecurefunc = function(tbl, name, hook)
+		if type(tbl) == "string" then
+			tbl, name, hook = _G, tbl, name
+		end
+		local original = tbl[name]
+		tbl[name] = function(...)
+			local results = { original(...) }
+			hook(...)
+			return unpack(results)
+		end
+	end
+	-- Bags: Blizzard's bag functions, reduced to one open/closed flag.
+	_G.ToggleAllBags = function()
+		state.bagsOpen = not state.bagsOpen
+	end
+	_G.OpenAllBags = function()
+		state.bagsOpen = true
+	end
+	_G.CloseAllBags = function()
+		state.bagsOpen = false
+	end
+	_G.ToggleBackpack = _G.ToggleAllBags
+	_G.OpenBackpack = _G.OpenAllBags
+	_G.CloseBackpack = _G.CloseAllBags
+	_G.IsAnyBagOpen = function()
+		return state.bagsOpen
+	end
+	-- EventRegistry: only what "addon" chat links use.
+	_G.EventRegistry = {
+		callbacks = {},
+		RegisterCallback = function(self, event, func, owner)
+			self.callbacks[#self.callbacks + 1] = { event = event, func = func, owner = owner }
+		end,
+	}
+	_G.C_ClassColor = {
+		-- Returns a ColorMixin; only GenerateHexColor is stubbed.
+		GetClassColor = function(className)
+			local hex = CLASS_COLORS[className]
+			return hex and {
+				GenerateHexColor = function()
+					return hex
+				end,
+			} or nil
+		end,
+	}
+	_G.LOCALIZED_CLASS_NAMES_MALE = {
+		WARRIOR = "Warrior",
+		ROGUE = "Rogue",
+		HUNTER = "Hunter",
+		MAGE = "Mage",
+		WARLOCK = "Warlock",
+		PRIEST = "Priest",
+		SHAMAN = "Shaman",
+		DRUID = "Druid",
+		PALADIN = "Paladin",
+	}
 	_G.issecretvalue = isSecret
 	_G.UnitGUID = function(unit)
 		if unit == "player" then
@@ -171,7 +395,7 @@ function wow.reset(overrides)
 		if not p then
 			return nil
 		end
-		return p.class, p.class:upper(), p.race, p.race, p.sex or 2, p.name, p.realm or "", p.level
+		return p.class, p.class:upper(), p.raceName or p.race, p.race, p.sex or 2, p.name, p.realm or "", p.level
 	end
 	_G.GetServerTime = function()
 		return state.now
@@ -233,6 +457,26 @@ function wow.fireEvent(event, ...)
 			handler(f, event, ...)
 		end
 	end
+end
+
+--- Click a chat hyperlink, as Blizzard's "addon" link handler does: it fires
+--- EventRegistry "SetItemRef" with (link, text, button, chatFrame).
+function wow.clickLink(link, button)
+	for _, cb in ipairs(_G.EventRegistry.callbacks) do
+		if cb.event == "SetItemRef" then
+			cb.func(cb.owner, link, "[link]", button or "LeftButton", nil)
+		end
+	end
+end
+
+--- Run a key binding's body, as the client does when the key is pressed.
+function wow.pressBinding(name)
+	local file = assert(io.open("Bindings.xml"))
+	local xml = file:read("*a")
+	file:close()
+	local body = xml:match('<Binding name="' .. name .. '"[^>]*>(.-)</Binding>')
+	assert(body, "no binding " .. name)
+	assert(loadstring(body))()
 end
 
 --- Let `seconds` pass: both clocks move and due C_Timer callbacks run, in order.
