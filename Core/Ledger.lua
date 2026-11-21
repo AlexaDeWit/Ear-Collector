@@ -31,16 +31,26 @@ end
 ---@field assists integer
 ---@field week integer ears taken in the last 7 days
 ---@field players integer different players you have ears from
+---@field deaths integer your recorded deaths to enemy players
 ---@field byQuality table<integer, integer> grade -> ears, for every grade in ns.QUALITY
 ---@field byClass { class: string, name: string?, count: integer }[] biggest first; class "UNKNOWN" when not known
 ---@field zones { zone: string, count: integer }[] the top Ledger.TOP_ZONES
 
---- Totals over `ears`. Tolerates missing optional fields (class, zone, camped).
+--- Totals over `ears` (and `deaths`). Tolerates missing optional fields (class, zone, camped).
 ---@param ears table[]
 ---@param now number server time in seconds
+---@param deaths table[]?
 ---@return EarCollector.LedgerSummary
-function Ledger.Summarize(ears, now)
-	local summary = { ears = #ears, kills = 0, assists = 0, week = 0, players = 0, byQuality = {} }
+function Ledger.Summarize(ears, now, deaths)
+	local summary = {
+		ears = #ears,
+		kills = 0,
+		assists = 0,
+		week = 0,
+		players = 0,
+		deaths = deaths and #deaths or 0,
+		byQuality = {},
+	}
 	for grade in pairs(ns.QUALITY) do
 		summary.byQuality[grade] = 0
 	end

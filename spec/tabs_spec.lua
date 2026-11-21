@@ -119,7 +119,7 @@ describe("pouch tabs", function()
 			for i, fs in ipairs(w.stats) do
 				stats[i] = fs:GetText()
 			end
-			assert.are.same({ "4", "4", "3", "1" }, stats) -- ears, last 7 days, players, assists
+			assert.are.same({ "4", "4", "1", "0" }, stats) -- ears, last 7 days, assists, ears lost
 
 			local inner = Pouch.WIDTH - 2 * Pouch.PAD
 			assert.are.equal(inner / 4, w.grades[0]:GetWidth())
@@ -217,7 +217,7 @@ describe("pouch tabs", function()
 			local lines = _G.GameTooltip.lines
 			assert.are.equal("|cfffff468Velaria Duskwhisper|r", lines[1])
 			assert.matches("^Level 60", lines[2])
-			assert.are.equal("Killed 2 times (2 ears)", lines[4])
+			assert.are.equal("You killed them 2 times (2 ears)", lines[4])
 			assert.matches("Tarren Mill$", lines[6])
 			assert.are.equal("Click to see their latest ear.", lines[#lines])
 			row:Click()

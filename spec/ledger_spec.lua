@@ -124,6 +124,48 @@ describe("Ledger and Rivals logic", function()
 			assert.is_false(rows[2].prey)
 		end)
 
+		it("adds players who only killed you, with deaths, debt and marks", function()
+			local function death(guid, at)
+				return { guid = guid, name = guid .. "-name", at = at }
+			end
+			local rows = ns.Rivals.List({
+				ear({ guid = "A", at = NOW - 5 * DAY }), -- you killed A once, then A killed you 3 times
+				ear({ guid = "P", camped = 2 }), -- prey, until P kills you
+			}, {
+				death("A", NOW - 6 * DAY), -- before your kill: not owed
+				death("A", NOW - 4 * DAY),
+				death("A", NOW - 3 * DAY),
+				death("A", NOW - 2 * DAY),
+				death("K", NOW - DAY), -- only killed you
+				death("P", NOW - 100),
+			})
+			local byGuid = {}
+			for _, row in ipairs(rows) do
+				byGuid[row.guid] = row
+			end
+			local a, k, p = byGuid.A, byGuid.K, byGuid.P
+			assert.are.same({ 1, 4, 3 }, { a.kills, a.killedYou, a.debt })
+			assert.is_true(a.owed)
+			assert.is_true(a.nemesis)
+			assert.are.equal("Avenge", ns.Rivals.Mark(a))
+			assert.are.same({ 0, 1, 1 }, { k.kills, k.killedYou, k.debt })
+			assert.are.equal("K-name", k.name)
+			assert.is_nil(k.lastAt)
+			assert.are.equal(NOW - DAY, k.lastSeen)
+			assert.is_false(k.nemesis) -- one death isn't a nemesis
+			assert.is_false(p.prey) -- they've killed you now
+			assert.is_nil(ns.Rivals.Mark(p))
+			assert.are.same({ "A", "P", "K" }, { rows[1].guid, rows[2].guid, rows[3].guid }) -- by encounters
+		end)
+
+		it("marks a nemesis at two deaths, more than your kills", function()
+			local rows = ns.Rivals.List({ ear({ guid = "N" }) }, {
+				{ guid = "N", name = "N", at = NOW - 10 },
+				{ guid = "N", name = "N", at = NOW - 5 },
+			})
+			assert.are.equal("Nemesis", ns.Rivals.Mark(rows[1]))
+		end)
+
 		it("sorts by kills, then the most recent", function()
 			local rows = ns.Rivals.List({
 				ear({ guid = "A", at = NOW - 300 }),

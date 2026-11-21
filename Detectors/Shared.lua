@@ -91,12 +91,34 @@ function ns.VictimDetails(guid)
 	}
 end
 
---- Record an ear and announce it.
+--- Record a death to an enemy player and announce it.
+---@param db table
+---@param killer EarCollector.Kill
+---@param spell string?
+---@return EarCollector.Death death
+---@return integer debt
+function ns.RecordDeath(db, killer, spell)
+	local death, debt = ns.Deaths.Record(db, killer, GetServerTime(), spell)
+	if db.settings.announce then
+		Chat.AnnounceDeath(death, debt)
+	end
+	if ns.Pouch then
+		ns.Pouch.Refresh()
+	end
+	return death, debt
+end
+
+--- Record an ear and announce it. A kill of someone you owe vengeance becomes
+--- a Legendary Vengeance ear.
 ---@param db table
 ---@param kill EarCollector.Kill with `by` set
 ---@return table ear
 ---@return boolean isNew
 function ns.Collect(db, kill)
+	local debt = ns.Deaths.Debt(db, kill.guid)
+	if debt >= ns.Deaths.VENGEANCE then
+		kill.vengeance = debt
+	end
 	local ear, isNew = ns.Ears.Record(db, kill, GetServerTime())
 	if db.settings.announce then
 		Chat.Announce(ear, isNew)

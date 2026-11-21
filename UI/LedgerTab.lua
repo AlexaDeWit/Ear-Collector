@@ -9,7 +9,7 @@ local LedgerTab = {}
 ns.LedgerTab = LedgerTab
 
 LedgerTab.CLASS_ROWS = 9
-LedgerTab.STATS = { "Ears", "Last 7 days", "Players", "Assists" }
+LedgerTab.STATS = { "Ears", "Last 7 days", "Assists", "Ears lost" }
 
 local PAD = Pouch.PAD
 local INNER = Pouch.WIDTH - 2 * PAD
@@ -140,14 +140,14 @@ end
 
 local function refresh()
 	local db = ns.db
-	local summary = Ledger.Summarize(db and db.ears or {}, GetServerTime())
+	local summary = Ledger.Summarize(db and db.ears or {}, GetServerTime(), db and db.deaths)
 	w.content:SetShown(summary.ears > 0)
 	w.empty:SetShown(summary.ears == 0)
 	if summary.ears == 0 then
 		return
 	end
 
-	local values = { summary.ears, summary.week, summary.players, summary.assists }
+	local values = { summary.ears, summary.week, summary.assists, summary.deaths }
 	for i, value in ipairs(w.stats) do
 		value:SetText(tostring(values[i]))
 	end

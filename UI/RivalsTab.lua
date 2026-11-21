@@ -1,5 +1,6 @@
--- The pouch's Rivals tab: everyone you have taken ears from, most kills first,
--- ten to a page. Hover a row for details; click it to see their latest ear.
+-- The pouch's Rivals tab: everyone you have taken ears from or died to, most
+-- encounters first, ten to a page. Hover a row for details; click it to see
+-- their latest ear.
 -- The list comes from Core/Rivals.lua; this file only draws it.
 local _, ns = ...
 
@@ -14,13 +15,19 @@ local PAD = Pouch.PAD
 local INNER = Pouch.WIDTH - 2 * PAD
 local ROW_HEIGHT = 18
 local TOP = -50 -- first row, under the column headings
-local KILLS_RIGHT, LAST_LEFT, MARK_LEFT = 196, 210, 268 -- column edges from the panel's left
+-- Column edges, from the panel's left.
+local KILLS_RIGHT, DEATHS_RIGHT, LAST_LEFT, MARK_LEFT = 150, 192, 204, 256
 local GREY = { 0.62, 0.62, 0.62 }
-local PREY_COLOR = { 0.75, 0.7, 0.55 }
+local MARK_COLORS = {
+	Avenge = { ns.QUALITY[5].r, ns.QUALITY[5].g, ns.QUALITY[5].b },
+	Nemesis = { 0.85, 0.25, 0.2 },
+	Prey = { 0.75, 0.7, 0.55 },
+}
 
 ---@class EarCollector.RivalRow : Button
 ---@field name FontString
 ---@field kills FontString
+---@field deaths FontString
 ---@field last FontString
 ---@field mark FontString
 ---@field rival EarCollector.Rival?
@@ -28,7 +35,7 @@ local PREY_COLOR = { 0.75, 0.7, 0.55 }
 local rows = {} ---@type EarCollector.RivalRow[]
 local list = {} ---@type EarCollector.Rival[]
 local page = 1
-local headings, emptyText ---@type Frame, FontString
+local headings, emptyText, countText ---@type Frame, FontString, FontString
 
 local function pageCount()
 	return math.max(1, math.ceil(#list / RivalsTab.ROWS))
@@ -63,19 +70,46 @@ function RivalsTab.TooltipLines(rival)
 	local class = ear.className or ear.class or ""
 	add((("Level %s %s %s"):format(ear.level and tostring(ear.level) or "??", race, class):gsub("%s+$", "")))
 	add(" ")
-	local times = rival.kills == 1 and "once" or ("%d times"):format(rival.kills)
-	local ears = rival.ears == 1 and "1 ear" or ("%d ears"):format(rival.ears)
-	add(("Killed %s (%s)"):format(times, ears))
-	add(("First: %s"):format(date("%b %d, %Y", rival.firstAt)), GREY)
-	local last = ("Last: %s"):format(date("%b %d, %Y %H:%M", rival.lastAt))
-	if ear.zone then
-		last = ("%s, %s"):format(last, ear.subzone or ear.zone)
+	local function times(n)
+		return n == 1 and "once" or ("%d times"):format(n)
 	end
-	add(last, GREY)
-	if rival.prey then
-		add(("Prey: you've killed them %d or more times"):format(Rivals.PREY), PREY_COLOR)
+	if rival.kills > 0 then
+		local ears = rival.ears == 1 and "1 ear" or ("%d ears"):format(rival.ears)
+		add(("You killed them %s (%s)"):format(times(rival.kills), ears))
 	end
-	add("Click to see their latest ear.", GREY)
+	if rival.killedYou > 0 then
+		add(("They killed you %s"):format(times(rival.killedYou)))
+	end
+	add(("First met: %s"):format(date("%b %d, %Y", rival.firstAt)), GREY)
+	if rival.lastAt then
+		local last = ("Last killed: %s"):format(date("%b %d, %Y %H:%M", rival.lastAt))
+		if rival.ears > 0 and ear.zone then
+			last = ("%s, %s"):format(last, ear.subzone or ear.zone)
+		end
+		add(last, GREY)
+	end
+	if rival.lastDeathAt then
+		add(("Last killed you: %s"):format(date("%b %d, %Y %H:%M", rival.lastDeathAt)), GREY)
+	end
+	local mark = Rivals.Mark(rival)
+	if mark == "Avenge" then
+		add(
+			("Vengeance owed: they've killed you %d times since you last killed them. Their next ear is Legendary."):format(
+				rival.debt
+			),
+			MARK_COLORS.Avenge
+		)
+	elseif mark == "Nemesis" then
+		add("Nemesis: they've killed you more often than you've killed them", MARK_COLORS.Nemesis)
+	elseif mark == "Prey" then
+		add(
+			("Prey: you've killed them %d or more times, and they've never killed you"):format(Rivals.PREY),
+			MARK_COLORS.Prey
+		)
+	end
+	if rival.ears > 0 then
+		add("Click to see their latest ear.", GREY)
+	end
 	return lines
 end
 
@@ -117,11 +151,13 @@ local function newRow(panel, index)
 	row.kills = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	row.kills:SetPoint("RIGHT", row, "LEFT", KILLS_RIGHT - PAD, 0)
 	row.kills:SetJustifyH("RIGHT")
+	row.deaths = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	row.deaths:SetPoint("RIGHT", row, "LEFT", DEATHS_RIGHT - PAD, 0)
+	row.deaths:SetJustifyH("RIGHT")
 	row.last = row:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 	row.last:SetPoint("LEFT", row, "LEFT", LAST_LEFT - PAD, 0)
 	row.mark = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	row.mark:SetPoint("LEFT", row, "LEFT", MARK_LEFT - PAD, 0)
-	row.mark:SetTextColor(PREY_COLOR[1], PREY_COLOR[2], PREY_COLOR[3])
 
 	row:SetScript("OnEnter", Errors.Wrap("rivals tooltip", showTooltip))
 	row:SetScript("OnLeave", Errors.Wrap("rivals tooltip", hideTooltip))
@@ -129,7 +165,7 @@ local function newRow(panel, index)
 		"OnClick",
 		Errors.Wrap("rivals", function()
 			local rival = row.rival
-			if rival then
+			if rival and rival.ears > 0 then
 				hideTooltip(row)
 				Pouch.FocusEar(rival.latest.guid, rival.latest.at)
 			end
@@ -144,6 +180,7 @@ local function build(panel)
 	for _, column in ipairs({
 		{ "Player", "LEFT", PAD + 4 },
 		{ "Kills", "RIGHT", KILLS_RIGHT },
+		{ "Deaths", "RIGHT", DEATHS_RIGHT },
 		{ "Last", "LEFT", LAST_LEFT },
 	}) do
 		local label = headings:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -156,12 +193,15 @@ local function build(panel)
 	emptyText = panel:CreateFontString(nil, "OVERLAY", "GameFontDisable")
 	emptyText:SetPoint("CENTER", panel, "CENTER", 0, 0)
 	emptyText:SetWidth(INNER - 20)
-	emptyText:SetText("No rivals yet. Everyone you take an ear from is listed here.")
+	emptyText:SetText("No rivals yet. Everyone you take an ear from, or who kills you, is listed here.")
+	countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	countText:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -PAD, -32)
+	countText:SetJustifyH("RIGHT")
 end
 
 local function refresh()
 	local db = ns.db
-	list = Rivals.List(db and db.ears or {})
+	list = Rivals.List(db and db.ears or {}, db and db.deaths or {})
 	page = math.min(math.max(page, 1), pageCount())
 	local first = (page - 1) * RivalsTab.ROWS
 	for i, row in ipairs(rows) do
@@ -170,8 +210,12 @@ local function refresh()
 		if rival then
 			row.name:SetText(("|c%s%s|r"):format(classHex(rival.latest.class), rival.name))
 			row.kills:SetText(tostring(rival.kills))
-			row.last:SetText(date("%b %d", rival.lastAt) --[[@as string]])
-			row.mark:SetText(rival.prey and "Prey" or "")
+			row.deaths:SetText(tostring(rival.killedYou))
+			row.last:SetText(date("%b %d", rival.lastSeen) --[[@as string]])
+			local mark = Rivals.Mark(rival)
+			local color = MARK_COLORS[mark] or GREY
+			row.mark:SetText(mark or "")
+			row.mark:SetTextColor(color[1], color[2], color[3])
 			row:Show()
 		else
 			row:Hide()
@@ -179,6 +223,8 @@ local function refresh()
 	end
 	headings:SetShown(#list > 0)
 	emptyText:SetShown(#list == 0)
+	countText:SetText(#list == 1 and "1 rival" or ("%d rivals"):format(#list))
+	countText:SetShown(#list > 0)
 end
 
 --- The row widgets, for specs.
@@ -189,7 +235,7 @@ end
 
 --- The column headings and the empty-list message, for specs.
 function RivalsTab.Widgets()
-	return { headings = headings, empty = emptyText }
+	return { headings = headings, empty = emptyText, count = countText }
 end
 
 Pouch.AddTab({

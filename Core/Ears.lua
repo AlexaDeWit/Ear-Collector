@@ -23,6 +23,8 @@ ns.Ears = Ears
 ---@field mapID number?
 ---@field zone string?
 ---@field subzone string?
+---@field vengeance integer? deaths to this player since you last killed them, when
+--- enough for a Vengeance ear (set by ns.Collect from Deaths.Debt)
 
 --- Base grade from the level gap between the victim and you.
 --- Unknown levels count as an even fight.
@@ -60,6 +62,7 @@ end
 
 --- Record a kill. A repeat kill of the same player inside the camping window
 --- adds to that ear's camp count instead of dropping a new ear, and restarts the window.
+--- A Vengeance kill (kill.vengeance set) always drops a new, Legendary ear.
 ---@param db table
 ---@param kill EarCollector.Kill
 ---@param now number server time in seconds
@@ -67,7 +70,7 @@ end
 ---@return boolean isNew false when the kill was a camped repeat
 function Ears.Record(db, kill, now)
 	local previous = Ears.Latest(db, kill.guid)
-	if previous and now - previous.lastAt <= db.settings.campWindow then
+	if previous and not kill.vengeance and now - previous.lastAt <= db.settings.campWindow then
 		previous.camped = previous.camped + 1
 		previous.lastAt = now
 		return previous, false
@@ -92,7 +95,8 @@ function Ears.Record(db, kill, now)
 		at = now,
 		lastAt = now,
 		camped = 0,
-		quality = Ears.Grade(kill.level, kill.yourLevel),
+		quality = kill.vengeance and 5 or Ears.Grade(kill.level, kill.yourLevel),
+		vengeance = kill.vengeance,
 	}
 	db.ears[#db.ears + 1] = ear
 	return ear, true

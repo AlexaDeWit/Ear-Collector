@@ -91,6 +91,9 @@ function Toast.Detail(ear)
 	elseif ear.by == "assist" then
 		parts[#parts + 1] = "Assist"
 	end
+	if ear.vengeance then
+		parts[#parts + 1] = ("Avenged %d deaths"):format(ear.vengeance)
+	end
 	return table.concat(parts, " · ")
 end
 
@@ -225,7 +228,8 @@ function Toast.Show(ear)
 	for _, edge in ipairs(toast.edges) do
 		edge:SetColorTexture(quality.r, quality.g, quality.b, 1)
 	end
-	toast.label:SetText(ear.by == "assist" and "Assist collected" or "You collected")
+	local label = ear.by == "assist" and "Assist collected" or "You collected"
+	toast.label:SetText(ear.vengeance and "Vengeance!" or label)
 	toast.title:SetText(("|c%s%s's Ear|r"):format(quality.color, ear.name))
 	toast.detail:SetText(Toast.Detail(ear))
 
