@@ -1,0 +1,69 @@
+name: CI
+
+# Runs the same two scripts as Claude Code cloud sessions and local machines:
+# scripts/setup-tools.sh (pinned toolchain) then scripts/check.sh (every check).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Checks (syntax, toc, luacheck, names, luals, xml, format, test)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Cache WoW API data
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache
+          key: wow-api-${{ hashFiles('scripts/setup-tools.sh') }}
+
+      - name: Install toolchain
+        run: scripts/setup-tools.sh
+
+      - name: Show tool versions
+        run: |
+          lua -v  # busted runs under `lua`; must be 5.1
+          luacheck --version
+          busted --version
+          stylua --version
+          lua-language-server --version
+
+      - name: Run all checks
+        run: scripts/check.sh
+
+  package:
+    name: Package (dry run)
+    runs-on: ubuntu-24.04
+    needs: [check]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Build the addon zip without uploading
+        uses: BigWigsMods/packager@01e8631a69c69d7654c788d152630d5fed9e3812 # v2.7.0
+        with:
+          args: -d
+          pandoc: false
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: EarCollector-${{ github.sha }}
+          path: .release/*.zip
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,20 @@
+## Interface: 16001
+## Title: Ear Collector
+## Notes: Collect an ear from every enemy player you kill in the open world.
+## Author: Alexa DeWit
+## Version: @project-version@
+## SavedVariables: EarCollectorDB
+## X-License: MIT
+
+Core\Init.lua
+Core\Errors.lua
+Core\Events.lua
+Core\Database.lua
+Core\Context.lua
+Core\Ears.lua
+Core\Assists.lua
+UI\Chat.lua
+Detectors\Shared.lua
+Detectors\PartyKill.lua
+Detectors\HonorKill.lua
+UI\Slash.lua
