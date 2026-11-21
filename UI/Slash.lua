@@ -42,6 +42,33 @@ function commands.bags(db, args)
 	)
 end
 
+local function toggle(db, key, args, onText, offText)
+	if args == "on" or args == "off" then
+		db.settings[key] = args == "on"
+	end
+	Chat.Print(db.settings[key] and onText or offText)
+end
+
+function commands.toast(db, args)
+	toggle(
+		db,
+		"toast",
+		args,
+		"Toasts are on. /ears toast off to stop them.",
+		"Toasts are off. /ears toast on to bring them back."
+	)
+end
+
+function commands.sound(db, args)
+	toggle(
+		db,
+		"toastSound",
+		args,
+		"Toast sounds are on. /ears sound off to mute them.",
+		"Toast sounds are off. /ears sound on to hear them."
+	)
+end
+
 function commands.stats(db)
 	local total = #db.ears
 	if total == 0 then
@@ -104,6 +131,7 @@ function commands.help()
 	Chat.Print("/ears recent [n]: your newest ears (default 5)")
 	Chat.Print("/ears debug: print every killing blow the addon sees, and why it did or didn't count")
 	Chat.Print("/ears bags on|off: open the pouch with your bags")
+	Chat.Print("/ears toast on|off, /ears sound on|off: the pop-up when you collect an ear, and its sound")
 	Chat.Print("/ears errors: errors the addon caught (it keeps running); /ears errors clear")
 end
 

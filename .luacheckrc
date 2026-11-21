@@ -45,6 +45,8 @@ read_globals = {
 	"IsAnyBagOpen",
 	"IsInInstance",
 	"LOCALIZED_CLASS_NAMES_MALE",
+	"PlaySound",
+	"SOUNDKIT",
 	"RegionalUniqueNamesEnabled",
 	"UIParent",
 	"UnitGUID",

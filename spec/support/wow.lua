@@ -169,6 +169,32 @@ end
 function widgetMethods:UnlockHighlight()
 	self.highlightLocked = false
 end
+function widgetMethods:SetAlpha(alpha)
+	self.alpha = alpha
+end
+function widgetMethods:GetAlpha()
+	return self.alpha or 1
+end
+-- Animation groups: Play/Stop/IsPlaying; wow.finishAnimations() completes them.
+local animationGroups = {}
+function widgetMethods.CreateAnimationGroup(owner)
+	local group = newWidget("AnimationGroup", nil, owner)
+	group.playing, group.plays = false, 0
+	function group:Play()
+		self.playing, self.plays = true, self.plays + 1
+	end
+	function group:Stop()
+		self.playing = false
+	end
+	function group:IsPlaying()
+		return self.playing
+	end
+	function group:CreateAnimation(kind)
+		return newWidget(kind or "Animation", nil, self)
+	end
+	animationGroups[#animationGroups + 1] = group
+	return group
+end
 function widgetMethods:CreateTexture(name)
 	return newWidget("Texture", name, self)
 end
@@ -202,6 +228,9 @@ local function newTooltip()
 	function tip:SetOwner(owner)
 		self.owner = owner
 		self.lines = {}
+	end
+	function tip:IsOwned(frame)
+		return self.owner == frame
 	end
 	function tip:AddLine(text)
 		self.lines[#self.lines + 1] = text
@@ -254,13 +283,23 @@ function wow.reset(overrides)
 		regionalNames = true, -- Forever: first name + surname instead of realms
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active
 		bagsOpen = false,
+		sounds = {}, -- PlaySound calls
 		printed = {},
 	}
 	for k, v in pairs(overrides or {}) do
 		state[k] = v
 	end
 
+	animationGroups = {}
 	_G.UIParent = newWidget("Frame", "UIParent")
+	_G.SOUNDKIT = {
+		UI_RAID_LOOT_TOAST_LESSER_ITEM_WON = 51402,
+		UI_EPICLOOT_TOAST = 31578,
+		UI_LEGENDARY_LOOT_TOAST = 63971,
+	}
+	_G.PlaySound = function(soundKitID, channel)
+		state.sounds[#state.sounds + 1] = { id = soundKitID, channel = channel }
+	end
 	_G.GameTooltip = newTooltip()
 	_G.CreateFrame = function(frameType, name, parent, template)
 		local f = newWidget(frameType, name, parent, template)
@@ -455,6 +494,19 @@ function wow.fireEvent(event, ...)
 		local handler = f.scripts.OnEvent
 		if f.events[event] and handler then
 			handler(f, event, ...)
+		end
+	end
+end
+
+--- Finish every playing animation group, firing OnFinished as the client does.
+function wow.finishAnimations()
+	for _, group in ipairs(animationGroups) do
+		if group.playing then
+			group.playing = false
+			local handler = group.scripts.OnFinished
+			if handler then
+				handler(group, false)
+			end
 		end
 	end
 end

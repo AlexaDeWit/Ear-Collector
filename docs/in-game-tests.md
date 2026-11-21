@@ -144,6 +144,18 @@ It should print the same number. Repeat across a full logout.
    race icon on the race line. If a slot is a green square, the texture failed
    to load: note which race.
 
+## T11: the loot toast
+
+1. Collect an ear. A toast appears near the top of the screen, with the ear art,
+   the name in its grade colour, level, race and class (and the groupmate who
+   landed the blow, or "Assist"), plus a loot sound. A Rare or better ear plays
+   the epic loot sound.
+2. It fades after about 4 seconds. Hovering keeps it up and shows the ear's
+   tooltip.
+3. Left-click opens the pouch on that ear. Right-click dismisses it.
+4. Several ears at once stack up to three.
+5. `/ears sound off` mutes it, and `/ears toast off` stops it.
+
 ## Reporting back
 
 Paste the printed lines, or copy `EarCollectorDB.debugLog` from
