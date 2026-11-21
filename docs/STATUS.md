@@ -48,7 +48,15 @@ Last updated: 2026-11-21.
 
 ## Next up (in order)
 
-1. **Escape closes the pouch**: needs a taint-safe approach; `UISpecialFrames` writes a Blizzard global.
+1. **Escape closes the pouch** (agreed as the next piece of work). Plan:
+   1. Read Forever's UI source for the Escape path: `ToggleGameMenu`, `CloseSpecialWindows`, `CloseAllWindows` and how `UISpecialFrames` is iterated. A full checkout of the `forever` branch of Gethe/wow-ui-source has the files; `.cache` only has the API docs.
+   2. Weigh the options:
+      - `UISpecialFrames` (classic, but writes a Blizzard global)
+      - `SetPropagateKeyboardInput` with `OnKeyDown("ESCAPE")` (check whether it's restricted in combat)
+      - a `hooksecurefunc` post-hook on the close function (safe, but Escape might also open the game menu)
+      - any modern escape-handler API Forever has
+   3. Pick the safest option that behaves right. Spec it, including combat.
+   4. Add an in-game check using the taint log (`/console taintLog 1`; press Escape in and out of combat; read `Logs/taint.log`).
 2. **Options panel**: the settings that exist so far (announce, toast and its sound, open with bags, include battlefields and free-for-all areas, camping window) in Blizzard's Settings UI.
 3. **Ledger and Rivals tabs**, as in the concept mockup: totals, grades, classes and zones; who you've taken ears from.
 4. **Deaths, Rivals and Vengeance**: record who killed you from the death recap (if T4 passes), then Legendary "Vengeance" ears.
