@@ -5,7 +5,7 @@ Read this first in a new session, together with `CLAUDE.md` (how to work) and
 next, and what's waiting on the user. It's the memory that survives a session
 ending or a conversation being compacted.
 
-Last updated: 2026-11-21 (after merging PRs #7 to #9).
+Last updated: 2026-11-21 (after merging PR #10, with CI turned on in PR #11).
 
 ## Decisions made with the user
 
@@ -29,7 +29,7 @@ Last updated: 2026-11-21 (after merging PRs #7 to #9).
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
 | Workflow | One branch per piece of work from `main`, a PR, and the user merges. Never push to `main` directly. |
-| CI workflow files | Claude can't push `.github/workflows/` (no `workflow` permission; it can't be granted). Stage them in `ci/workflows/` for the user to move. |
+| CI workflow files | Cloud sessions can't push `.github/workflows/`: they lack the `workflow` permission, and it can't be granted. A cloud session stages the file in `ci/workflows/` for the user to move. A local session pushes over SSH and can change it directly. |
 
 ## Done
 
@@ -42,14 +42,15 @@ Last updated: 2026-11-21 (after merging PRs #7 to #9).
 - **PR #7** (merged): the pouch's tabs, with the Ledger and the Rivals list.
 - **PR #8** (merged): deaths from the death recap, the Rivals "Deaths" column, Nemesis, and Legendary Vengeance ears.
 - **PR #9** (merged): per-character data, fixes from an adversarial review of everything, README install section.
+- **PR #10** (merged): `scripts/build-zip.sh` for test builds, and this file brought up to date.
+- **PR #11** (open, `enable-ci`): CI turned on. The workflows moved from `ci/workflows/` to `.github/workflows/`.
 
-Every planned v1.0 feature is built and on `main`. What's left is in-game verification, CI, and the release. The user has a test zip of `main` at `9f19d0b`; `scripts/build-zip.sh` makes another.
+Every planned v1.0 feature is built and on `main`. What's left is in-game verification and the release. The user has a test zip of `main` at `9f19d0b`; `scripts/build-zip.sh` makes another.
 
 ## Waiting on the user
 
-1. **Turn CI on**: move `ci/workflows/ci.yml` and `release.yml` to `.github/workflows/` on `main` in GitHub's web editor (steps in `ci/README.md`), then delete `ci/`. (Still not done at the last check: `main` has `ci/` and no `.github/`.)
-2. **Decide the Poor grade**: Poor is "10+ levels below you", but the game's grey (no-honor) range at 60 is about 13 below, so levels 48 to 50 grade Poor yet give honor. Follow the game's grey formula instead? Asked, not yet answered.
-3. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
+1. **Decide the Poor grade**: Poor is "10+ levels below you", but the game's grey (no-honor) range at 60 is about 13 below, so levels 48 to 50 grade Poor yet give honor. Follow the game's grey formula instead? Asked, not yet answered.
+2. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
    - T1: does `PARTY_KILL` fire with readable IDs for your and your group's open-world kills?
    - T2: do honorable kills arrive within about 2 s of the death, so assists match?
    - T9: does saved data survive `/reload`, for both the account file and the per-character file? One addon author claims Forever doesn't reload it.
@@ -62,7 +63,7 @@ Every planned v1.0 feature is built and on `main`. What's left is in-game verifi
    - T4: does the death recap name who killed you? It gates deaths, Nemesis and Vengeance. `/ears debug` now answers it from a single death.
    - T6: is the 7th `GetPlayerInfoByGUID` value the surname?
 
-4. **Release**, once CI is on and the in-game tests pass: push a tag (`v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
+3. **Release**, once the in-game tests pass: push a tag (`v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
 
 When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fixtures/`, replayed with `wow.replay`), fix what fails, and keep the in-game sheet in step.
 

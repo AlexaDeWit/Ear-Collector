@@ -122,13 +122,18 @@ addon. Treat an escaped error as a serious bug.
 - Pouch slots show the ear art. Tooltips and chat lines use Blizzard's race
   icons. The minimap drawer icon is `Media/Ears/human-2`.
 
-## GitHub workflow files: the human moves them
+## GitHub workflow files
 
-Claude sessions can't push changes under `.github/workflows/`. GitHub refuses
-them because Claude's GitHub connection lacks the `workflow` permission, and
-the user can't grant it. To add or change a workflow, put the file in
-`ci/workflows/`, explain the move in `ci/README.md` and the PR description, and
-ask the user to move it in GitHub's web editor. Everything else pushes normally.
+- `.github/workflows/ci.yml` runs `scripts/setup-tools.sh` then
+  `scripts/check.sh` on every PR and push to `main`, plus a packager dry run
+  that uploads the zip as a build artifact.
+- `.github/workflows/release.yml` runs on a `v*` tag: the checks, then the
+  packager publishes a GitHub Release.
+- Cloud sessions can't push changes under `.github/workflows/`. Claude's GitHub
+  connection there lacks the `workflow` permission, and the user can't grant
+  it. In a cloud session, put the new file under `ci/workflows/`, say in the PR
+  description where it goes, and ask the user to move it.
+- A local session that pushes over SSH can change `.github/workflows/` directly.
 
 ## WoW Forever API facts the code relies on
 
