@@ -35,6 +35,35 @@ local function tableOrNew(value)
 	return type(value) == "table" and value or {}
 end
 
+-- Optional fields and their types. A wrong-typed one (hand-edited, or from a
+-- bug) is dropped, so display code that formats them can't throw.
+local OPTIONAL = {
+	surname = "string",
+	realm = "string",
+	class = "string",
+	className = "string",
+	race = "string",
+	raceName = "string",
+	sex = "number",
+	level = "number",
+	yourLevel = "number",
+	by = "string",
+	killer = "string",
+	mapID = "number",
+	zone = "string",
+	subzone = "string",
+	spell = "string",
+	vengeance = "number",
+}
+
+local function dropWrongTypes(record)
+	for key, kind in pairs(OPTIONAL) do
+		if record[key] ~= nil and type(record[key]) ~= kind then
+			record[key] = nil
+		end
+	end
+end
+
 -- Keep only ears with the fields the rest of the addon relies on.
 local function repairEars(ears)
 	local kept = {}
@@ -52,6 +81,7 @@ local function repairEars(ears)
 			if type(ear.quality) ~= "number" or not ns.QUALITY[ear.quality] then
 				ear.quality = 2
 			end
+			dropWrongTypes(ear)
 			kept[#kept + 1] = ear
 		end
 	end
@@ -66,6 +96,7 @@ local function repairDeaths(deaths)
 			if type(death.name) ~= "string" then
 				death.name = "Unknown"
 			end
+			dropWrongTypes(death)
 			kept[#kept + 1] = death
 		end
 	end

@@ -2,7 +2,7 @@
 -- secret values, and the /ears debug decision log.
 local _, ns = ...
 
-local Context, Chat, Database = ns.Context, ns.Chat, ns.Database
+local Context, Chat, Database, Errors = ns.Context, ns.Chat, ns.Database, ns.Errors
 local Readable = Context.Readable
 
 --- Text for the debug log that never inspects a secret value.
@@ -99,11 +99,12 @@ end
 ---@return integer debt
 function ns.RecordDeath(db, killer, spell)
 	local death, debt = ns.Deaths.Record(db, killer, GetServerTime(), spell)
+	-- UI work runs in its own Errors.Call: a UI bug must never switch off detection.
 	if db.settings.announce then
-		Chat.AnnounceDeath(death, debt)
+		Errors.Call("chat", Chat.AnnounceDeath, death, debt)
 	end
 	if ns.Pouch then
-		ns.Pouch.Refresh()
+		Errors.Call("pouch refresh", ns.Pouch.Refresh)
 	end
 	return death, debt
 end
@@ -120,14 +121,15 @@ function ns.Collect(db, kill)
 		kill.vengeance = debt
 	end
 	local ear, isNew = ns.Ears.Record(db, kill, GetServerTime())
+	-- UI work runs in its own Errors.Call: a UI bug must never switch off detection.
 	if db.settings.announce then
-		Chat.Announce(ear, isNew)
+		Errors.Call("chat", Chat.Announce, ear, isNew)
 	end
 	if ns.Pouch then
-		ns.Pouch.Refresh()
+		Errors.Call("pouch refresh", ns.Pouch.Refresh)
 	end
 	if isNew and ns.Toast then
-		ns.Toast.Show(ear)
+		Errors.Call("toast", ns.Toast.Show, ear)
 	end
 	return ear, isNew
 end

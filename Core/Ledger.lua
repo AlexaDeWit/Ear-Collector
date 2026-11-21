@@ -6,7 +6,6 @@ local _, ns = ...
 local Ledger = {}
 ns.Ledger = Ledger
 
-Ledger.WEEK = 7 * 24 * 60 * 60
 Ledger.TOP_ZONES = 5
 
 -- { key -> count } as a list of { [keyName] = key, count = n }, biggest first,
@@ -55,7 +54,7 @@ function Ledger.Summarize(ears, now, deaths)
 		summary.byQuality[grade] = 0
 	end
 	local classes, classNames, zones, seen = {}, {}, {}, {}
-	local weekStart = now - Ledger.WEEK
+	local weekStart = now - ns.Ears.WEEK
 	for _, ear in ipairs(ears) do
 		summary.kills = summary.kills + 1 + (type(ear.camped) == "number" and ear.camped or 0)
 		if ear.by == "assist" then

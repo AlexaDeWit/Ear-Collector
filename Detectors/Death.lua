@@ -2,12 +2,14 @@
 -- fill the Rivals tab's "Deaths" column and build up vengeance (Core/Deaths.lua).
 --
 -- Forever gives addons no combat log, so the death recap (C_DeathRecap) is the
--- only record of who killed you. Its events name the source by `sourceName`
--- only, with no GUID, and NPCs appear too. So at the moment of death the addon
--- notes the enemy players it can see (target, focus, mouseover, nameplates),
--- and a moment later matches the recap's killing blow to one of them. A match
--- gives the killer's GUID, which keys Rivals and vengeance, and proves the
--- killer was a player. No match, no record: a wrong rival is worse than none.
+-- only record of who killed you. If the killing blow's event carries a readable
+-- player sourceGUID, that's the killer. Otherwise there's only `sourceName`,
+-- and NPCs appear too. So at the moment of death the addon notes the enemy
+-- players it can see (target, focus, mouseover, nameplates), and a moment
+-- later matches the recap's name to one of them exactly. A match gives the
+-- killer's GUID, which keys Rivals and vengeance, and proves the killer was a
+-- player. No match, no record: a wrong rival is worse than none. A pet's
+-- killing blow names the pet, which matches nobody.
 --
 -- Unverified in game (T4): whether Forever fills the recap at all (Blizzard's
 -- recap window only loads on Retail, though C_DeathRecap is documented for every
@@ -18,8 +20,11 @@ local _, ns = ...
 local Context, Deaths, Errors = ns.Context, ns.Deaths, ns.Errors
 local Readable = Context.Readable
 
-Deaths.RECAP_DELAY = 1 -- seconds after death before reading the recap
-Deaths.NAMEPLATES = 40 -- nameplate1 .. nameplateN
+local DeathWatch = {}
+ns.DeathWatch = DeathWatch
+
+DeathWatch.RECAP_DELAY = 1 -- seconds after death before reading the recap
+DeathWatch.NAMEPLATES = 40 -- nameplate1 .. nameplateN
 
 local function isTrue(value)
 	return Readable(value) and value == true
@@ -30,20 +35,22 @@ local function see(seen, unit)
 	if not isTrue(UnitExists(unit)) or not isTrue(UnitIsPlayer(unit)) or not isTrue(UnitCanAttack("player", unit)) then
 		return
 	end
-	local name, guid = UnitName(unit), UnitGUID(unit)
+	local name, server = UnitName(unit)
+	local guid = UnitGUID(unit)
 	if Readable(name) and type(name) == "string" and Readable(guid) and type(guid) == "string" then
-		Deaths.See(seen, name, guid)
+		local surname = Readable(server) and type(server) == "string" and server or nil
+		Deaths.See(seen, name, guid, surname)
 	end
 end
 
 --- Enemy players you can see right now, by name.
 ---@return table<string, string|false>
-function Deaths.EnemiesInView()
+function DeathWatch.EnemiesInView()
 	local seen = {}
 	for _, unit in ipairs({ "target", "focus", "mouseover" }) do
 		see(seen, unit)
 	end
-	for i = 1, Deaths.NAMEPLATES do
+	for i = 1, DeathWatch.NAMEPLATES do
 		see(seen, "nameplate" .. i)
 	end
 	return seen
@@ -62,15 +69,24 @@ local function readRecap(seen)
 		ns.Trace(db, "PLAYER_DEAD", nil, nil, "no death recap")
 		return
 	end
-	local name, spell = Deaths.KillerFromRecap(C_DeathRecap.GetRecapEvents())
-	if not name then
+	local name, spell, sourceGUID = Deaths.KillerFromRecap(C_DeathRecap.GetRecapEvents())
+	if not name and not sourceGUID then
 		ns.Trace(db, "PLAYER_DEAD", nil, nil, "recap names no killer")
 		return
 	end
-	local guid = Deaths.MatchKiller(name, seen)
-	if not guid then
-		ns.Trace(db, "PLAYER_DEAD", name, nil, "killer isn't an enemy player you could see")
-		return
+	local guid, how = sourceGUID, "by GUID"
+	if guid then
+		local me, inGroup = UnitGUID("player"), C_PartyInfo.IsGUIDInGroup(guid)
+		if not Readable(me) or guid == me or not Readable(inGroup) or inGroup then
+			ns.Trace(db, "PLAYER_DEAD", guid, nil, "killer is you or in your group")
+			return
+		end
+	else
+		guid, how = Deaths.MatchKiller(name, seen), "by name"
+		if not guid then
+			ns.Trace(db, "PLAYER_DEAD", name, nil, "killer isn't an enemy player you could see")
+			return
+		end
 	end
 	local killer = ns.VictimDetails(guid)
 	if not killer then
@@ -78,7 +94,13 @@ local function readRecap(seen)
 		return
 	end
 	local _, debt = ns.RecordDeath(db, killer, spell)
-	ns.Trace(db, "PLAYER_DEAD", name, guid, ("death recorded (%d since you last killed them)"):format(debt))
+	ns.Trace(
+		db,
+		"PLAYER_DEAD",
+		name or guid,
+		guid,
+		("death recorded %s (%d since you last killed them)"):format(how, debt)
+	)
 end
 
 ns.On("PLAYER_DEAD", function()
@@ -91,9 +113,9 @@ ns.On("PLAYER_DEAD", function()
 		ns.Trace(db, "PLAYER_DEAD", nil, nil, "ignored: " .. reason)
 		return
 	end
-	local seen = Deaths.EnemiesInView()
+	local seen = DeathWatch.EnemiesInView()
 	C_Timer.After(
-		Deaths.RECAP_DELAY,
+		DeathWatch.RECAP_DELAY,
 		Errors.Wrap("death recap", function()
 			readRecap(seen)
 		end)

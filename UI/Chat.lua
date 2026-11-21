@@ -37,13 +37,50 @@ function Chat.RaceAtlas(race, sex)
 	return atlas
 end
 
+--- The race icon as inline markup with a trailing space, or "" when the client
+--- has no icon for the race.
+---@param race string?
+---@param sex number?
+---@return string
+function Chat.RaceIcon(race, sex)
+	local atlas = Chat.RaceAtlas(race, sex)
+	return atlas and ("|A:%s:14:14|a "):format(atlas) or ""
+end
+
+--- A class's colour as "ffRRGGBB", or nil for an unknown or missing class.
+---@param token any English class token, e.g. "WARRIOR"
+---@return string|nil
+function Chat.ClassHex(token)
+	local color = type(token) == "string" and C_ClassColor.GetClassColor(token)
+	local hex = color and color:GenerateHexColor()
+	if type(hex) == "string" and hex:find("^%x%x%x%x%x%x%x%x$") then
+		return hex
+	end
+	return nil
+end
+
+--- Show tooltip lines ({ text, r, g, b } or { left, right, r, g, b }) on `owner`.
+---@param owner Frame
+---@param anchor string e.g. "ANCHOR_RIGHT"
+---@param lines table[]
+function Chat.ShowTooltip(owner, anchor, lines)
+	GameTooltip:SetOwner(owner, anchor)
+	for _, line in ipairs(lines) do
+		if line.left then
+			GameTooltip:AddDoubleLine(line.left, line.right, 1, 1, 1, line.r, line.g, line.b)
+		else
+			GameTooltip:AddLine(line.text, line.r, line.g, line.b, true)
+		end
+	end
+	GameTooltip:Show()
+end
+
 --- "Name's Ear" in the ear's quality color, after the victim's race icon when there is one.
 ---@param ear table
 ---@return string
 function Chat.EarName(ear)
-	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
-	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
-	local icon = atlas and ("|A:%s:14:14|a "):format(atlas) or ""
+	local quality = ns.Quality(ear.quality)
+	local icon = Chat.RaceIcon(ear.race, ear.sex)
 	return ("%s|c%s%s's Ear|r"):format(icon, quality.color, ear.name)
 end
 
@@ -51,9 +88,8 @@ end
 ---@param ear table
 ---@return string
 function Chat.EarLink(ear)
-	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
-	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
-	local icon = atlas and ("|A:%s:14:14|a "):format(atlas) or ""
+	local quality = ns.Quality(ear.quality)
+	local icon = Chat.RaceIcon(ear.race, ear.sex)
 	return ("%s|c%s|H%s%s:%d|h[%s's Ear]|h|r"):format(icon, quality.color, LINK_PREFIX, ear.guid, ear.at, ear.name)
 end
 
@@ -73,7 +109,7 @@ end
 ---@param isNew boolean
 function Chat.Announce(ear, isNew)
 	if isNew then
-		local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
+		local quality = ns.Quality(ear.quality)
 		local by = ""
 		if ear.by == "group" then
 			by = ear.killer and (" Killing blow: %s."):format(ear.killer) or " Killing blow: your group."
@@ -101,11 +137,8 @@ end
 ---@param death table
 ---@param debt integer deaths to them since you last killed them, this one included
 function Chat.AnnounceDeath(death, debt)
-	local atlas = Chat.RaceAtlas(death.race, death.sex)
-	local icon = atlas and ("|A:%s:14:14|a "):format(atlas) or ""
-	local color = death.class and C_ClassColor.GetClassColor(death.class)
-	local hex = color and color:GenerateHexColor() or "ffffffff"
-	local who = ("%s|c%s%s|r"):format(icon, hex, death.name)
+	local hex = Chat.ClassHex(death.class) or "ffffffff"
+	local who = ("%s|c%s%s|r"):format(Chat.RaceIcon(death.race, death.sex), hex, death.name)
 	if debt >= ns.Deaths.VENGEANCE then
 		local legendary = ns.QUALITY[5]
 		Chat.Print(

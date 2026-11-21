@@ -86,7 +86,7 @@ describe("error containment", function()
 		assert.has_no.errors(function()
 			wow.slash("/ears stats")
 		end)
-		assert.are.equal("/ears", ns.db.errors[1].where)
+		assert.are.equal("/ears stats", ns.db.errors[1].where)
 	end)
 
 	it("lists caught errors with /ears errors and clears them", function()

@@ -32,7 +32,7 @@ describe("deaths and vengeance", function()
 		end
 		wow.state().recap = events
 		wow.fireEvent("PLAYER_DEAD")
-		wow.advance(ns.Deaths.RECAP_DELAY)
+		wow.advance(ns.DeathWatch.RECAP_DELAY)
 	end
 
 	describe("recording who killed you", function()
@@ -62,12 +62,39 @@ describe("deaths and vengeance", function()
 			assert.are.equal(2, #ns.db.deaths)
 		end)
 
+		it("doesn't blame a namesake with another surname", function()
+			-- A stealthed Grimbash Stonefist kills you while Grimbash Ironhide is your target.
+			die({ target = GRIMBASH }, recap("Grimbash Stonefist"))
+			assert.are.equal(0, #ns.db.deaths)
+		end)
+
+		it("matches a first name when the client gives name and surname as one", function()
+			wow.state().players[VELARIA].name = "Velaria Duskwhisper"
+			die({ target = VELARIA }, recap("Velaria"))
+			assert.are.equal(VELARIA, ns.db.deaths[1].guid)
+		end)
+
+		it("uses the recap's player GUID when it has one, even with nobody in view", function()
+			wow.slash("/ears debug")
+			die({}, recap("Velaria", { sourceGUID = VELARIA }))
+			assert.are.equal(VELARIA, ns.db.deaths[1].guid)
+			assert.matches("by GUID", ns.db.debugLog[#ns.db.debugLog].decision)
+			wow.state().group[GRIMBASH] = true
+			die({}, recap("Grimbash", { sourceGUID = GRIMBASH }))
+			assert.are.equal(1, #ns.db.deaths)
+		end)
+
+		it("falls back to the name when the GUID is a pet's", function()
+			die({ target = GRIMBASH }, recap("Grimbash", { sourceGUID = "Pet-0-4395-1-2-3" }))
+			assert.are.equal(GRIMBASH, ns.db.deaths[1].guid)
+		end)
+
 		it("matches the players in view when you died, not after", function()
 			wow.state().units.target = GRIMBASH
 			wow.state().recap = recap("Grimbash")
 			wow.fireEvent("PLAYER_DEAD")
 			wow.state().units.target = nil -- they ran off before the recap was read
-			wow.advance(ns.Deaths.RECAP_DELAY)
+			wow.advance(ns.DeathWatch.RECAP_DELAY)
 			assert.are.equal(1, #ns.db.deaths)
 		end)
 
@@ -108,11 +135,12 @@ describe("deaths and vengeance", function()
 
 		it("survives secret values in the recap or unit names", function()
 			die({ target = GRIMBASH }, { { sourceName = wow.secret() } })
-			die({ target = GRIMBASH }, wow.secret())
+			die({ target = GRIMBASH }, wow.secretTable())
+			die({ target = GRIMBASH }, { wow.secretTable() })
 			wow.state().players[GRIMBASH].name = wow.secret()
 			wow.state().units.target = GRIMBASH
 			-- A secret can't be a table key in the client, so it must never be collected.
-			assert.are.same({}, ns.Deaths.EnemiesInView())
+			assert.are.same({}, ns.DeathWatch.EnemiesInView())
 			die({ target = GRIMBASH }, recap("Grimbash"))
 			die({ target = wow.secret() }, recap("Grimbash"))
 			assert.are.equal(0, #ns.db.deaths)
@@ -126,7 +154,7 @@ describe("deaths and vengeance", function()
 			wow.state().recap = recap("Grimbash")
 			assert.has_no.errors(function()
 				wow.fireEvent("PLAYER_DEAD")
-				wow.advance(ns.Deaths.RECAP_DELAY)
+				wow.advance(ns.DeathWatch.RECAP_DELAY)
 			end)
 			assert.are.equal("death recap", ns.db.errors[1].where)
 		end)

@@ -22,3 +22,10 @@ for _, quality in pairs(ns.QUALITY) do
 	quality.g = tonumber(quality.color:sub(5, 6), 16) / 255
 	quality.b = tonumber(quality.color:sub(7, 8), 16) / 255
 end
+
+--- A grade's name and colours; an unknown grade shows as Uncommon.
+---@param grade any
+---@return { name: string, color: string, r: number, g: number, b: number }
+function ns.Quality(grade)
+	return ns.QUALITY[grade] or ns.QUALITY[2]
+end

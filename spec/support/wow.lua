@@ -35,6 +35,26 @@ function wow.secret()
 	return setmetatable({}, secretMeta)
 end
 
+-- Secret tables: not secret values themselves, but issecrettable is true and
+-- the addon may not index them (canaccesstable is false). Lua 5.1 ignores __len
+-- on tables, so #t is 0; specs set what HasRecapEvents etc. report separately.
+local secretTableMeta = {
+	__index = function()
+		error("addon code tried to index a secret table", 2)
+	end,
+	__newindex = function()
+		error("addon code tried to write to a secret table", 2)
+	end,
+}
+local function isSecretTable(value)
+	return type(value) == "table" and getmetatable(value) == secretTableMeta
+end
+
+--- A table the addon must not index.
+function wow.secretTable()
+	return setmetatable({}, secretTableMeta)
+end
+
 local function isSecret(value)
 	return type(value) == "table" and getmetatable(value) == secretMeta
 end
@@ -243,6 +263,12 @@ function widgetMethods:Hide()
 	if self.shown then
 		self.shown = false
 		fire(self, "OnHide")
+		-- Hiding a frame under the mouse sends it OnLeave. (Assumed, not
+		-- verified in game: code must be safe either way.)
+		if self.hovered then
+			self.hovered = false
+			fire(self, "OnLeave")
+		end
 	end
 end
 function widgetMethods:IsShown()
@@ -355,9 +381,11 @@ function widgetMethods:Click(button)
 	fire(self, "OnClick", button or "LeftButton")
 end
 function widgetMethods:Enter()
+	self.hovered = true
 	fire(self, "OnEnter")
 end
 function widgetMethods:Leave()
+	self.hovered = false
 	fire(self, "OnLeave")
 end
 function widgetMethods:Drag()
@@ -488,6 +516,13 @@ function wow.reset(overrides)
 	_G.ToggleBackpack = _G.ToggleAllBags
 	_G.OpenBackpack = _G.OpenAllBags
 	_G.CloseBackpack = _G.CloseAllBags
+	-- One bag: the fake has a single bag, so these act on "the bags". CloseBag is
+	-- what a bag frame's own close button calls.
+	_G.ToggleBag = _G.ToggleAllBags
+	_G.OpenBag = function()
+		state.bagsOpen = true
+	end
+	_G.CloseBag = _G.CloseAllBags
 	_G.IsAnyBagOpen = function()
 		return state.bagsOpen
 	end
@@ -550,6 +585,10 @@ function wow.reset(overrides)
 		PALADIN = "Paladin",
 	}
 	_G.issecretvalue = isSecret
+	_G.issecrettable = isSecretTable
+	_G.canaccesstable = function(t)
+		return not isSecretTable(t)
+	end
 	_G.UnitGUID = function(unit)
 		if unit == "player" then
 			return state.playerGUID
@@ -582,7 +621,7 @@ function wow.reset(overrides)
 	-- the death), or nil when there is none.
 	_G.C_DeathRecap = {
 		HasRecapEvents = function()
-			return state.recap ~= nil and #state.recap > 0
+			return state.recap ~= nil and (isSecretTable(state.recap) or #state.recap > 0)
 		end,
 		GetRecapEvents = function()
 			return state.recap or {}

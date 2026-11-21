@@ -39,6 +39,7 @@ local countText, pageText, emptyText ---@type FontString, FontString, FontString
 local prevButton, nextButton ---@type Button, Button
 local page = 1
 local openedWithBags = false
+local buildFailed = false -- set once; the pouch stays closed until /reload
 local focused ---@type table?
 
 -- Ears in display order: newest first.
@@ -68,11 +69,8 @@ end
 ---@return string
 local function classColored(ear)
 	local name = className(ear)
-	local color = ear.class and C_ClassColor.GetClassColor(ear.class)
-	if color then
-		return ("|c%s%s|r"):format(color:GenerateHexColor(), name)
-	end
-	return name
+	local hex = Chat.ClassHex(ear.class)
+	return hex and ("|c%s%s|r"):format(hex, name) or name
 end
 
 --- The tooltip for an ear, as lines: { text, r, g, b } or { left, right, r, g, b }.
@@ -80,7 +78,7 @@ end
 ---@param ear table
 ---@return table[]
 function Pouch.TooltipLines(ear)
-	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
+	local quality = ns.Quality(ear.quality)
 	local lines = {}
 	local function add(text, color)
 		color = color or { 1, 1, 1 }
@@ -93,10 +91,7 @@ function Pouch.TooltipLines(ear)
 	end
 	local level = ear.level and tostring(ear.level) or "??"
 	local race = ear.raceName or ear.race or ""
-	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
-	if atlas then
-		race = ("|A:%s:14:14|a %s"):format(atlas, race)
-	end
+	race = Chat.RaceIcon(ear.race, ear.sex) .. race
 	add((("Level %s %s %s"):format(level, race, classColored(ear)):gsub("  ", " ")))
 	add(" ")
 	if ear.subzone then
@@ -135,15 +130,7 @@ local function showTooltip(slot)
 	if not slot.ear then
 		return
 	end
-	GameTooltip:SetOwner(slot, "ANCHOR_RIGHT")
-	for _, line in ipairs(Pouch.TooltipLines(slot.ear)) do
-		if line.left then
-			GameTooltip:AddDoubleLine(line.left, line.right, 1, 1, 1, line.r, line.g, line.b)
-		else
-			GameTooltip:AddLine(line.text, line.r, line.g, line.b, true)
-		end
-	end
-	GameTooltip:Show()
+	Chat.ShowTooltip(slot, "ANCHOR_RIGHT", Pouch.TooltipLines(slot.ear))
 end
 
 local function hideTooltip()
@@ -235,7 +222,7 @@ local function fillSlot(slot, ear)
 	slot.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	slot.icon:SetDesaturated(ear.quality == 0)
 	slot.icon:Show()
-	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
+	local quality = ns.Quality(ear.quality)
 	for _, edge in ipairs(slot.edges) do
 		edge:SetColorTexture(quality.r, quality.g, quality.b, 1)
 		edge:Show()
@@ -301,13 +288,7 @@ local function refreshEars()
 			slot:UnlockHighlight()
 		end
 	end
-	local assists = 0
-	for _, ear in ipairs(ears) do
-		if ear.by == "assist" then
-			assists = assists + 1
-		end
-	end
-	countText:SetText(("%d ears, %d assists"):format(#ears, assists))
+	countText:SetText(("%d ears, %d assists"):format(#ears, ns.Ears.CountAssists(ears)))
 	emptyText:SetShown(#ears == 0)
 end
 
@@ -543,11 +524,19 @@ function Pouch.IsShown()
 end
 
 function Pouch.Show()
-	if not ns.db then
+	if not ns.db or buildFailed then
 		return
 	end
 	if not frame then
-		build()
+		-- All or nothing: a half-built window would throw on every refresh.
+		if not Errors.Call("pouch", build) then
+			buildFailed = true
+			if frame then
+				frame:Hide()
+			end
+			frame = nil
+			return
+		end
 	end
 	if frame and not frame:IsShown() then
 		frame:Show()
@@ -596,6 +585,7 @@ function Pouch.FocusEar(guid, at)
 	for index, ear in ipairs(ears) do
 		if ear.guid == guid and ear.at == at then
 			focused = ear
+			openedWithBags = false -- you asked for it, so closing the bags leaves it open
 			page = math.floor((index - 1) / Pouch.PER_PAGE) + 1
 			Pouch.SelectTab(1)
 			Pouch.Show()

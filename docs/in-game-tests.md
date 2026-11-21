@@ -153,9 +153,10 @@ number (shared).
    shows your totals, and clicking toggles the pouch.
 3. Key Bindings > AddOns has "Ear Collector: Toggle Ear Pouch". Bind a key and
    try it.
-4. Press B: the pouch opens with your bags and closes with them. Open it with
-   `/ears` first and it stays open when the bags close. `/ears bags off` stops
-   it opening with your bags.
+4. Press B: the pouch opens with your bags and closes with them, including when
+   you close the last bag with its own X. Open it with `/ears` first and it
+   stays open when the bags close. At a merchant, bank or mailbox your bags open
+   but the pouch doesn't. `/ears bags off` stops it opening with your bags.
 5. Do step 4 in combat. There should be no "action blocked" or "interface action
    failed" message.
 6. Click an ear's name in a "You collected ..." chat line. The pouch opens on

@@ -44,6 +44,14 @@ addon. Treat an escaped error as a serious bug.
   - Slash commands use `Errors.Wrap`.
   - New entry points must be wrapped too: `C_Timer` callbacks, `OnUpdate` and
     `OnClick` scripts, and hooks.
+- Keep error names narrow, because 3 errors switch a name off:
+  - Detection never shares a name with UI work. `ns.Collect` and
+    `ns.RecordDeath` run the chat line, pouch refresh and toast in their own
+    `Errors.Call`, so a UI bug can't switch off kill detection.
+  - Each `/ears` subcommand has its own name (`/ears pouch`, `/ears stats`...).
+    `/ears errors` and `/ears help` are never switched off.
+  - The pouch window is built all or nothing: if `build` fails, the pouch stays
+    closed until `/reload` instead of throwing on every refresh.
 - A caught error is stored in `EarCollectorDB.errors` (bounded) and announced
   once per session. After 3 errors the handler is switched off until `/reload`.
   `/ears errors` shows the log. With `/ears debug` on, errors also go to the
@@ -51,8 +59,11 @@ addon. Treat an escaped error as a serious bug.
 - The wrapper is a safety net, not error handling. Prevent the error:
   - **Secret values.** Forever hides unit identity in instances, PvP matches and
     some maps. GUIDs, names and other values then become "secret". Comparing,
-    concatenating, indexing or calling `tostring` on a secret raises an error.
-    Check `Context.Readable(v)` before touching any value from the API.
+    concatenating, indexing or calling `tostring` on a secret raises an error,
+    and so does using one as a table key. Tables can be secret too
+    (`issecrettable`; indexing one without `canaccesstable` is an error).
+    Check `Context.Readable(v)`, which covers both, before touching any value
+    from the API.
   - **Nil returns.** Assume any API can return nil. Check before indexing or
     doing arithmetic.
   - **Saved data.** It can be old, hand-edited or truncated.
@@ -151,6 +162,9 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
     `stats.unnamedHonorKills`.
   - Matching runs `WINDOW + 0.5` seconds later via `C_Timer.After`, because the
     events can arrive in any order.
+  - Credits and the deaths within `WINDOW` of them form connected groups, each
+    resolved as a whole once nothing in it is newer than `WINDOW`. Matching one
+    credit at a time lost both assists when two enemies died a second apart.
   - Grey-level kills give no honor, so they never become assists.
 - Use `C_PvP.GetZonePVPInfo()`, not the deprecated global `GetZonePVPInfo`.
 - Race icons are atlases `raceicon-<race>-<male|female>` (Blizzard's
@@ -165,8 +179,11 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
     `category="ADDONS"`; the strings `BINDING_HEADER_*` / `BINDING_NAME_*`
     are set in Lua.
   - Bags: `hooksecurefunc` post-hooks on `ToggleAllBags`, `OpenAllBags`,
-    `CloseAllBags`, `ToggleBackpack`, `OpenBackpack`, `CloseBackpack`, then
-    `IsAnyBagOpen()`. The pouch closes with the bags only if the bags opened it.
+    `CloseAllBags`, `ToggleBackpack`, `OpenBackpack`, `CloseBackpack`,
+    `ToggleBag`, `OpenBag` and `CloseBag` (what a bag's own close button calls),
+    then `IsAnyBagOpen()`. The pouch closes with the bags only if the bags opened
+    it. Merchants, banks, mailboxes and trade windows call `OpenAllBags(self)`;
+    with a frame argument the pouch doesn't open.
   - Chat links: `|Haddon:EarCollector:ear:<guid>:<time>|h`. Blizzard's "addon"
     link handler fires `EventRegistry` "SetItemRef" `(owner, link, text, button, frame)`.
   - The window uses `BasicFrameTemplateWithInset` (`.TitleText`, `.CloseButton`).
@@ -236,11 +253,16 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
   - Blizzard's recap window loads only on Retail
     (`[AllowLoadGameType mainline]` in its TOC), though `C_DeathRecap` is
     documented for every client. Whether Forever fills it is test T4.
-  - On `PLAYER_DEAD` the addon notes the enemy players in view (target, focus,
-    mouseover, `nameplate1..40`; `UnitIsPlayer` and `UnitCanAttack`), then after
-    `Deaths.RECAP_DELAY` matches the recap's killing blow to one by name. It
-    tries the name as given, then its first word. A match gives a GUID; no
-    match, or a name two players in view share, records nothing.
+  - Blizzard's PTR feedback code reads `deathEvents[1].sourceGUID`. A readable
+    player GUID there identifies the killer outright (not you, not your group).
+  - Otherwise, on `PLAYER_DEAD` the addon notes the enemy players in view
+    (target, focus, mouseover, `nameplate1..40`; `UnitIsPlayer` and
+    `UnitCanAttack`). After `DeathWatch.RECAP_DELAY` it matches the recap's name
+    exactly against each player's name, its first word, and name plus surname
+    (UnitName's second return) with a space or a hyphen. "Grimbash Stonefist"
+    can't match "Grimbash Ironhide". No match, or a form two players share,
+    records nothing. `DeathWatch` (the detector) reads the game; `Deaths` stays
+    pure.
   - Vengeance: `Deaths.VENGEANCE` (3) deaths to one player since you last killed
     them make their next ear Legendary (quality 5, `ear.vengeance`), even inside
     the repeat-kill window. `ns.Collect` sets `kill.vengeance` from
@@ -324,6 +346,11 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 - `wow.pressEscape()` follows Forever's Escape chain: it closes the game menu if
   it's open, otherwise closes the bags and hides shown `UISpecialFrames`, and
   opens the game menu (`state.gameMenuShown`) only if nothing closed.
+- `wow.secretTable()` is a table the addon may not index (`issecrettable` true,
+  `canaccesstable` false). `#t` is 0 in Lua 5.1, so stubs that report a count
+  check for it explicitly.
+- `widget:Enter()` marks a widget hovered; hiding a hovered widget fires
+  `OnLeave` (assumed client behaviour; code must be safe either way).
 - `wow.state().inCombat = true` puts the client in combat. Frame methods Forever
   restricts in combat (`SetPropagateKeyboardInput` and the like) then raise, and
   so does `Settings.OpenToCategory`.

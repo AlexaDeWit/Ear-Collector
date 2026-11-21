@@ -68,6 +68,8 @@ read_globals = {
 	"geterrorhandler",
 	"hooksecurefunc",
 	"issecretvalue",
+	"issecrettable",
+	"canaccesstable",
 	-- WoW additions to the Lua environment
 	"date",
 	"time",

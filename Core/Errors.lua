@@ -84,7 +84,8 @@ function Errors.Call(name, fn, ...)
 		return fn(unpack(args, 1, n))
 	end, capture) }
 	if not results[1] then
-		Errors.Report(name, results[2])
+		-- The safety net must not throw either: if reporting fails, stay quiet.
+		pcall(Errors.Report, name, results[2])
 		return false
 	end
 	return unpack(results)

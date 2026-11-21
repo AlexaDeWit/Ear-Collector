@@ -118,6 +118,19 @@ describe("loot toast", function()
 		assert.is_false(ns.Pouch.IsShown())
 	end)
 
+	it("isn't pooled twice when clicked while hovered", function()
+		kills(1)
+		local toast = Toast.Active()[1]
+		toast:Enter()
+		toast:Click("RightButton") -- hides it, which sends OnLeave and replays the fade
+		wow.finishAnimations()
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		wow.fireEvent("PARTY_KILL", ME, VELARIA)
+		local active = Toast.Active()
+		assert.are.equal(2, #active)
+		assert.are_not.equal(active[1], active[2])
+	end)
+
 	it("can be turned off, or muted", function()
 		wow.slash("/ears sound off")
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)

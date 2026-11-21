@@ -171,6 +171,17 @@ local function register(db)
 	category = new
 end
 
+-- Blizzard's own gate for addon actions in combat (Blizzard_GamepadSmartNavigation/
+-- SecureHelper.lua) is the Combat addon restriction; check it as well as lockdown.
+local function inCombat()
+	if InCombatLockdown() then
+		return true
+	end
+	local kind = Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Combat
+	local active = kind and C_RestrictedActions.IsAddOnRestrictionActive(kind)
+	return not ns.Context.Readable(active) or active == true
+end
+
 --- Open the Settings screen on Ear Collector's options.
 --- Blizzard restricts opening it from addon code in combat, so that waits.
 ---@return boolean opened
@@ -179,7 +190,7 @@ function Options.Open()
 		Chat.Print("The options page isn't available. /ears help lists the commands.")
 		return false
 	end
-	if InCombatLockdown() then
+	if inCombat() then
 		Chat.Print("Options can't open during combat. Try again when it ends.")
 		return false
 	end

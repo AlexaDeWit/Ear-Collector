@@ -18,9 +18,11 @@ Deaths.VENGEANCE = 3
 
 --- The killing blow's source from death recap events. Blizzard_DeathRecap lists
 --- them newest first and marks the first as the one that caused the death.
---- Returns nil when the recap is empty, hides the caster, or holds secrets.
+--- Blizzard's PTR feedback code also reads the event's sourceGUID; when that is
+--- a readable player GUID it identifies the killer outright.
+--- Returns nothing when the recap is empty, hides the caster, or holds secrets.
 ---@param events any C_DeathRecap.GetRecapEvents()
----@return string|nil name, string|nil spell
+---@return string|nil name, string|nil spell, string|nil guid
 function Deaths.KillerFromRecap(events)
 	if not Readable(events) or type(events) ~= "table" then
 		return nil
@@ -33,43 +35,57 @@ function Deaths.KillerFromRecap(events)
 	if hidden ~= nil and (not Readable(hidden) or hidden) then
 		return nil
 	end
-	local name, spell = first.sourceName, first.spellName
+	local name, spell, guid = first.sourceName, first.spellName, first.sourceGUID
 	if not Readable(name) or type(name) ~= "string" or name == "" then
+		name = nil
+	end
+	if not Readable(guid) or type(guid) ~= "string" or not guid:find("^Player%-") then
+		guid = nil
+	end
+	if not name and not guid then
 		return nil
 	end
 	if not Readable(spell) or type(spell) ~= "string" or spell == "" then
 		spell = nil
 	end
-	return name, spell
+	return name, spell, guid
 end
 
 --- The GUID of the enemy player a recap name refers to, from the players seen at
---- the moment of death. Tries the name as given, then its first word, in case
---- the recap adds a surname ("Name Surname") or realm ("Name-Realm").
+--- the moment of death (see Deaths.See). Only an exact match counts: a recap name
+--- with a surname must match that surname, so "Grimbash Stonefist" can't be
+--- blamed on the "Grimbash Ironhide" you were targeting.
 ---@param name string
 ---@param seen table<string, string|false> name -> GUID; false when two players shared the name
 ---@return string|nil guid
 function Deaths.MatchKiller(name, seen)
-	local guid = seen[name]
-	if guid == nil then
-		local short = name:match("^[^%s%-]+")
-		if short and short ~= name then
-			guid = seen[short]
-		end
-	end
-	return guid or nil
+	return seen[name] or nil
 end
 
---- Add `name -> guid` to a seen-players table; a second GUID for the same name
---- makes the name ambiguous (false), so it can never match.
+--- Note a player seen at the moment of death, under every form the recap might
+--- write their name in: the name as UnitName gives it, its first word (in case
+--- the name includes the surname), and name plus surname joined by a space or a
+--- hyphen. A form two players share is marked false, so it can never match.
 ---@param seen table<string, string|false>
 ---@param name string
 ---@param guid string
-function Deaths.See(seen, name, guid)
-	if seen[name] == nil then
-		seen[name] = guid
-	elseif seen[name] ~= guid then
-		seen[name] = false
+---@param surname string? UnitName's second return (the surname on Forever)
+function Deaths.See(seen, name, guid, surname)
+	local function add(key)
+		if seen[key] == nil then
+			seen[key] = guid
+		elseif seen[key] ~= guid then
+			seen[key] = false
+		end
+	end
+	add(name)
+	local first = name:match("^[^%s%-]+")
+	if first and first ~= name then
+		add(first)
+	end
+	if surname and surname ~= "" then
+		add(name .. " " .. surname)
+		add(name .. "-" .. surname)
 	end
 end
 
