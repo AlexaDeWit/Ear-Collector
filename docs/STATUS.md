@@ -5,7 +5,7 @@ Read this first in a new session, together with `CLAUDE.md` (how to work) and
 next, and what's waiting on the user. It's the memory that survives a session
 ending or a conversation being compacted.
 
-Last updated: 2026-11-21.
+Last updated: 2026-11-21 (after merging PRs #7 to #9).
 
 ## Decisions made with the user
 
@@ -39,14 +39,16 @@ Last updated: 2026-11-21.
 - **PR #4** (merged): the loot toast.
 - **PR #5** (merged): Escape closes the pouch.
 - **PR #6** (merged): the options page; checks now skip Claude Code worktrees under `.claude/worktrees/`; README status refreshed.
-- **PR #7** (open, `ledger`): the pouch's tabs, with the Ledger and the Rivals list.
-- **PR #8** (open, `deaths`, builds on #7): deaths from the death recap, the Rivals "Deaths" column, Nemesis, and Legendary Vengeance ears.
-- **PR #9** (open, `v1-prep`, builds on #8): per-character data, fixes from the adversarial review, README install section.
+- **PR #7** (merged): the pouch's tabs, with the Ledger and the Rivals list.
+- **PR #8** (merged): deaths from the death recap, the Rivals "Deaths" column, Nemesis, and Legendary Vengeance ears.
+- **PR #9** (merged): per-character data, fixes from an adversarial review of everything, README install section.
+
+Every planned v1.0 feature is built and on `main`. What's left is in-game verification, CI, and the release. The user has a test zip of `main` at `9f19d0b`; `scripts/build-zip.sh` makes another.
 
 ## Waiting on the user
 
-1. **Turn CI on**: move `ci/workflows/ci.yml` and `release.yml` to `.github/workflows/` on `main` in GitHub's web editor (steps in `ci/README.md`), then delete `ci/`.
-2. **Merge PR #7, then #8, then #9** (each builds on the one before).
+1. **Turn CI on**: move `ci/workflows/ci.yml` and `release.yml` to `.github/workflows/` on `main` in GitHub's web editor (steps in `ci/README.md`), then delete `ci/`. (Still not done at the last check: `main` has `ci/` and no `.github/`.)
+2. **Decide the Poor grade**: Poor is "10+ levels below you", but the game's grey (no-honor) range at 60 is about 13 below, so levels 48 to 50 grade Poor yet give honor. Follow the game's grey formula instead? Asked, not yet answered.
 3. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
    - T1: does `PARTY_KILL` fire with readable IDs for your and your group's open-world kills?
    - T2: do honorable kills arrive within about 2 s of the death, so assists match?
@@ -60,16 +62,21 @@ Last updated: 2026-11-21.
    - T4: does the death recap name who killed you? It gates deaths, Nemesis and Vengeance. `/ears debug` now answers it from a single death.
    - T6: is the 7th `GetPlayerInfoByGUID` value the surname?
 
+4. **Release**, once CI is on and the in-game tests pass: push a tag (`v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
+
+When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fixtures/`, replayed with `wow.replay`), fix what fails, and keep the in-game sheet in step.
+
 ## Next up (in order)
 
 1. **Deferred from the review** (each small; none blocks v1.0):
-   - Poor grade uses a fixed 10-level gap; the game's grey range at 60 is about 13 levels, so levels 48 to 50 grade Poor but give honor. Needs a decision: follow the game's grey formula?
+   - The Poor grade's level gap (waiting on the user's decision, above).
    - A group kill that gave no honor (a grey victim) still uses up a nearby credit, which can cost an ally's kill its assist.
    - Nameplates are scanned as `nameplate1..40`; `C_NamePlate.GetNamePlates()` exists, but the frame's unit-token field isn't documented.
    - Opening with bags does nothing with bag-replacement addons (`IsAnyBagOpen` stays false).
    - The fake's `UnitCanAttack` is true for same-faction players.
-2. **The first release** once CI is on: `v1.0.0` tag, CurseForge and Wago project IDs in the TOC, their API tokens as repository secrets (the user's steps).
-3. Later: export ears as text, inspect another Ear Collector user's pouch, CurseForge and Wago publishing.
+2. Later: export ears as text; inspect another Ear Collector user's pouch (addon messages, which Forever may restrict: the `Chat` addon restriction and `SecretInChatMessagingLockdown`).
+
+Making a test build: `scripts/build-zip.sh` writes `.release/EarCollector-dev-<commit>.zip` (committed files only, minus what `.pkgmeta` ignores), then send it with SendUserFile.
 
 Reading Forever's UI source: `.cache/wow-ui-source` is a sparse, blob-less checkout, so `git grep` there fetches one file at a time and stalls. Instead, add a worktree in the scratchpad (`git -C .cache/wow-ui-source worktree add --no-checkout <dir> HEAD`), set a sparse pattern such as `'/Interface/**/*.lua'`, and `git checkout`: it fetches in one batch (about 35 MB, a minute).
 
