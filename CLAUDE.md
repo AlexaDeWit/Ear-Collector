@@ -79,17 +79,22 @@ addon. Treat an escaped error as a serious bug.
     the severed edge.
   - Race features are separately lit layers: rings, the gnome's gear, undead
     stitches, the Skyborne feather, the dwarf braid, tauren fur and beads.
+  - Each race comes in 4 skin tones (`TONES`; tauren: fur colours; dwarf hair
+    varies too), written as `Media/Ears/<race>-<tone>.tga`, plus `generic.tga`.
 - `scripts/build-art.sh` writes `Media/Ears/<name>.tga` (128x128, uncompressed
   32-bit) and `Media/Ears/manifest.txt` (size, painter hash, texture list). Run
   it after changing the painter and commit both. The `art` check fails on a
   stale, missing or malformed texture.
 - To look at the full-size renders while iterating:
   `python3 art/paint_ears.py /tmp/ears 128 --preview /tmp/ears/png`.
-- `UI/Art.lua` maps race tokens to files (`Scourge` -> `undead`). WoW loads
-  addon textures by path without the extension:
-  `Interface\AddOns\EarCollector\Media\Ears\orc`.
+- `UI/Art.lua` maps race tokens to files (`Scourge` -> `undead`). The game
+  doesn't expose skin tone, so `Art.Tone(guid)` picks one from a hash of the
+  victim's GUID: random across players, stable for each player.
+  `Art.TONES` must match the painter (a spec checks). WoW loads addon
+  textures by path without the extension:
+  `Interface\AddOns\EarCollector\Media\Ears\orc-2`.
 - Pouch slots show the ear art. Tooltips and chat lines use Blizzard's race
-  icons. The minimap drawer icon is `Media/Ears/human`.
+  icons. The minimap drawer icon is `Media/Ears/human-2`.
 
 ## GitHub workflow files: the human moves them
 

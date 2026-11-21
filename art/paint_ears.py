@@ -1,7 +1,7 @@
 """Paint the Ear Collector ear icons: one per WoW Forever race, plus a generic ear.
 
 This program is the source of the art. scripts/build-art.sh runs it and writes
-Media/Ears/<name>.tga (128x128, 32-bit) plus a manifest the `art` check uses.
+Media/Ears/*.tga (128x128, 32-bit) plus a manifest the `art` check uses.
 
 How an ear is painted, at 512x512 before downscaling:
   1. Anatomy as shapes: the outline, the rolled rim (helix), the Y-shaped inner
@@ -16,7 +16,9 @@ How an ear is painted, at 512x512 before downscaling:
   5. Race features as separately lit layers: metal rings, a gear stud, an
      undead seam with stitches, a feather, a braid, tauren fur.
 
-Usage: python3 art/paint_ears.py <out dir> <size> [--preview <png>]
+Each race comes in a few tones (TONES): Media/Ears/<race>-<n>.tga.
+
+Usage: python3 art/paint_ears.py <out dir> <size> [--preview <png dir>]
 Needs numpy and Pillow.
 """
 import math
@@ -36,6 +38,12 @@ RNG = np.random.default_rng(20261121)  # fixed seed: rebuilds are identical
 def srgb_to_linear(hex_color):
     c = np.array([int(hex_color[i : i + 2], 16) / 255 for i in (1, 3, 5)], dtype=np.float32)
     return np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+
+
+def scale_hex(hex_color, factor):
+    """A lighter (>1) or darker (<1) version of an sRGB hex colour."""
+    rgb = [min(255, int(int(hex_color[i : i + 2], 16) * factor)) for i in (1, 3, 5)]
+    return "#%02x%02x%02x" % tuple(rgb)
 
 
 def linear_to_srgb(c):
@@ -479,7 +487,8 @@ def braid(path, color="#b5592a", bead="#d7a640"):
         mask = np.maximum(mask, plait)
         h = np.maximum(h, blur(plait, 4) * 0.9 + i * 0.0001)
     region = mask > 0.5
-    rgb_fur, fur = fur_layer(region.astype(np.float32), 90, "#6b2a10", "#e38a4e", count=2600, length=12)
+    rgb_fur, fur = fur_layer(region.astype(np.float32), 90, scale_hex(color, 0.45), scale_hex(color, 1.45),
+                             count=2600, length=12)
     strands = fur
     albedo = srgb_to_linear(color)[None, None, :] * (0.55 + 0.25 * strands[..., None]) + rgb_fur * 0.35
     rgb = light(h + strands * 0.03, albedo, strength=85, spec=0.4, shine=18)
@@ -510,61 +519,110 @@ def fur_layer(region, direction_deg, color_dark, color_light, count=2200, length
 
 
 # ---------------------------------------------------------------- races
+# Each race comes in a few skin tones (tauren: fur colours). The game doesn't tell
+# addons a player's skin tone, so UI/Art.lua picks one per victim from a hash of
+# their GUID: random across players, stable for each one.
 
-PALETTES = {
-    "human": dict(skin="#e8b597", sss="#e2706a", inner="#9b4d40"),
-    "dwarf": dict(skin="#e6a185", sss="#d9524a", inner="#8e3a2e", mottle=0.22),
-    "gnome": dict(skin="#f2cdb6", sss="#ec8378", inner="#a65a4c"),
-    "nightelf": dict(skin="#9c88d2", sss="#a675e6", inner="#4c3a7c", mottle=0.10),
-    "skyborne": dict(skin="#f3ddcc", sss="#ef9a90", inner="#b06a5e", mottle=0.10),
-    "orc": dict(skin="#7d9f55", sss="#a9b94a", inner="#3e5528", mottle=0.20),
-    "troll": dict(skin="#6c9eb0", sss="#6cc2d6", inner="#2f5562", mottle=0.18),
-    "undead": dict(skin="#a8a7a3", sss="#9aa58f", inner="#3c3240", mottle=0.30, spec=0.12, shine=12),
-    "generic": dict(skin="#c9b2a2", sss="#c98a80", inner="#7b5a4e"),
+TONES = {
+    "human": [
+        dict(skin="#f1cbb3", sss="#ea827a", inner="#a85a4c"),
+        dict(skin="#e0a984", sss="#dc6c5a", inner="#924c3a"),
+        dict(skin="#b07752", sss="#bd5c45", inner="#6e392a"),
+        dict(skin="#6f4631", sss="#8e4030", inner="#3a1e16"),
+    ],
+    "dwarf": [
+        dict(skin="#e6a185", sss="#d9524a", inner="#8e3a2e", mottle=0.22, hair="#b5592a"),
+        dict(skin="#f0c4ad", sss="#e2706a", inner="#9e5244", mottle=0.22, hair="#6b4228"),
+        dict(skin="#c88b66", sss="#c85c48", inner="#7a3c2c", mottle=0.22, hair="#2e2622"),
+        dict(skin="#8c5a3e", sss="#9c4834", inner="#4e2a1e", mottle=0.22, hair="#d9b46a"),
+    ],
+    "gnome": [
+        dict(skin="#f2cdb6", sss="#ec8378", inner="#a65a4c"),
+        dict(skin="#ecb99c", sss="#e2746a", inner="#9a5040"),
+        dict(skin="#d49c7a", sss="#d06a56", inner="#844634"),
+        dict(skin="#a8735a", sss="#b05a46", inner="#5e3426"),
+    ],
+    "nightelf": [
+        dict(skin="#9c88d2", sss="#a675e6", inner="#4c3a7c", mottle=0.10),
+        dict(skin="#7f8bd0", sss="#8a7ef0", inner="#3a3f78", mottle=0.10),
+        dict(skin="#6b56a6", sss="#8a5ad8", inner="#33245e", mottle=0.10),
+        dict(skin="#b9a8da", sss="#c08ef0", inner="#5e4a8a", mottle=0.10),
+    ],
+    "skyborne": [
+        dict(skin="#f3ddcc", sss="#ef9a90", inner="#b06a5e", mottle=0.10),
+        dict(skin="#f2cbb8", sss="#ee8c84", inner="#a85e52", mottle=0.10),
+        dict(skin="#e4bc92", sss="#dc8a6a", inner="#9a5e44", mottle=0.10),
+        dict(skin="#c89a74", sss="#c4785a", inner="#7c4a34", mottle=0.10),
+    ],
+    "orc": [
+        dict(skin="#7d9f55", sss="#a9b94a", inner="#3e5528", mottle=0.20),
+        dict(skin="#8f9a52", sss="#b8b24a", inner="#4a5226", mottle=0.20),
+        dict(skin="#587c3e", sss="#86a83c", inner="#2c421e", mottle=0.20),
+        dict(skin="#7e6e44", sss="#a88e4a", inner="#45391e", mottle=0.20),
+    ],
+    "troll": [
+        dict(skin="#6c9eb0", sss="#6cc2d6", inner="#2f5562", mottle=0.18),
+        dict(skin="#68a898", sss="#6ccab4", inner="#2c5a4e", mottle=0.18),
+        dict(skin="#7f86b8", sss="#8a8ee0", inner="#3c3f68", mottle=0.18),
+        dict(skin="#7aa66a", sss="#8ccc6c", inner="#3a5a30", mottle=0.18),
+    ],
+    "undead": [
+        dict(skin="#a8a7a3", sss="#9aa58f", inner="#3c3240", mottle=0.30, spec=0.12, shine=12),
+        dict(skin="#9ca591", sss="#9aaf88", inner="#363c30", mottle=0.30, spec=0.12, shine=12),
+        dict(skin="#9ba3b2", sss="#94a4bc", inner="#323848", mottle=0.30, spec=0.12, shine=12),
+        dict(skin="#aa9eae", sss="#ac98b4", inner="#3e3044", mottle=0.30, spec=0.12, shine=12),
+    ],
+    "tauren": [
+        dict(fur_dark="#3a2010", fur_light="#b07e52", inner="#c99a8c"),
+        dict(fur_dark="#161210", fur_light="#4e443c", inner="#b48a80"),
+        dict(fur_dark="#9c8a70", fur_light="#f2e8d6", inner="#d8aaa0"),
+        dict(fur_dark="#4e1c0c", fur_light="#b8653a", inner="#c8988a"),
+    ],
+    "generic": [dict(skin="#c9b2a2", sss="#c98a80", inner="#7b5a4e")],
 }
 
 
-def paint_human():
-    return [skin(HUMAN, PALETTES["human"])]
+def paint_human(p):
+    return [skin(HUMAN, p)]
 
 
-def paint_dwarf():
-    ear = skin(HUMAN, PALETTES["dwarf"])
-    layers = braid([(380, 40), (412, 150), (424, 270), (418, 390), (410, 470)])
+def paint_dwarf(p):
+    ear = skin(HUMAN, p)
+    layers = braid([(380, 40), (412, 150), (424, 270), (418, 390), (410, 470)], color=p["hair"])
     lobe = ellipse(*HUMAN.lobe)
     ring = torus(290, 470, 20, 5.5, "#d9a93e", cover=lobe, cover_above=452)
     return layers + [ear, ring]
 
 
-def paint_gnome():
-    ear = skin(GNOME, PALETTES["gnome"])
+def paint_gnome(p):
+    ear = skin(GNOME, p)
     lx, ly = GNOME.lobe[0], GNOME.lobe[1] + 6
     return [ear, gear(lx + 2, ly + 2, 34, teeth=9)]
 
 
-def paint_nightelf():
-    ear = skin(ELF, PALETTES["nightelf"])
+def paint_nightelf(p):
+    ear = skin(ELF, p)
     cuff = metal_band([(404, 52), (424, 86)], 22, "#c9cdd8")
     return [ear, cuff]
 
 
-def paint_skyborne():
+def paint_skyborne(p):
     back = feather([(300, 300), (240, 196), (170, 120), (78, 70)])
-    ear = skin(ELF, PALETTES["skyborne"])
+    ear = skin(ELF, p)
     cuff = metal_band([(366, 74), (384, 108)], 16, "#e2bd5a")
     return [back, ear, cuff]
 
 
-def paint_orc():
-    ear = skin(ORC, PALETTES["orc"])
+def paint_orc(p):
+    ear = skin(ORC, p)
     lobe = ellipse(*ORC.lobe)
     hoop = torus(292, 474, 22, 6, "#d6a43c", cover=lobe, cover_above=455)
     small = torus(398, 104, 12, 4, "#d6a43c")
     return [ear, hoop, small]
 
 
-def paint_troll():
-    ear = skin(TROLL, PALETTES["troll"])
+def paint_troll(p):
+    ear = skin(TROLL, p)
     bone = torus(452, 158, 17, 6, "#e8dcc0")
     return [ear, bone]
 
@@ -575,15 +633,15 @@ def undead_albedo(albedo, alpha):
     return albedo * (1 - bruise[..., None] * 0.5) + rot[None, None, :] * (bruise[..., None] * 0.5)
 
 
-def paint_undead():
+def paint_undead(p):
     notches = [[(392, 192), (360, 214), (390, 234)], [(368, 92), (346, 122), (382, 118)]]
-    ear = skin(HUMAN, PALETTES["undead"], notches=notches, albedo_fn=undead_albedo)
+    ear = skin(HUMAN, p, notches=notches, albedo_fn=undead_albedo)
     seam = [(286, 64), (296, 120), (314, 190), (318, 240)]
     crosses = [((278, 86), (306, 100)), ((286, 126), (314, 136)), ((296, 168), (326, 176)), ((304, 210), (332, 214))]
     return [ear] + stitches(seam, crosses)
 
 
-def paint_tauren():
+def paint_tauren(p):
     # A cow's ear seen from the open side: a scoop with rolled edges, a dark hollow
     # at the base, and pale hair fanning out of it; brown fur on the rolled rim.
     outline_pts = [(78, 226), (118, 196), (190, 166), (280, 156), (366, 174), (432, 218), (476, 272), (498, 330),
@@ -597,8 +655,8 @@ def paint_tauren():
     h = 0.40 * outline + 0.18 * blur(np.clip(outline - cup, 0, 1), 6) - 0.22 * blur(cup, 12) - 0.35 * blur(canal, 9)
     h = np.clip(h, 0, 1) * np.clip(blur(outline, 8) * 1.7, 0, 1)
     rim = np.clip(outline - blur(cup, 4) * 1.15, 0, 1)
-    fur_rgb, fur = fur_layer(rim, 12, "#3a2010", "#b07e52", count=2600, length=16)
-    skin_in = srgb_to_linear("#c99a8c")
+    fur_rgb, fur = fur_layer(rim, 12, p["fur_dark"], p["fur_light"], count=2600, length=16)
+    skin_in = srgb_to_linear(p["inner"])
     dark = blur(canal, 16)
     inside = skin_in[None, None, :] * (1 - np.clip(dark * 1.6, 0, 0.92)[..., None]) * (
         0.85 + 0.3 * value_noise(30, 1)[..., None]
@@ -633,8 +691,8 @@ def paint_tauren():
     return [ear, thong] + bead_layers
 
 
-def paint_generic():
-    return [skin(HUMAN, PALETTES["generic"], blood=False)]
+def paint_generic(p):
+    return [skin(HUMAN, p, blood=False)]
 
 
 RACES = {
@@ -685,8 +743,8 @@ def frame(rgb, alpha, angle, scale, dx, dy):
     return np.clip(rgb2, 0, None), alpha2
 
 
-def render(name):
-    rgb, alpha = over(RACES[name]())
+def render(name, palette):
+    rgb, alpha = over(RACES[name](palette))
     rgb, alpha = frame(rgb, alpha, *FRAMING[name])
     shadow = blur(shift(alpha, 9, 11), 8) * 0.6
     out_alpha = alpha + shadow * (1 - alpha)
@@ -696,17 +754,24 @@ def render(name):
     return Image.fromarray((np.clip(rgba, 0, 1) * 255 + 0.5).astype(np.uint8), "RGBA")
 
 
+def texture_names():
+    """(file name, race, palette) for every texture: <race>-<tone>, or just <race> with one tone."""
+    for name, tones in TONES.items():
+        for i, palette in enumerate(tones, 1):
+            yield (name if len(tones) == 1 else f"{name}-{i}"), name, palette
+
+
 def main():
     out, size = Path(sys.argv[1]), int(sys.argv[2])
     out.mkdir(parents=True, exist_ok=True)
-    for name in RACES:
-        image = render(name)
-        image.resize((size, size), Image.LANCZOS).save(out / f"{name}.tga", compression=None)
-        if "--preview" in sys.argv:
-            preview_dir = Path(sys.argv[sys.argv.index("--preview") + 1])
+    preview_dir = Path(sys.argv[sys.argv.index("--preview") + 1]) if "--preview" in sys.argv else None
+    for file_name, race, palette in texture_names():
+        image = render(race, palette)
+        image.resize((size, size), Image.LANCZOS).save(out / f"{file_name}.tga", compression=None)
+        if preview_dir:
             preview_dir.mkdir(parents=True, exist_ok=True)
-            image.save(preview_dir / f"{name}.png")
-        print(f"{name}.tga")
+            image.save(preview_dir / f"{file_name}.png")
+        print(f"{file_name}.tga")
 
 
 if __name__ == "__main__":

@@ -139,7 +139,8 @@ It should print the same number. Repeat across a full logout.
    that ear's page, highlights it and shows its tooltip.
 7. Drag the pouch, `/reload`, and open it again. It should be where you left it.
 8. Ear art: each slot shows the victim's race ear (orc, troll, tauren, undead,
-   Skyborne, and so on), with Poor ears greyed out. Tooltips show Blizzard's
+   Skyborne, and so on) in one of four skin tones. The same player always gets
+   the same tone. Poor ears are greyed out. Tooltips show Blizzard's
    race icon on the race line. If a slot is a green square, the texture failed
    to load: note which race.
 

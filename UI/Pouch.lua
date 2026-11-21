@@ -219,7 +219,7 @@ local function fillSlot(slot, ear)
 		return
 	end
 	slot:SetAlpha(1)
-	slot.icon:SetTexture(Art.EarTexture(ear.race))
+	slot.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	slot.icon:SetDesaturated(ear.quality == 0)
 	slot.icon:Show()
 	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
