@@ -84,6 +84,23 @@ newWidget = function(widgetType, name, parent, template)
 	return w
 end
 
+-- Frame methods Forever restricts in combat (HasRestrictions in Blizzard's
+-- SimpleFrame and SimpleScriptRegion API docs). The client blocks them from
+-- addon code during combat; here they raise, so a spec fails if the addon uses
+-- one while `state.inCombat` is true.
+for _, method in ipairs({
+	"SetPropagateKeyboardInput",
+	"SetPassThroughButtons",
+	"SetPropagateMouseClicks",
+	"SetPropagateMouseMotion",
+}) do
+	widgetMethods[method] = function()
+		if state.inCombat then
+			error(method .. " is blocked in combat", 2)
+		end
+	end
+end
+
 function widgetMethods:RegisterEvent(event)
 	self.events[event] = true
 end
@@ -283,6 +300,8 @@ function wow.reset(overrides)
 		regionalNames = true, -- Forever: first name + surname instead of realms
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active
 		bagsOpen = false,
+		inCombat = false,
+		gameMenuShown = false,
 		sounds = {}, -- PlaySound calls
 		printed = {},
 	}
@@ -336,6 +355,17 @@ function wow.reset(overrides)
 	_G.IsAnyBagOpen = function()
 		return state.bagsOpen
 	end
+	_G.InCombatLockdown = function()
+		return state.inCombat
+	end
+	-- Frames Escape hides, as Forever's UIParentPanelManager.lua starts it.
+	_G.UISpecialFrames = {
+		"ItemRefTooltip",
+		"ColorPickerFrame",
+		"FloatingPetBattleAbilityTooltip",
+		"FloatingGarrisonFollowerTooltip",
+		"FloatingGarrisonShipyardFollowerTooltip",
+	}
 	-- EventRegistry: only what "addon" chat links use.
 	_G.EventRegistry = {
 		callbacks = {},
@@ -529,6 +559,30 @@ function wow.pressBinding(name)
 	local body = xml:match('<Binding name="' .. name .. '"[^>]*>(.-)</Binding>')
 	assert(body, "no binding " .. name)
 	assert(loadstring(body))()
+end
+
+--- Press Escape. Forever's binding runs ToggleGameMenu (Blizzard_GameMenuEsc),
+--- which offers the key to handlers in priority order and opens the game menu
+--- only if none takes it. Modelled here: the game menu closing (Framework), then
+--- CloseAllWindows (AddOnPost), which closes the bags and hides each shown frame
+--- named in UISpecialFrames.
+function wow.pressEscape()
+	if state.gameMenuShown then
+		state.gameMenuShown = false
+		return
+	end
+	local found = _G.IsAnyBagOpen()
+	_G.CloseAllBags()
+	for _, name in pairs(_G.UISpecialFrames) do
+		local f = _G[name]
+		if f and f:IsShown() then
+			f:Hide()
+			found = true
+		end
+	end
+	if not found then
+		state.gameMenuShown = true
+	end
 end
 
 --- Let `seconds` pass: both clocks move and due C_Timer callbacks run, in order.

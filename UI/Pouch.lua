@@ -1,7 +1,7 @@
 -- The Ear Pouch: a window with a grid of collected ears, newest first.
 -- Built lazily on first open, from Lua only. Every script handler runs inside
 -- Errors.Wrap. The frame is not protected, so showing and hiding it is allowed
--- in combat.
+-- in combat. Escape closes it, like Blizzard's windows (see closeOnEscape).
 local addonName, ns = ...
 
 local Art, Chat, Errors = ns.Art, ns.Chat, ns.Errors
@@ -15,6 +15,7 @@ Pouch.PER_PAGE = Pouch.COLUMNS * Pouch.ROWS
 
 local SLOT, GAP, PAD = 36, 4, 12
 local GREY = { 0.62, 0.62, 0.62 }
+local FRAME_NAME = addonName .. "Pouch"
 
 ---@class EarCollector.PouchFrame : Frame
 ---@field TitleText FontString
@@ -230,8 +231,37 @@ local function fillSlot(slot, ear)
 	slot.count:SetText(ear.camped and ear.camped > 0 and tostring(ear.camped + 1) or "")
 end
 
+--- Let Escape close the pouch, the way it closes Blizzard's windows.
+---
+--- On Forever, Escape runs ToggleGameMenu (Blizzard_GameMenuEsc). It offers the
+--- key to registered handlers in priority order (dialogs, menus, casting, the
+--- game menu, ...) and opens the game menu only if none of them took it. One
+--- handler is CloseAllWindows, which closes the bags, then hides every shown
+--- frame named in UISpecialFrames. It reads that list inside securecall, because
+--- addons add to it: their entries can't taint the rest of Escape. So pressing
+--- Escape with the pouch open closes it without also opening the game menu. The
+--- pouch isn't a protected frame, so this works in combat too.
+---
+--- Rejected, after reading Forever's UI source:
+--- - RegisterGameMenuEscHandler: only Blizzard's code calls it. A call from an
+---   addon would write and re-sort Blizzard's handler list while tainted, so every
+---   Escape would run tainted and SpellStopCasting / ClearTarget would be blocked.
+--- - OnKeyDown with SetPropagateKeyboardInput: that method is restricted in
+---   combat, so the pouch would either swallow every key or let Escape through.
+--- - A hooksecurefunc post-hook on ToggleGameMenu: it can't claim the key, so
+---   the game menu would open as well.
+---
+--- Called once, from build. Without the list (a future client), the close
+--- button still works.
+---@param name string the frame's global name
+local function closeOnEscape(name)
+	if type(UISpecialFrames) == "table" then
+		table.insert(UISpecialFrames, name)
+	end
+end
+
 local function build()
-	local f = CreateFrame("Frame", addonName .. "Pouch", UIParent, "BasicFrameTemplateWithInset")
+	local f = CreateFrame("Frame", FRAME_NAME, UIParent, "BasicFrameTemplateWithInset")
 	---@cast f EarCollector.PouchFrame
 	frame = f
 	-- New frames start shown. Hide before the OnHide script exists, so building
@@ -316,6 +346,7 @@ local function build()
 	pageText:SetPoint("BOTTOM", f, "BOTTOM", 0, 14)
 
 	restorePosition()
+	closeOnEscape(FRAME_NAME)
 end
 
 --- Redraw the grid if the pouch is open.

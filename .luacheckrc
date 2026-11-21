@@ -49,6 +49,7 @@ read_globals = {
 	"SOUNDKIT",
 	"RegionalUniqueNamesEnabled",
 	"UIParent",
+	"UISpecialFrames", -- the addon appends its pouch's name; see UI/Pouch.lua closeOnEscape
 	"UnitGUID",
 	"UnitLevel",
 	"debugstack",

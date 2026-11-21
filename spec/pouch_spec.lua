@@ -268,6 +268,90 @@ describe("Ear Pouch", function()
 		end)
 	end)
 
+	describe("Escape", function()
+		it("closes the pouch without opening the game menu", function()
+			wow.slash("/ears")
+			wow.pressEscape()
+			assert.is_false(Pouch.IsShown())
+			assert.is_false(wow.state().gameMenuShown)
+			wow.pressEscape() -- nothing left to close
+			assert.is_true(wow.state().gameMenuShown)
+		end)
+
+		it("closes the pouch along with the bags that opened it", function()
+			_G.ToggleAllBags()
+			assert.is_true(Pouch.IsShown())
+			wow.pressEscape()
+			assert.is_false(Pouch.IsShown())
+			assert.is_false(wow.state().bagsOpen)
+			assert.is_false(wow.state().gameMenuShown)
+		end)
+
+		it("clears a focused ear, like the close button", function()
+			collect(1)
+			Pouch.FocusEar(ns.db.ears[1].guid, ns.db.ears[1].at)
+			wow.pressEscape()
+			assert.is_false(_G.GameTooltip:IsShown())
+			wow.slash("/ears")
+			assert.is_false(Pouch.Slots()[1].highlightLocked)
+		end)
+
+		it("works in combat, from every way of opening the pouch", function()
+			collect(1)
+			wow.state().inCombat = true
+			local opens = {
+				function()
+					wow.slash("/ears")
+				end,
+				function()
+					_G.ToggleAllBags()
+				end,
+				function()
+					wow.pressBinding("EARCOLLECTOR_TOGGLE")
+				end,
+				function()
+					_G.EarCollector_OnAddonCompartmentClick("EarCollector", "LeftButton")
+				end,
+				function()
+					Pouch.FocusEar(ns.db.ears[1].guid, ns.db.ears[1].at)
+				end,
+			}
+			for i, open in ipairs(opens) do
+				open()
+				assert.is_true(Pouch.IsShown(), "opened by way " .. i)
+				wow.pressEscape()
+				assert.is_false(Pouch.IsShown(), "closed after way " .. i)
+				assert.is_false(wow.state().gameMenuShown, "no game menu after way " .. i)
+			end
+			assert.are.same({}, ns.db.errors)
+		end)
+
+		it("adds its name to Blizzard's list once, keeping the entries already there", function()
+			local before = { unpack(_G.UISpecialFrames) }
+			for _ = 1, 3 do
+				wow.slash("/ears")
+				wow.slash("/ears")
+			end
+			local expected = { unpack(before) }
+			expected[#expected + 1] = "EarCollectorPouch"
+			assert.are.same(expected, _G.UISpecialFrames)
+		end)
+
+		it("leaves the list alone until the pouch is first opened", function()
+			assert.is_falsy(table.concat(_G.UISpecialFrames, " "):find("EarCollector"))
+		end)
+
+		it("still opens on a client without the list", function()
+			_G.UISpecialFrames = nil
+			assert.has_no.errors(function()
+				wow.slash("/ears")
+			end)
+			assert.is_true(Pouch.IsShown())
+			assert.is_nil(_G.UISpecialFrames)
+			assert.are.same({}, ns.db.errors)
+		end)
+	end)
+
 	describe("ear links in chat", function()
 		local function linkIn(line)
 			return line:match("|H(addon:[^|]+)|h")

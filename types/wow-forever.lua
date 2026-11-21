@@ -34,3 +34,9 @@ function IsAnyBagOpen() end
 --- Sound kit IDs by name, for PlaySound. Blizzard_SharedXML/Mainline/SoundKitConstants.lua.
 ---@type table<string, number>
 SOUNDKIT = {}
+
+--- Names of frames that Escape hides: CloseSpecialWindows, run inside securecall
+--- by CloseAllWindows, the AddOnPost Escape handler.
+--- Blizzard_UIParentPanelManager/Shared/UIParentPanelManager.lua.
+---@type string[]
+UISpecialFrames = {}
