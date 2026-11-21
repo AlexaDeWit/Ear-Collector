@@ -6,10 +6,11 @@
 -- player sourceGUID, that's the killer. Otherwise there's only `sourceName`,
 -- and NPCs appear too. So at the moment of death the addon notes the enemy
 -- players it can see (target, focus, mouseover, nameplates), and a moment
--- later matches the recap's name to one of them exactly. A match gives the
--- killer's GUID, which keys Rivals and vengeance, and proves the killer was a
--- player. No match, no record: a wrong rival is worse than none. A pet's
--- killing blow names the pet, which matches nobody.
+-- later matches the recap's name to one of them exactly. If none matches, the
+-- enemy players on the damage meter (those you or your group hit) get a turn.
+-- A match gives the killer's GUID, which keys Rivals and vengeance, and proves
+-- the killer was a player. No match, no record: a wrong rival is worse than
+-- none. A pet's killing blow names the pet, which matches nobody.
 --
 -- Whether Forever fills the recap at all is for the game to show: Blizzard's
 -- recap window loads only on Retail, though C_DeathRecap is documented for every
@@ -77,7 +78,7 @@ function DeathWatch.NamesInView(seen)
 end
 
 --- Read the recap and record the death if the killing blow was an enemy player
---- seen at the moment of death.
+--- seen at the moment of death, or one the damage meter says you hit.
 ---@param seen table<string, string|false>
 local function readRecap(seen)
 	local db = ns.db
@@ -104,7 +105,19 @@ local function readRecap(seen)
 	else
 		guid, how = Deaths.MatchKiller(name, seen), "by name"
 		if not guid then
-			local decision = "killer isn't an enemy player you could see (in view: %s)"
+			-- Out of sight now, but on the damage meter if you or your group hit them.
+			local damaged = ns.DamageMeter.EnemyPlayers()
+			if damaged then
+				for meterGUID, meterName in pairs(damaged) do
+					if meterName then
+						Deaths.See(seen, meterName, meterGUID, nil)
+					end
+				end
+				guid, how = Deaths.MatchKiller(name, seen), "by name, from the damage meter"
+			end
+		end
+		if not guid then
+			local decision = "killer isn't an enemy player you saw or damaged (names: %s)"
 			ns.Trace(db, "PLAYER_DEAD", name, nil, decision:format(DeathWatch.NamesInView(seen)))
 			return
 		end

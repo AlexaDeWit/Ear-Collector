@@ -92,8 +92,8 @@ describe("the debug log", function()
 			wow.fireEvent("PLAYER_DEAD")
 			wow.advance(DeathWatch.RECAP_DELAY)
 			assert.are.same({
-				"PLAYER_DEAD: killer isn't an enemy player you could see"
-					.. " (in view: Grimbash, Grimbash Ironhide, Grimbash-Ironhide)",
+				"PLAYER_DEAD: killer isn't an enemy player you saw or damaged"
+					.. " (names: Grimbash, Grimbash Ironhide, Grimbash-Ironhide)",
 			}, decisions())
 		end)
 

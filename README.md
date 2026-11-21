@@ -4,8 +4,9 @@ A World of Warcraft addon for **WoW Forever** that collects an ear from every
 enemy player you or your group kill in the open world, like the ears PvP kills
 dropped in Diablo II.
 
-- Kills by you, your pet, your group and their pets count. So do assists: honor
-  for a kill someone outside your group finished.
+- Kills by you, your pet, your group and their pets count. So do assists: kills
+  someone outside your group finished after you damaged the victim or earned
+  honor for them.
 - Battlegrounds, arenas and dungeons never count.
 - Each ear shows the victim's race and a grade set by the level gap. Ears go in
   an Ear Pouch, with a Ledger of totals and a list of Rivals.

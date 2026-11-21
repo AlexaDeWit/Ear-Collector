@@ -94,6 +94,34 @@ confirm are marked, and `docs/in-game-tests.md` tests them.
   `nameplate40`, with `UnitExists`, `UnitIsPlayer`, `UnitCanAttack`, `UnitGUID`
   and `UnitName`.
 
+## The damage meter
+
+Forever has Blizzard's built-in damage meter (`DamageMeterDocumentation.lua`,
+`Blizzard_DamageMeter`). The client keeps its own totals for each fight, and
+addons such as Details read them instead of a combat log.
+
+- `C_DamageMeter.GetAvailableCombatSessions()` lists the fights the meter keeps,
+  each with a `sessionID`. It isn't secret.
+- `C_DamageMeter.GetCombatSessionFromType(sessionType, type)` and
+  `GetCombatSessionFromID(sessionID, type)` return a fight's totals.
+  `Enum.DamageMeterSessionType.Current` is the fight in progress or just ended.
+  Both are `SecretWhenInCombat`, so read them once combat ends.
+- With `Enum.DamageMeterType.EnemyDamageTaken` (10), `combatSources` lists the
+  enemies that took damage, each with `sourceGUID` and `name` (both
+  `ConditionalSecret`), `totalAmount`, `sourceDisplayType` and `factionGroup`.
+- `deathRecapID` and `deathTimeSeconds` are filled in for deaths on the `Deaths`
+  view only, so they don't say whether an enemy died.
+- `C_DamageMeter.IsDamageMeterAvailable()` returns whether the player can use
+  the meter. Blizzard's meter window shows only while the `damageMeterEnabled`
+  setting is on.
+- `PLAYER_REGEN_DISABLED` and `PLAYER_REGEN_ENABLED` fire as you enter and leave
+  combat. `UnitAffectingCombat("player")` reports it too.
+
+*Needs the game:*
+- whether enemy players appear in open-world PvP with readable GUIDs and names
+- whether the meter counts only your group's damage, which Ear Collector assumes
+- whether it tracks fights while its window is turned off
+
 ## Races and icons
 
 - Race tokens: `Human`, `Dwarf`, `Gnome`, `NightElf`, `Scourge`, `Orc`, `Troll`,

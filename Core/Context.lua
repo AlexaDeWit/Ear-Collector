@@ -19,6 +19,22 @@ function Context.Readable(value)
 	return true
 end
 
+--- True while the player is in combat, or the game says so through the Combat
+--- addon restriction. An unreadable answer counts as combat.
+---@return boolean
+function Context.InCombat()
+	if InCombatLockdown() then
+		return true
+	end
+	local affecting = UnitAffectingCombat("player")
+	if not Context.Readable(affecting) or affecting then
+		return true
+	end
+	local kind = Enum.AddOnRestrictionType and Enum.AddOnRestrictionType.Combat
+	local active = kind and C_RestrictedActions.IsAddOnRestrictionActive(kind)
+	return not Context.Readable(active) or active == true
+end
+
 --- Decide whether a kill here counts. Pure: callers pass in what the API reported.
 ---@param inInstance boolean from IsInInstance()
 ---@param instanceType string from IsInInstance(): "none", "pvp", "arena", "party", "raid", "scenario"

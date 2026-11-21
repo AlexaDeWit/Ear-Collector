@@ -1,16 +1,23 @@
 -- Assists: kills where someone outside your group landed the killing blow but
--- you earned honorable-kill credit. Forever gives addons no damage data, so the
--- evidence is timing: an honorable kill (HK) credit arriving within WINDOW
--- seconds of an enemy player's death.
+-- you took part. Forever gives addons no combat log, so there are two kinds of
+-- evidence for an enemy player's death:
 --
--- Credits and the deaths within WINDOW of them form groups, resolved together.
--- Rules, in order, for each group:
+-- Honor. An honorable kill (HK) credit arriving within WINDOW seconds of the
+-- death. Credits and the deaths within WINDOW of them form groups, resolved
+-- together. Rules, in order, for each group:
 --   1. Credits next to kills your group already collected are used up by them
 --      (no double ear).
 --   2. If enough credits remain for every other death, each is an assist.
 --   3. If more players died than credits remain, name nobody: the credits are
 --      counted as unnamed rather than guessed.
--- Pure logic over a session tracker; Detectors/HonorKill.lua feeds it.
+--
+-- Damage. A death that no credit named is "unclaimed". It's still an assist if
+-- the game's damage meter shows you or your group damaged that player in your
+-- latest fight, and the death came during that fight or within RECENT seconds
+-- after it (FromDamage).
+--
+-- Pure logic over a session tracker; Detectors/HonorKill.lua and
+-- Detectors/DamageMeter.lua feed it.
 local _, ns = ...
 
 local Assists = {}
@@ -18,6 +25,7 @@ ns.Assists = Assists
 
 Assists.WINDOW = 2.5 -- seconds between a death and its honorable-kill credit
 Assists.KEEP = 15 -- seconds a death or group kill stays available for matching
+Assists.RECENT = 60 -- seconds after your fight ends that a death still counts as part of it
 
 ---@class EarCollector.AssistTracker
 ---@field deaths { guid: string, t: number, kill: EarCollector.Kill, used: boolean? }[]
@@ -91,6 +99,8 @@ end
 ---@return EarCollector.Kill[] assists victims to collect as assist ears
 ---@return integer unnamed credits that couldn't be tied to one victim
 ---@return integer pending credits not settled yet
+---@return { guid: string, t: number, kill: EarCollector.Kill }[] unclaimed settled deaths no credit named
+---@return integer settling deaths not settled yet
 function Assists.Resolve(tracker, now)
 	local nodes, parent = {}, {}
 	for _, credit in ipairs(tracker.credits) do
@@ -134,51 +144,99 @@ function Assists.Resolve(tracker, now)
 		list[#list + 1] = node.item
 	end
 
-	local assists, unnamed, waiting = {}, 0, {}
-	for _, group in ipairs(order) do
-		if #group.credits > 0 then
-			if now - group.newest < Assists.WINDOW then
-				for _, credit in ipairs(group.credits) do
-					waiting[#waiting + 1] = credit
-				end
-			else
-				local remaining = 0
-				for _, credit in ipairs(group.credits) do
-					remaining = remaining + credit.n
-				end
-				-- Rule 1: kills your group collected use up their credits.
-				local ours = {}
-				for _, g in ipairs(group.groupKills) do
-					g.used = true
-					if not ours[g.guid] then
-						ours[g.guid] = true
-						remaining = remaining - 1
-					end
-				end
-				remaining = math.max(remaining, 0)
-				local others = {}
-				for _, d in ipairs(group.deaths) do
-					d.used = true
-					if not ours[d.guid] then
-						others[#others + 1] = d
-					end
-				end
-				-- Rules 2 and 3: enough credits for every death names them all;
-				-- fewer names nobody.
-				if #others > 0 and #others <= remaining then
-					for _, d in ipairs(others) do
-						assists[#assists + 1] = d.kill
-					end
-					remaining = remaining - #others
-				end
-				unnamed = unnamed + remaining
+	-- A group kill fires UNIT_DIED too: that death is the group's ear, never an
+	-- unclaimed one, whether or not a credit links them.
+	local function groupKilled(d)
+		for _, g in ipairs(tracker.groupKills) do
+			if g.guid == d.guid and math.abs(g.t - d.t) <= Assists.WINDOW then
+				return true
 			end
+		end
+		return false
+	end
+
+	local assists, unnamed, waiting, unclaimed, settling = {}, 0, {}, {}, 0
+	for _, group in ipairs(order) do
+		if now - group.newest < Assists.WINDOW then
+			for _, credit in ipairs(group.credits) do
+				waiting[#waiting + 1] = credit
+			end
+			settling = settling + #group.deaths
+		else
+			local remaining = 0
+			for _, credit in ipairs(group.credits) do
+				remaining = remaining + credit.n
+			end
+			-- Rule 1: kills your group collected use up their credits.
+			local ours = {}
+			for _, g in ipairs(group.groupKills) do
+				g.used = true
+				if not ours[g.guid] then
+					ours[g.guid] = true
+					remaining = remaining - 1
+				end
+			end
+			remaining = math.max(remaining, 0)
+			local others = {}
+			for _, d in ipairs(group.deaths) do
+				d.used = true
+				if not ours[d.guid] then
+					others[#others + 1] = d
+				end
+			end
+			-- Rules 2 and 3: enough credits for every death names them all;
+			-- fewer names nobody, and the damage meter gets a say.
+			if #others > 0 and #others <= remaining then
+				for _, d in ipairs(others) do
+					assists[#assists + 1] = d.kill
+				end
+				remaining = remaining - #others
+			else
+				for _, d in ipairs(others) do
+					if not groupKilled(d) then
+						unclaimed[#unclaimed + 1] = d
+					end
+				end
+			end
+			unnamed = unnamed + remaining
 		end
 	end
 	tracker.credits = waiting
 	tracker.deaths = prune(tracker.deaths, now)
 	tracker.groupKills = prune(tracker.groupKills, now)
-	return assists, unnamed, #waiting
+	return assists, unnamed, #waiting, unclaimed, settling
+end
+
+--- Unclaimed deaths the damage meter ties to you.
+---
+--- A death counts when the meter shows you or your group damaged that player,
+--- and the death came during your fight (or just before it, within WINDOW) or
+--- within RECENT seconds after it ended. Each death is judged against its own
+--- `fight` when it has one.
+---@param deaths { guid: string, t: number, kill: EarCollector.Kill, fight: table? }[] unclaimed deaths
+---@param damaged table<string, any> enemy players on the meter, by GUID
+---@param fight { start: number, finish: number? }|nil the fight for deaths without one, GetTime()
+---@return EarCollector.Kill[] assists
+---@return { guid: string, reason: string }[] rejected
+function Assists.FromDamage(deaths, damaged, fight)
+	local assists, rejected = {}, {}
+	for _, d in ipairs(deaths) do
+		local reason
+		local f = d.fight or fight
+		if not f then
+			reason = "no fight on record"
+		elseif d.t < f.start - Assists.WINDOW or (f.finish and d.t > f.finish + Assists.RECENT) then
+			reason = "not during or just after your last fight"
+		elseif damaged[d.guid] == nil then
+			reason = "not on the damage meter"
+		end
+		if reason then
+			rejected[#rejected + 1] = { guid = d.guid, reason = reason }
+		else
+			assists[#assists + 1] = d.kill
+		end
+	end
+	return assists, rejected
 end
 
 ns.assistTracker = Assists.New()

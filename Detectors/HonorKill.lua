@@ -1,15 +1,15 @@
--- Assist detection: honorable-kill credit for an enemy player whose killing
--- blow came from outside your group. Feeds Core/Assists.lua with
+-- Assist detection: an enemy player whose killing blow came from outside your
+-- group. Feeds Core/Assists.lua with
 --   * UNIT_DIED for enemy players in the open world (death candidates), and
 --   * PLAYER_PVP_KILLS_CHANGED steps in the lifetime honorable-kill count,
--- then matches them once late events have had time to arrive.
+-- then matches them once late events have had time to arrive. Deaths no honor
+-- named go to the damage meter (Detectors/DamageMeter.lua).
 local _, ns = ...
 
 local Context, Assists, Errors = ns.Context, ns.Assists, ns.Errors
 local Readable = Context.Readable
 
 local lastHonorableKills -- this session's baseline; nil until known
-local resolveScheduled = false
 
 local function lifetimeHonorableKills()
 	local kills = GetPVPLifetimeStats()
@@ -17,12 +17,11 @@ local function lifetimeHonorableKills()
 end
 
 local function resolve()
-	resolveScheduled = false
 	local db = ns.db
 	if not db then
 		return
 	end
-	local assists, unnamed, pending = Assists.Resolve(ns.assistTracker, GetTime())
+	local assists, unnamed, _, unclaimed = Assists.Resolve(ns.assistTracker, GetTime())
 	for _, kill in ipairs(assists) do
 		kill.by = "assist"
 		local _, isNew = ns.Collect(db, kill)
@@ -32,18 +31,17 @@ local function resolve()
 		db.stats.unnamedHonorKills = db.stats.unnamedHonorKills + unnamed
 		ns.Trace(db, "HONOR", nil, nil, ("%d honorable kill(s) not tied to one victim"):format(unnamed))
 	end
-	if pending > 0 then
-		ns.ScheduleAssistCheck()
-	end
+	-- Deaths no honor named may still be assists, if you damaged them.
+	ns.DamageMeter.Queue(unclaimed)
 end
 
---- Match honor credits to deaths after the window closes. Runs inside Errors.Call.
+local resolveWrapped = Errors.Wrap("assist matching", resolve)
+
+--- Match honor credits to deaths once this event's window has closed. Every
+--- death and credit schedules its own pass, so each settles on time; a pass
+--- that finds nothing settled does nothing. Runs inside Errors.Call.
 function ns.ScheduleAssistCheck()
-	if resolveScheduled then
-		return
-	end
-	resolveScheduled = true
-	C_Timer.After(Assists.WINDOW + 0.5, Errors.Wrap("assist matching", resolve))
+	C_Timer.After(Assists.WINDOW + 0.5, resolveWrapped)
 end
 
 ns.On("PLAYER_ENTERING_WORLD", function()
@@ -95,6 +93,7 @@ ns.On("UNIT_DIED", function(guid)
 	local kill = ns.VictimDetails(guid)
 	if kill then
 		Assists.NoteDeath(ns.assistTracker, { guid = guid, t = GetTime(), kill = kill })
+		ns.ScheduleAssistCheck()
 		ns.Trace(db, "UNIT_DIED", nil, guid, "assist candidate")
 	end
 end)

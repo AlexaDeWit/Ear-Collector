@@ -89,6 +89,7 @@ function ns.OnPartyKill(attackerGUID, targetGUID)
 	if not by then
 		-- Not ours, but if honor credit arrives for it, it's an assist.
 		Assists.NoteDeath(ns.assistTracker, { guid = targetGUID, t = GetTime(), kill = kill })
+		ns.ScheduleAssistCheck()
 		trace("not you or your group: assist candidate")
 		return
 	end
