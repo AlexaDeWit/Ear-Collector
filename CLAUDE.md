@@ -9,6 +9,10 @@ Battlegrounds and other instances never count: kills there would be noise.
 The game client can't run here. Correctness comes from the headless checks
 below, then a human test in game.
 
+**Start here:** `docs/STATUS.md` has the decisions made with the user, what's
+done, what's waiting on the user, and the ordered backlog. Update it at the end
+of every piece of work. It's the project's memory across sessions.
+
 ## Checks: run before you call anything done
 
 - `scripts/check.sh` runs every check in about 3 seconds. CI runs the same
