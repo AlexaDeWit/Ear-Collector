@@ -202,6 +202,22 @@ reads inside `securecall`. This test checks that nothing else gets tainted.
 8. With `/console taintLog 1` on, change a few options, log out, and search
    `Logs/taint.log` for `EarCollector`: nothing should be blamed on it.
 
+## T14: the Ledger and Rivals tabs
+
+1. Open the pouch: three tabs sit under it (Ears, Ledger, Rivals), in
+   Blizzard's tab style. Clicking one plays the tab sound and switches panels.
+2. Ledger: four boxes (Ears, Last 7 days, Players, Assists), a bar split by
+   grade with a coloured legend, your top classes with bars in class colours,
+   and your top zones. Long zone names are cut off, not wrapped.
+3. Rivals: one row per player, most kills first, with the date you last killed
+   them. Three or more kills shows "Prey". Hover a row for a tooltip; click it
+   to jump to their latest ear on the Ears tab.
+4. With more than ten rivals, the page buttons page the list, and the mouse
+   wheel does too. The Ledger hides the page buttons.
+5. Collect an ear with the Ledger open: the numbers update.
+6. Note anything that overlaps or runs off the window: the layout was made
+   without seeing it.
+
 ## Reporting back
 
 Paste the printed lines, or copy `EarCollectorDB.debugLog` from

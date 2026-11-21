@@ -48,6 +48,8 @@ read_globals = {
 	"IsInInstance",
 	"LOCALIZED_CLASS_NAMES_MALE",
 	"MinimalSliderWithSteppersMixin",
+	"PanelTemplates_SetNumTabs",
+	"PanelTemplates_SetTab",
 	"PlaySound",
 	"SOUNDKIT",
 	"Settings",
