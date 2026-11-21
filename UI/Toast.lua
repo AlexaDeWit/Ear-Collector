@@ -50,14 +50,22 @@ local function layout()
 	end
 end
 
+--- Take a toast off the screen and back to the pool. Safe to call twice: a
+--- hovered toast that is clicked gets OnLeave as it hides, and the fade that
+--- replays would release it again, putting it in the pool twice.
 ---@param toast EarCollector.Toast
 local function release(toast)
+	local index
 	for i, t in ipairs(active) do
 		if t == toast then
-			table.remove(active, i)
+			index = i
 			break
 		end
 	end
+	if not index then
+		return
+	end
+	table.remove(active, index)
 	toast.appear:Stop()
 	toast.leave:Stop()
 	toast:Hide()
@@ -101,15 +109,7 @@ local function showTooltip(toast)
 	if not toast.ear then
 		return
 	end
-	GameTooltip:SetOwner(toast, "ANCHOR_BOTTOM")
-	for _, line in ipairs(Pouch.TooltipLines(toast.ear)) do
-		if line.left then
-			GameTooltip:AddDoubleLine(line.left, line.right, 1, 1, 1, line.r, line.g, line.b)
-		else
-			GameTooltip:AddLine(line.text, line.r, line.g, line.b, true)
-		end
-	end
-	GameTooltip:Show()
+	ns.Chat.ShowTooltip(toast, "ANCHOR_BOTTOM", Pouch.TooltipLines(toast.ear))
 end
 
 ---@return EarCollector.Toast
@@ -192,6 +192,9 @@ local function build()
 			if GameTooltip:IsOwned(toast) then
 				GameTooltip:Hide()
 			end
+			if not toast.ear then
+				return -- already released (OnLeave as it hides after a click)
+			end
 			toast.fadeOut:SetStartDelay(1.5)
 			toast.leave:Play()
 		end)
@@ -222,7 +225,7 @@ function Toast.Show(ear)
 	local toast = table.remove(pool) or build()
 	toast.ear = ear
 
-	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
+	local quality = ns.Quality(ear.quality)
 	toast.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	toast.icon:SetDesaturated(ear.quality == 0)
 	for _, edge in ipairs(toast.edges) do

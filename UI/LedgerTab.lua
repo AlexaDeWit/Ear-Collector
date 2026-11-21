@@ -28,12 +28,7 @@ function LedgerTab.ClassStyle(entry)
 		return "Unknown", UNKNOWN_GREY
 	end
 	local name = entry.name or LOCALIZED_CLASS_NAMES_MALE[entry.class] or entry.class
-	local color = C_ClassColor.GetClassColor(entry.class)
-	local hex = color and color:GenerateHexColor()
-	if type(hex) ~= "string" or not hex:find("^%x%x%x%x%x%x%x%x$") then
-		hex = UNKNOWN_GREY
-	end
-	return name, hex
+	return name, ns.Chat.ClassHex(entry.class) or UNKNOWN_GREY
 end
 
 local function rgb(hex)
@@ -141,9 +136,10 @@ end
 local function refresh()
 	local db = ns.db
 	local summary = Ledger.Summarize(db and db.ears or {}, GetServerTime(), db and db.deaths)
-	w.content:SetShown(summary.ears > 0)
-	w.empty:SetShown(summary.ears == 0)
-	if summary.ears == 0 then
+	local empty = summary.ears == 0 and summary.deaths == 0
+	w.content:SetShown(not empty)
+	w.empty:SetShown(empty)
+	if empty then
 		return
 	end
 
@@ -157,7 +153,7 @@ local function refresh()
 	for grade = 0, 5 do
 		local segment, count = w.grades[grade], summary.byQuality[grade] or 0
 		if count > 0 then
-			local width = INNER * count / summary.ears
+			local width = INNER * count / summary.ears -- count > 0, so ears > 0
 			segment:ClearAllPoints()
 			segment:SetPoint("TOPLEFT", w.content, "TOPLEFT", PAD + x, -90)
 			segment:SetSize(width, 10)

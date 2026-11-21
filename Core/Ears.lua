@@ -5,6 +5,21 @@ local _, ns = ...
 local Ears = {}
 ns.Ears = Ears
 
+Ears.WEEK = 7 * 24 * 60 * 60 -- "the last 7 days", in seconds
+
+--- How many of `ears` are assists.
+---@param ears table[]
+---@return integer
+function Ears.CountAssists(ears)
+	local count = 0
+	for _, ear in ipairs(ears) do
+		if ear.by == "assist" then
+			count = count + 1
+		end
+	end
+	return count
+end
+
 ---@class EarCollector.Kill
 ---@field guid string the victim's GUID
 ---@field name string

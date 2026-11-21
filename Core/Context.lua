@@ -5,11 +5,18 @@ local Context = {}
 ns.Context = Context
 
 --- True when `value` can be read. Values the client marks secret can be shown
---- to the player but not inspected by addon code.
+--- to the player but not inspected by addon code. A table can be secret too
+--- (issecrettable): indexing one without access (canaccesstable) is an error.
 ---@param value any
 ---@return boolean
 function Context.Readable(value)
-	return value ~= nil and not issecretvalue(value)
+	if value == nil or issecretvalue(value) then
+		return false
+	end
+	if type(value) == "table" and issecrettable and issecrettable(value) then
+		return canaccesstable ~= nil and canaccesstable(value) == true
+	end
+	return true
 end
 
 --- Decide whether a kill here counts. Pure: callers pass in what the API reported.

@@ -4,6 +4,7 @@
 ## Author: Alexa DeWit
 ## Version: @project-version@
 ## SavedVariables: EarCollectorDB
+## SavedVariablesPerCharacter: EarCollectorCharDB
 ## IconTexture: Interface\AddOns\EarCollector\Media\Ears\human-2
 ## AddonCompartmentFunc: EarCollector_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: EarCollector_OnAddonCompartmentEnter

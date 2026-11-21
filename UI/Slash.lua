@@ -3,8 +3,6 @@ local _, ns = ...
 
 local Chat, Ears, Errors = ns.Chat, ns.Ears, ns.Errors
 
-local WEEK = 7 * 24 * 60 * 60
-
 local function where(ear)
 	if ear.subzone and ear.zone then
 		return ("%s, %s"):format(ear.subzone, ear.zone)
@@ -81,19 +79,21 @@ function commands.stats(db)
 		Chat.Print("No ears yet. Kill an enemy player in the open world to collect one.")
 		return
 	end
-	local week = Ears.CountSince(db, GetServerTime() - WEEK)
-	local assists = 0
-	for _, ear in ipairs(db.ears) do
-		if ear.by == "assist" then
-			assists = assists + 1
-		end
-	end
+	local week = Ears.CountSince(db, GetServerTime() - Ears.WEEK)
+	local assists = Ears.CountAssists(db.ears)
 	Chat.Print(("%d ears collected (%d assists), %d in the last 7 days."):format(total, assists, week))
 	Chat.Print("Latest: " .. describeEar(db.ears[total]))
+	local hidden, unnamed = db.stats.hiddenKills, db.stats.unnamedHonorKills
+	if hidden > 0 then
+		Chat.Print(("%d kill(s) the game hid from the addon (no ear)."):format(hidden))
+	end
+	if unnamed > 0 then
+		Chat.Print(("%d honorable kill(s) not tied to one victim (no assist ear)."):format(unnamed))
+	end
 end
 
 function commands.recent(db, args)
-	local n = math.min(tonumber(args) or 5, 50)
+	local n = math.max(1, math.min(math.floor(tonumber(args) or 5), 50))
 	local list = Ears.Recent(db, n)
 	if #list == 0 then
 		Chat.Print("No ears yet.")
@@ -114,7 +114,7 @@ end
 
 function commands.errors(db, args)
 	if args == "clear" then
-		db.errors = {}
+		ns.Database.Clear(db.errors)
 		Chat.Print("Error log cleared.")
 		return
 	end
@@ -125,7 +125,10 @@ function commands.errors(db, args)
 	Chat.Print(("%d error(s) recorded (newest last). Please include these in bug reports:"):format(#db.errors))
 	for i = math.max(1, #db.errors - 4), #db.errors do
 		local e = db.errors[i]
-		Chat.Print(("%s in %s (%s): %s"):format(date("%b %d %H:%M", e.at), e.where, e.version, e.message))
+		if type(e) == "table" then -- the saved log may be hand-edited
+			local when = type(e.at) == "number" and date("%b %d %H:%M", e.at) or "?"
+			Chat.Print(("%s in %s (%s): %s"):format(when, tostring(e.where), tostring(e.version), tostring(e.message)))
+		end
 	end
 	Chat.Print("/ears errors clear empties the log.")
 end
@@ -151,6 +154,14 @@ SlashCmdList.EARCOLLECTOR = Errors.Wrap("/ears", function(message)
 	end
 	local command, args = (message or ""):match("^%s*(%S*)%s*(.-)%s*$")
 	command = command:lower()
-	local handler = commands[command == "" and "pouch" or command] or commands.help
-	handler(db, args)
+	local key = command == "" and "pouch" or command
+	local handler = commands[key]
+	if not handler or key == "errors" or key == "help" then
+		-- Never switched off: /ears errors is how the player reads the error log.
+		(handler or commands.help)(db, args)
+		return
+	end
+	-- Each command has its own error name, so one failing command can't switch
+	-- off the others.
+	Errors.Call("/ears " .. key, handler, db, args)
 end)

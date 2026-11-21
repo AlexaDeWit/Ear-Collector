@@ -44,6 +44,14 @@ addon. Treat an escaped error as a serious bug.
   - Slash commands use `Errors.Wrap`.
   - New entry points must be wrapped too: `C_Timer` callbacks, `OnUpdate` and
     `OnClick` scripts, and hooks.
+- Keep error names narrow, because 3 errors switch a name off:
+  - Detection never shares a name with UI work. `ns.Collect` and
+    `ns.RecordDeath` run the chat line, pouch refresh and toast in their own
+    `Errors.Call`, so a UI bug can't switch off kill detection.
+  - Each `/ears` subcommand has its own name (`/ears pouch`, `/ears stats`...).
+    `/ears errors` and `/ears help` are never switched off.
+  - The pouch window is built all or nothing: if `build` fails, the pouch stays
+    closed until `/reload` instead of throwing on every refresh.
 - A caught error is stored in `EarCollectorDB.errors` (bounded) and announced
   once per session. After 3 errors the handler is switched off until `/reload`.
   `/ears errors` shows the log. With `/ears debug` on, errors also go to the
@@ -51,13 +59,23 @@ addon. Treat an escaped error as a serious bug.
 - The wrapper is a safety net, not error handling. Prevent the error:
   - **Secret values.** Forever hides unit identity in instances, PvP matches and
     some maps. GUIDs, names and other values then become "secret". Comparing,
-    concatenating, indexing or calling `tostring` on a secret raises an error.
-    Check `Context.Readable(v)` before touching any value from the API.
+    concatenating, indexing or calling `tostring` on a secret raises an error,
+    and so does using one as a table key. Tables can be secret too
+    (`issecrettable`; indexing one without `canaccesstable` is an error).
+    Check `Context.Readable(v)`, which covers both, before touching any value
+    from the API.
   - **Nil returns.** Assume any API can return nil. Check before indexing or
     doing arithmetic.
   - **Saved data.** It can be old, hand-edited or truncated.
-    `Database.Migrate` repairs it on load. Code that reads saved fields must
-    still tolerate missing ones.
+    `Database.MigrateAccount` / `MigrateCharacter` repair it on load. Code that
+    reads saved fields must still tolerate missing ones.
+  - **Where saved data lives.** `EarCollectorDB` (account-wide): `settings`,
+    `ui`, `errors`, `debugLog`. `EarCollectorCharDB` (per character,
+    `SavedVariablesPerCharacter`): `ears`, `deaths`, `stats`. `ns.db` is a view
+    whose fields are those saved tables (`Database.View`): change them in place
+    (`Database.Clear` empties a list); reassigning a field would stop it being
+    saved. Data an older version saved account-wide moves to the first character
+    that loads (`Database.MoveShared`), and is never dropped.
 - Never cause taint, which leads to "action blocked" messages and the
   disable-addons prompt:
   - Don't write to Blizzard globals or frames. The one exception is appending
@@ -144,6 +162,9 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
     `stats.unnamedHonorKills`.
   - Matching runs `WINDOW + 0.5` seconds later via `C_Timer.After`, because the
     events can arrive in any order.
+  - Credits and the deaths within `WINDOW` of them form connected groups, each
+    resolved as a whole once nothing in it is newer than `WINDOW`. Matching one
+    credit at a time lost both assists when two enemies died a second apart.
   - Grey-level kills give no honor, so they never become assists.
 - Use `C_PvP.GetZonePVPInfo()`, not the deprecated global `GetZonePVPInfo`.
 - Race icons are atlases `raceicon-<race>-<male|female>` (Blizzard's
@@ -158,8 +179,11 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
     `category="ADDONS"`; the strings `BINDING_HEADER_*` / `BINDING_NAME_*`
     are set in Lua.
   - Bags: `hooksecurefunc` post-hooks on `ToggleAllBags`, `OpenAllBags`,
-    `CloseAllBags`, `ToggleBackpack`, `OpenBackpack`, `CloseBackpack`, then
-    `IsAnyBagOpen()`. The pouch closes with the bags only if the bags opened it.
+    `CloseAllBags`, `ToggleBackpack`, `OpenBackpack`, `CloseBackpack`,
+    `ToggleBag`, `OpenBag` and `CloseBag` (what a bag's own close button calls),
+    then `IsAnyBagOpen()`. The pouch closes with the bags only if the bags opened
+    it. Merchants, banks, mailboxes and trade windows call `OpenAllBags(self)`;
+    with a frame argument the pouch doesn't open.
   - Chat links: `|Haddon:EarCollector:ear:<guid>:<time>|h`. Blizzard's "addon"
     link handler fires `EventRegistry` "SetItemRef" `(owner, link, text, button, frame)`.
   - The window uses `BasicFrameTemplateWithInset` (`.TitleText`, `.CloseButton`).
@@ -229,11 +253,16 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
   - Blizzard's recap window loads only on Retail
     (`[AllowLoadGameType mainline]` in its TOC), though `C_DeathRecap` is
     documented for every client. Whether Forever fills it is test T4.
-  - On `PLAYER_DEAD` the addon notes the enemy players in view (target, focus,
-    mouseover, `nameplate1..40`; `UnitIsPlayer` and `UnitCanAttack`), then after
-    `Deaths.RECAP_DELAY` matches the recap's killing blow to one by name. It
-    tries the name as given, then its first word. A match gives a GUID; no
-    match, or a name two players in view share, records nothing.
+  - Blizzard's PTR feedback code reads `deathEvents[1].sourceGUID`. A readable
+    player GUID there identifies the killer outright (not you, not your group).
+  - Otherwise, on `PLAYER_DEAD` the addon notes the enemy players in view
+    (target, focus, mouseover, `nameplate1..40`; `UnitIsPlayer` and
+    `UnitCanAttack`). After `DeathWatch.RECAP_DELAY` it matches the recap's name
+    exactly against each player's name, its first word, and name plus surname
+    (UnitName's second return) with a space or a hyphen. "Grimbash Stonefist"
+    can't match "Grimbash Ironhide". No match, or a form two players share,
+    records nothing. `DeathWatch` (the detector) reads the game; `Deaths` stays
+    pure.
   - Vengeance: `Deaths.VENGEANCE` (3) deaths to one player since you last killed
     them make their next ear Legendary (quality 5, `ear.vengeance`), even inside
     the repeat-kill window. `ns.Collect` sets `kill.vengeance` from
@@ -261,7 +290,7 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `Core/Init.lua` | namespace, version, quality colors |
 | `Core/Errors.lua` | error containment (see above) |
 | `Core/Events.lua` | `ns.On(event, fn)` dispatcher |
-| `Core/Database.lua` | SavedVariables migrate/repair |
+| `Core/Database.lua` | SavedVariables: account and per-character repair, the `ns.db` view |
 | `Core/Context.lua` | open-world decision; secret-safe reads |
 | `Core/Ears.lua` | pure grading and recording logic |
 | `Core/Assists.lua` | pure assist matching (honor credit to deaths) |
@@ -291,7 +320,7 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 `spec/support/wow.lua` is a fake Forever client:
 
 - `wow.reset{...}` installs API stubs with the given state.
-- `wow.loadAddon("EarCollector.toc", { EarCollectorDB = saved })` loads files in
+- `wow.loadAddon("EarCollector.toc", { EarCollectorDB = saved, EarCollectorCharDB = char })` loads files in
   TOC order with `(addonName, ns)`, then fires `ADDON_LOADED`.
 - `wow.fireEvent(...)` dispatches an event. `wow.slash("/ears recent")` runs a command.
 - `wow.advance(seconds)` moves both clocks and runs due `C_Timer` callbacks.
@@ -317,6 +346,11 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 - `wow.pressEscape()` follows Forever's Escape chain: it closes the game menu if
   it's open, otherwise closes the bags and hides shown `UISpecialFrames`, and
   opens the game menu (`state.gameMenuShown`) only if nothing closed.
+- `wow.secretTable()` is a table the addon may not index (`issecrettable` true,
+  `canaccesstable` false). `#t` is 0 in Lua 5.1, so stubs that report a count
+  check for it explicitly.
+- `widget:Enter()` marks a widget hovered; hiding a hovered widget fires
+  `OnLeave` (assumed client behaviour; code must be safe either way).
 - `wow.state().inCombat = true` puts the client in combat. Frame methods Forever
   restricts in combat (`SetPropagateKeyboardInput` and the like) then raise, and
   so does `Settings.OpenToCategory`.
@@ -361,14 +395,15 @@ The basic checklist:
 3. Run `/ears debug`, then kill an enemy player in the open world. The chat
    shows the decision "new ear (you)" and a "You collected ..." line with the
    victim's race icon.
-   `/dump EarCollectorDB.ears[#EarCollectorDB.ears]` shows the right name,
+   `/dump EarCollectorCharDB.ears[#EarCollectorCharDB.ears]` shows the right name,
    class, level and zone.
 4. A groupmate's killing blow in the open world says "new ear (group)". A
    battleground kill says "instance:pvp". For a pet's killing blow (yours or a
    groupmate's), note whether the attacker GUID is the pet or its owner. For a
    kill where someone outside your group lands the blow, note whether
    PARTY_KILL fires at all.
-5. Ears survive `/reload` and relog. `/ears errors` says "No errors recorded".
+5. Ears survive `/reload` and relog. Another character has its own (empty)
+   pouch but the same settings. `/ears errors` says "No errors recorded".
 6. No "action blocked" or taint messages, in combat or out. Open and close
    your bags in combat too.
 7. The pouch: `/ears` opens it. It also opens from the minimap addon drawer

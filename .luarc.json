@@ -11,7 +11,7 @@
   "workspace.library": [".cache/wow-api/Annotations/Core"],
   "workspace.ignoreDir": [".cache", ".release", ".luarocks", "spec", "scripts", "Libs", ".claude/worktrees"],
   "workspace.checkThirdParty": false,
-  "diagnostics.globals": ["EarCollectorDB", "SLASH_EARCOLLECTOR1", "SLASH_EARCOLLECTOR2"],
+  "diagnostics.globals": ["EarCollectorDB", "EarCollectorCharDB", "SLASH_EARCOLLECTOR1", "SLASH_EARCOLLECTOR2"],
   "diagnostics.severity": {
     "undefined-global": "Error",
     "undefined-field": "Error",

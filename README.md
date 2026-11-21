@@ -18,6 +18,40 @@ a Ledger of totals and a list of Rivals. When an enemy player kills you three
 times, their next ear is a Legendary Vengeance ear. Its options are in
 Options > AddOns > Ear Collector.
 
+## Installing
+
+1. Download `EarCollector-<version>.zip` from this repository's Releases page.
+   (CurseForge and Wago listings are planned.)
+2. Unzip it into `World of Warcraft/_<flavor>_/Interface/AddOns/`, so that you
+   have `Interface/AddOns/EarCollector/EarCollector.toc`.
+3. Start the game, or `/reload` if it's running. On the AddOns screen, Ear
+   Collector should be listed and enabled.
+
+To update, delete the old `EarCollector` folder and unzip the new one. Your
+data is saved outside the addon folder, so it survives updates. Each character
+has its own collection (`WTF/Account/<account>/<realm>/<character>/SavedVariables/EarCollector.lua`);
+settings are shared by all your characters (`WTF/Account/<account>/SavedVariables/EarCollector.lua`).
+
+## Grades
+
+| Grade | When |
+|---|---|
+| Poor (grey) | The victim was 10 or more levels below you. No honor, no assists. |
+| Common (white) | 5 to 9 levels below you |
+| Uncommon (green) | A fair fight |
+| Rare (blue) | 3 or more levels above you |
+| Legendary (orange) | Vengeance: they had killed you 3 or more times since you last killed them |
+
+Killing the same player again within 10 minutes adds to that ear's count
+instead of dropping a new one (the window is in the options).
+
+## Rivals
+
+The Rivals tab lists everyone you've taken an ear from or died to. Marks:
+**Avenge** (vengeance owed: their next ear is Legendary), **Nemesis** (they've
+killed you more often than you've killed them) and **Prey** (you've killed them
+three or more times, and they've never killed you).
+
 ## Commands
 
 | Command | What it does |
@@ -34,7 +68,10 @@ Options > AddOns > Ear Collector.
 
 The pouch also opens from the minimap addon drawer, a key binding (Key
 Bindings > AddOns > Ear Collector), your bags, and by clicking an ear's name in
-chat.
+chat. Escape closes it.
+
+Found a bug? `/ears errors` lists what the addon caught; please include it in
+the report.
 
 ## Installing a development copy
 

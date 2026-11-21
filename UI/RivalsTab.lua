@@ -42,12 +42,7 @@ local function pageCount()
 end
 
 local function classHex(token)
-	local color = type(token) == "string" and C_ClassColor.GetClassColor(token)
-	local hex = color and color:GenerateHexColor()
-	if type(hex) == "string" and hex:find("^%x%x%x%x%x%x%x%x$") then
-		return hex
-	end
-	return "ffffffff"
+	return Chat.ClassHex(token) or "ffffffff"
 end
 
 --- The tooltip for a rival, as lines like Pouch.TooltipLines. Pure, for specs.
@@ -63,10 +58,7 @@ function RivalsTab.TooltipLines(rival)
 	local fullName = ear.surname and ("%s %s"):format(rival.name, ear.surname) or rival.name
 	add(("|c%s%s|r"):format(classHex(ear.class), fullName))
 	local race = ear.raceName or ear.race or ""
-	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
-	if atlas then
-		race = ("|A:%s:14:14|a %s"):format(atlas, race)
-	end
+	race = Chat.RaceIcon(ear.race, ear.sex) .. race
 	local class = ear.className or ear.class or ""
 	add((("Level %s %s %s"):format(ear.level and tostring(ear.level) or "??", race, class):gsub("%s+$", "")))
 	add(" ")
@@ -117,11 +109,7 @@ local function showTooltip(row)
 	if not row.rival then
 		return
 	end
-	GameTooltip:SetOwner(row, "ANCHOR_RIGHT")
-	for _, line in ipairs(RivalsTab.TooltipLines(row.rival)) do
-		GameTooltip:AddLine(line.text, line.r, line.g, line.b, true)
-	end
-	GameTooltip:Show()
+	Chat.ShowTooltip(row, "ANCHOR_RIGHT", RivalsTab.TooltipLines(row.rival))
 end
 
 local function hideTooltip(row)
