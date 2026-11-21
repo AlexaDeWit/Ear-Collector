@@ -59,6 +59,9 @@ function Database.Migrate(saved)
 	if type(db.stats.hiddenKills) ~= "number" then
 		db.stats.hiddenKills = 0
 	end
+	if type(db.stats.unnamedHonorKills) ~= "number" then
+		db.stats.unnamedHonorKills = 0
+	end
 	db.settings = tableOrNew(db.settings)
 	for key, value in pairs(Database.DEFAULT_SETTINGS) do
 		if type(db.settings[key]) ~= type(value) then

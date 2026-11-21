@@ -2,8 +2,9 @@
 
 A World of Warcraft addon for **WoW Forever only** (Interface `16001`, the
 Classic-style game on the modern Retail engine). It records the enemy players
-you or your group kill in the open world as Diablo-style "ears". Battlegrounds,
-arenas and other instances never count: group kills there would be noise.
+you or your group kill in the open world as Diablo-style "ears", plus assists
+(someone outside your group lands the blow while you earn honorable-kill credit).
+Battlegrounds and other instances never count: kills there would be noise.
 
 The game client can't run here. Correctness comes from the headless checks
 below, then a human test in game.
@@ -89,6 +90,17 @@ addon. Treat an escaped error as a serious bug.
   (`C_PartyInfo.IsGUIDInGroup`; the global `IsGUIDInGroup` is only a
   deprecation shim on Forever) or a group member's pet (`partypetN`/`raidpetN`).
   See `ns.ClassifyKiller`.
+- **Assists** (`Core/Assists.lua`, `Detectors/HonorKill.lua`). There's no damage
+  data, so the evidence is timing:
+  - An honorable-kill (HK) step in `GetPVPLifetimeStats()`, signalled by
+    `PLAYER_PVP_KILLS_CHANGED`, is matched to an enemy player's `UNIT_DIED` (or
+    an outside-group `PARTY_KILL`) within `Assists.WINDOW` seconds.
+  - A credit next to a group kill is used up by it.
+  - More deaths than credits means nobody is named, and the credit counts in
+    `stats.unnamedHonorKills`.
+  - Matching runs `WINDOW + 0.5` seconds later via `C_Timer.After`, because the
+    events can arrive in any order.
+  - Grey-level kills give no honor, so they never become assists.
 - Use `C_PvP.GetZonePVPInfo()`, not the deprecated global `GetZonePVPInfo`.
 - Race icons are atlases `raceicon-<race>-<male|female>` (Blizzard's
   `GetRaceAtlas` in `Blizzard_SharedXML`). `Scourge` maps to `undead`. Forever's
@@ -123,7 +135,10 @@ addon. Treat an escaped error as a serious bug.
 | `Core/Database.lua` | SavedVariables migrate/repair |
 | `Core/Context.lua` | open-world decision; secret-safe reads |
 | `Core/Ears.lua` | pure grading and recording logic |
-| `Detectors/PartyKill.lua` | the kill detector |
+| `Core/Assists.lua` | pure assist matching (honor credit to deaths) |
+| `Detectors/Shared.lua` | victim details, debug trace, `ns.Collect` |
+| `Detectors/PartyKill.lua` | kills by you, your pet, your group |
+| `Detectors/HonorKill.lua` | assists: `UNIT_DIED` + honorable-kill steps |
 | `UI/Chat.lua`, `UI/Slash.lua` | output and `/ears` |
 
 Keep game-touching code thin and decisions in plain functions that specs call directly.
@@ -136,6 +151,8 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 - `wow.loadAddon("EarCollector.toc", { EarCollectorDB = saved })` loads files in
   TOC order with `(addonName, ns)`, then fires `ADDON_LOADED`.
 - `wow.fireEvent(...)` dispatches an event. `wow.slash("/ears recent")` runs a command.
+- `wow.advance(seconds)` moves both clocks and runs due `C_Timer` callbacks.
+  `wow.honorableKill(n)` bumps the HK count and fires `PLAYER_PVP_KILLS_CHANGED`.
 - `wow.secret()` makes a secret value.
 - `wow.replay(dofile("spec/fixtures/x.lua"))` plays an event sequence. In a
   fixture, `"<secret>"` becomes a secret value, which matches how `/ears debug`

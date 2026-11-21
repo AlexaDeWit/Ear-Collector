@@ -2,7 +2,8 @@
 
 A World of Warcraft addon for **WoW Forever** that collects an ear from every
 enemy player you or your group kill in the open world, like the ears that PvP
-kills dropped in Diablo II.
+kills dropped in Diablo II. Assists count too: when someone outside your group
+lands the killing blow and you earn honorable-kill credit, you still get the ear.
 
 Kills in battlegrounds, arenas and other instances don't count, so your
 collection stays a record of real world PvP.

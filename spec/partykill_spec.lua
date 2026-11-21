@@ -145,7 +145,10 @@ describe("PARTY_KILL detection", function()
 		for _, entry in ipairs(ns.db.debugLog) do
 			decisions[#decisions + 1] = entry.decision
 		end
-		assert.are.same({ "hidden by the client", "not you or your group", "new ear (you)" }, decisions)
+		assert.are.same(
+			{ "hidden by the client", "not you or your group: assist candidate", "new ear (you)" },
+			decisions
+		)
 		assert.are.equal("<secret>", ns.db.debugLog[1].target)
 		assert.are.equal("none", ns.db.debugLog[3].restrictions)
 	end)

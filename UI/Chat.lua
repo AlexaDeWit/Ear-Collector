@@ -50,6 +50,8 @@ function Chat.Announce(ear, isNew)
 		local by = ""
 		if ear.by == "group" then
 			by = ear.killer and (" Killing blow: %s."):format(ear.killer) or " Killing blow: your group."
+		elseif ear.by == "assist" then
+			by = " Assist."
 		end
 		Chat.Print(("You collected %s (%s).%s"):format(Chat.EarName(ear), quality.name, by))
 	else

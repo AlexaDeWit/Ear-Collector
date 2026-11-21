@@ -12,6 +12,9 @@ Core\Events.lua
 Core\Database.lua
 Core\Context.lua
 Core\Ears.lua
+Core\Assists.lua
 UI\Chat.lua
+Detectors\Shared.lua
 Detectors\PartyKill.lua
+Detectors\HonorKill.lua
 UI\Slash.lua

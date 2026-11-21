@@ -35,7 +35,13 @@ function commands.summary(db)
 		return
 	end
 	local week = Ears.CountSince(db, GetServerTime() - WEEK)
-	Chat.Print(("%d ears collected, %d in the last 7 days."):format(total, week))
+	local assists = 0
+	for _, ear in ipairs(db.ears) do
+		if ear.by == "assist" then
+			assists = assists + 1
+		end
+	end
+	Chat.Print(("%d ears collected (%d assists), %d in the last 7 days."):format(total, assists, week))
 	Chat.Print("Latest: " .. describeEar(db.ears[total]))
 end
 

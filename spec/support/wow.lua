@@ -71,7 +71,10 @@ function wow.reset(overrides)
 		mapID = 1424,
 		zone = "Hillsbrad Foothills",
 		subzone = "Tarren Mill",
-		now = 1795293660,
+		now = 1795293660, -- GetServerTime(), seconds
+		clock = 5000, -- GetTime(), seconds since the client started
+		timers = {}, -- pending C_Timer.After callbacks
+		lifetimeHonorableKills = 120,
 		players = {}, -- guid -> { name, realm (the surname on Forever), class, race, sex, level }
 		group = {}, -- guid -> true for players in your party/raid
 		units = {}, -- extra unit tokens -> guid, e.g. pet = "Pet-...", partypet1 = "Pet-..."
@@ -173,6 +176,18 @@ function wow.reset(overrides)
 	_G.GetServerTime = function()
 		return state.now
 	end
+	_G.GetTime = function()
+		return state.clock
+	end
+	-- Returns lifetimeHonorableKills, lifetimeMaxPVPRank.
+	_G.GetPVPLifetimeStats = function()
+		return state.lifetimeHonorableKills, 0
+	end
+	_G.C_Timer = {
+		After = function(seconds, callback)
+			state.timers[#state.timers + 1] = { due = state.clock + seconds, fn = callback }
+		end,
+	}
 	_G.print = function(...)
 		local parts = {}
 		for i = 1, select("#", ...) do
@@ -218,6 +233,33 @@ function wow.fireEvent(event, ...)
 			handler(f, event, ...)
 		end
 	end
+end
+
+--- Let `seconds` pass: both clocks move and due C_Timer callbacks run, in order.
+function wow.advance(seconds)
+	state.clock = state.clock + seconds
+	state.now = state.now + math.floor(seconds)
+	local due, waiting = {}, {}
+	for _, timer in ipairs(state.timers) do
+		if timer.due <= state.clock then
+			due[#due + 1] = timer
+		else
+			waiting[#waiting + 1] = timer
+		end
+	end
+	state.timers = waiting
+	table.sort(due, function(a, b)
+		return a.due < b.due
+	end)
+	for _, timer in ipairs(due) do
+		timer.fn()
+	end
+end
+
+--- Your honorable-kill count goes up by `n`, as the client reports it.
+function wow.honorableKill(n)
+	state.lifetimeHonorableKills = state.lifetimeHonorableKills + (n or 1)
+	wow.fireEvent("PLAYER_PVP_KILLS_CHANGED", "player")
 end
 
 --- Run a slash command as if the player typed it.

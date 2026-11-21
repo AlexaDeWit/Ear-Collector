@@ -37,13 +37,14 @@ Then, on the PvP ruleset in a contested zone, note what prints for each case:
 6. An ally outside your group finishes an enemy you were fighting.
 7. A hunter feigns death.
 
-## T2: honorable kills (for a possible "assist" tier)
+## T2: honorable kills (how assists are detected)
 
 ```
 /run local f=CreateFrame("Frame")f:RegisterEvent("PLAYER_PVP_KILLS_CHANGED")f:RegisterEvent("CHAT_MSG_COMBAT_HONOR_GAIN")f:SetScript("OnEvent",function(_,e,m)print(format("%.1f",GetTime()),e,S(GetPVPSessionStats()),S(GetPVPLifetimeStats()),S(m))end)
 ```
 
-Repeat T1 cases 1, 3 and 6, and kill a grey-level enemy. For each, note:
+Repeat T1 cases 1, 3 and 6, and kill a grey-level enemy. Case 6 should give an
+ear marked "Assist" (check with `/ears debug` on). For each, note:
 - whether an honorable kill (HK) arrives
 - whether the honor message names the victim
 - the time gap to PARTY_KILL and UNIT_DIED

@@ -15,7 +15,8 @@ ns.Ears = Ears
 ---@field sex number? 2 male, 3 female (GetPlayerInfoByGUID)
 ---@field level number? nil when the client doesn't say
 ---@field yourLevel number?
----@field by "you"|"group" who landed the killing blow: you (or your pet), or your group
+---@field by "you"|"group"|"assist" who landed the killing blow: you (or your pet), your group,
+--- or someone else while you earned honorable-kill credit
 ---@field killer string? the group member's name, when by == "group" and known
 ---@field mapID number?
 ---@field zone string?

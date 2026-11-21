@@ -6,59 +6,14 @@
 --
 -- Kills by you, your pet, anyone in your group or their pets all count: in the
 -- open world a group kill is a world PvP kill. Instanced PvP is excluded by
--- Context, where group kills would be noise.
+-- Context, where group kills would be noise. Kills where someone outside the
+-- group lands the blow can still become assists (Detectors/HonorKill.lua).
 local _, ns = ...
 
-local Context, Ears, Chat, Database = ns.Context, ns.Ears, ns.Chat, ns.Database
+local Context, Assists = ns.Context, ns.Assists
 local Readable = Context.Readable
 
 local MAX_PARTY_PETS, MAX_RAID_PETS = 4, 40
-
---- Text for the debug log that never inspects a secret value.
-local function describe(value)
-	if value == nil then
-		return "nil"
-	elseif issecretvalue(value) then
-		return "<secret>"
-	end
-	return tostring(value)
-end
-
--- Addon restrictions the client is enforcing right now, e.g. "Map,PvPMatch".
--- Logged with each decision so a hidden kill can be explained afterwards.
-local function activeRestrictions()
-	local active = {}
-	for _, name in ipairs({ "Combat", "PvPMatch", "Map" }) do
-		local kind = Enum.AddOnRestrictionType[name]
-		local on = kind and C_RestrictedActions.IsAddOnRestrictionActive(kind)
-		if Readable(on) and on then
-			active[#active + 1] = name
-		end
-	end
-	return #active > 0 and table.concat(active, ",") or "none"
-end
-
-local function trace(db, attackerGUID, targetGUID, decision)
-	if not db.settings.debug then
-		return
-	end
-	local entry = {
-		at = GetServerTime(),
-		attacker = describe(attackerGUID),
-		target = describe(targetGUID),
-		decision = decision,
-		restrictions = activeRestrictions(),
-	}
-	Database.LogDebug(db, entry)
-	Chat.Print(
-		("PARTY_KILL %s -> %s: %s [restrictions: %s]"):format(
-			entry.attacker,
-			entry.target,
-			decision,
-			entry.restrictions
-		)
-	)
-end
 
 local function unitIs(unit, guid)
 	local unitGUID = UnitGUID(unit)
@@ -103,60 +58,39 @@ function ns.OnPartyKill(attackerGUID, targetGUID)
 	if not db then
 		return
 	end
+	local function trace(decision)
+		ns.Trace(db, "PARTY_KILL", attackerGUID, targetGUID, decision)
+	end
 	if not Readable(attackerGUID) or not Readable(targetGUID) then
 		db.stats.hiddenKills = db.stats.hiddenKills + 1
-		trace(db, attackerGUID, targetGUID, "hidden by the client")
+		trace("hidden by the client")
 		return
 	end
 	if not targetGUID:find("^Player%-") then
-		trace(db, attackerGUID, targetGUID, "not a player")
+		trace("not a player")
 		return
 	end
 	local counts, reason = Context.Current(db.settings)
 	if not counts then
-		trace(db, attackerGUID, targetGUID, reason)
+		trace(reason)
+		return
+	end
+	local kill = ns.VictimDetails(targetGUID)
+	if not kill then
+		trace("victim details hidden")
 		return
 	end
 	local by, killerName = ns.ClassifyKiller(attackerGUID)
 	if not by then
-		trace(db, attackerGUID, targetGUID, "not you or your group")
+		-- Not ours, but if honor credit arrives for it, it's an assist.
+		Assists.NoteDeath(ns.assistTracker, { guid = targetGUID, t = GetTime(), kill = kill })
+		trace("not you or your group: assist candidate")
 		return
 	end
-
-	-- The 8th return (level) exists on Forever and Retail 12.x but may be nil.
-	-- The 7th is the realm on most clients, but Forever characters have a first
-	-- name and a surname instead of realms, and it holds the surname there.
-	local _, class, _, race, sex, name, nameSuffix, level = GetPlayerInfoByGUID(targetGUID)
-	if not Readable(name) then
-		trace(db, attackerGUID, targetGUID, "victim details hidden")
-		return
-	end
-	local suffix = Readable(nameSuffix) and nameSuffix ~= "" and nameSuffix or nil
-	local regionalNames = RegionalUniqueNamesEnabled()
-	local usesSurnames = Readable(regionalNames) and regionalNames
-	local yourLevel = UnitLevel("player")
-	local location = Context.Location()
-	local ear, isNew = Ears.Record(db, {
-		guid = targetGUID,
-		name = name,
-		surname = usesSurnames and suffix or nil,
-		realm = not usesSurnames and suffix or nil,
-		class = Readable(class) and class or nil,
-		race = Readable(race) and race or nil,
-		sex = Readable(sex) and sex or nil,
-		level = Readable(level) and level > 0 and level or nil,
-		yourLevel = Readable(yourLevel) and yourLevel > 0 and yourLevel or nil,
-		by = by,
-		killer = killerName,
-		mapID = location.mapID,
-		zone = location.zone,
-		subzone = location.subzone,
-	}, GetServerTime())
-
-	trace(db, attackerGUID, targetGUID, (isNew and "new ear" or "camped") .. " (" .. by .. ")")
-	if db.settings.announce then
-		Chat.Announce(ear, isNew)
-	end
+	kill.by, kill.killer = by, killerName
+	Assists.NoteGroupKill(ns.assistTracker, targetGUID, GetTime())
+	local _, isNew = ns.Collect(db, kill)
+	trace((isNew and "new ear" or "camped") .. " (" .. by .. ")")
 end
 
 ns.On("PARTY_KILL", ns.OnPartyKill)
