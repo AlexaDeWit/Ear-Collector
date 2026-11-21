@@ -95,15 +95,18 @@ and, if the annotations lack it, a declaration in `types/wow-forever.lua`.
 
 ## Fixtures from the game
 
-`wow.replay(dofile("spec/fixtures/<name>.lua"))` plays an event sequence. In a
-fixture, `"<secret>"` becomes a secret value, the way `/ears debug` logs one.
+`wow.replay(dofile("spec/fixtures/<name>.lua"))` plays an event sequence. A
+fixture's `setup` sets the fake client's state, and each step in `events` is an
+event (`{ "UNIT_DIED", guid }`), a state change (`{ set = { ... } }`) or a pause
+(`{ advance = seconds }`). `"<secret>"` becomes a secret value, the way
+`/ears debug` logs one.
 
 Recorded fixtures beat hand-written ones. To make one from a play session:
 
 1. Take `debugLog` from `WTF/Account/<ACCOUNT>/SavedVariables/EarCollector.lua`.
 2. Take the victims' details from the character's own `EarCollector.lua`
    (`ears` and `deaths`, by GUID) for the fixture's `setup.players`.
-3. Turn the differences in `t` into `wow.advance` steps.
+3. Turn the differences in `t` into `{ advance = seconds }` steps.
 4. Replace player names before committing.
 
 ## What headless checks can't tell you

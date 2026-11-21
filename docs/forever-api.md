@@ -62,9 +62,10 @@ confirm are marked, and `docs/in-game-tests.md` tests them.
   return, can be nil, and the pinned annotations list only 7.
 - **Surnames.** Forever characters have a first name and a surname instead of a
   realm (`RegionalUniqueNamesEnabled()` is true;
-  `Blizzard_FrameXMLUtil/Camelot/NameUtil.lua`). The 7th return of
-  `GetPlayerInfoByGUID` and the 2nd of `UnitName` then hold the surname, so
-  players are keyed by GUID, never by "Name-Realm".
+  `Blizzard_FrameXMLUtil/Camelot/NameUtil.lua`). `GetPlayerInfoByGUID` returns
+  both as the name, `"Brennus Themenace"`, with the realm empty (seen in game).
+  *Needs the game:* whether `UnitName` and the death recap's `sourceName` give
+  the full name too. Players are keyed by GUID, never by "Name-Realm".
 - **Where you are:** `IsInInstance()` returns `inInstance, instanceType`
   (`"none"`, `"pvp"`, `"arena"`, `"party"`, `"raid"`, `"scenario"`).
   `C_PvP.GetZonePVPInfo()` returns `"combat"` for a zone-wide battle and

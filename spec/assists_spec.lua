@@ -162,6 +162,18 @@ describe("Assists", function()
 			assert.matches("You collected .*Grimbash's Ear.*Assist%.", wow.state().printed[1])
 		end)
 
+		it("replays an assist recorded in Western Plaguelands", function()
+			wow.replay(dofile("spec/fixtures/western_plaguelands_assist.lua"))
+			assert.are.equal(1, #ns.db.ears)
+			local ear = ns.db.ears[1]
+			assert.are.equal("assist", ear.by)
+			assert.are.equal("Tobble Sparkwhistle", ear.name)
+			assert.is_nil(ear.surname)
+			assert.are.equal(3, ear.quality) -- 6 levels above you: Rare
+			assert.are.equal("Dalson's Tears", ear.subzone)
+			assert.matches("Tobble Sparkwhistle's Ear.*%(Rare%)%. Assist%.", wow.state().printed[1])
+		end)
+
 		it("collects an assist when PARTY_KILL names a killer outside the group", function()
 			wow.fireEvent("PARTY_KILL", ALLY, VELARIA)
 			wow.honorableKill()

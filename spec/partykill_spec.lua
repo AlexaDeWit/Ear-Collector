@@ -161,7 +161,7 @@ describe("PARTY_KILL detection", function()
 		assert.matches("%[restrictions: PvPMatch,Map%]", wow.state().printed[1])
 	end)
 
-	it("replays a recorded open-world skirmish", function()
+	it("replays a hand-written open-world skirmish", function()
 		wow.replay(dofile("spec/fixtures/tarren_mill_skirmish.lua"))
 		local names = {}
 		for _, ear in ipairs(ns.db.ears) do
