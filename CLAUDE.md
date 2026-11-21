@@ -27,6 +27,8 @@ of every piece of work. It's the project's memory across sessions.
   - `format`: StyLua
   - `test`: busted
 - `scripts/check.sh --fix` formats first. `scripts/check.sh luals test` runs only the named steps.
+- `scripts/build-zip.sh` builds an install zip of the current commit for testing
+  in game (what the release packager would publish, version `dev-<commit>`).
 - "missing tool" means run `scripts/setup-tools.sh`. In cloud sessions the
   SessionStart hook runs it already. Its first lines pin every tool version and
   the WoW Forever build the checks use.
