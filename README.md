@@ -22,6 +22,8 @@ icon. It has not yet been tested in game.
 | `/ears stats` | Totals and your latest ear |
 | `/ears recent [n]` | Your newest ears (default 5) |
 | `/ears bags on\|off` | Open the pouch with your bags (on by default) |
+| `/ears toast on\|off` | The pop-up when you collect an ear |
+| `/ears sound on\|off` | The pop-up's loot sound |
 | `/ears debug` | Print every killing blow the addon sees, and why it did or didn't count |
 | `/ears errors` | Errors the addon caught. It keeps running; include these in bug reports |
 

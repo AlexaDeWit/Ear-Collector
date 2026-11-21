@@ -16,6 +16,8 @@ Database.DEFAULT_SETTINGS = {
 	announce = true, -- print a chat line when you collect an ear
 	debug = false, -- print and log every PARTY_KILL decision (see /ears debug)
 	openWithBags = true, -- the pouch opens and closes with your bags
+	toast = true, -- pop up a toast when you collect an ear
+	toastSound = true, -- and play a loot sound with it
 }
 
 Database.DEBUG_LOG_SIZE = 100

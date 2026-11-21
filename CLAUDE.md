@@ -163,6 +163,12 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
   - The window uses `BasicFrameTemplateWithInset` (`.TitleText`, `.CloseButton`).
     Escape doesn't close it yet: adding to `UISpecialFrames` writes a Blizzard
     global, so it's left out until checked for taint.
+- **Loot toast** (`UI/Toast.lua`): our own frames on `UIParent`, not Blizzard's
+  alert system, which would risk taint. Fading uses animation groups, not
+  `OnUpdate`. Sounds are `SOUNDKIT` names from Forever's `SoundKitConstants`
+  (`UI_RAID_LOOT_TOAST_LESSER_ITEM_WON`, `UI_EPICLOOT_TOAST`,
+  `UI_LEGENDARY_LOOT_TOAST`), played with `PlaySound(id, "SFX")`. Only new ears
+  get a toast; camped repeats don't.
 - Death recap (`C_DeathRecap.GetRecapEvents`) exposes `sourceName` for what
   killed you. It's the likely source for future Rivals/Vengeance features.
   Its behaviour in PvP is unverified.
@@ -198,6 +204,7 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `UI/Chat.lua` | chat output, ear links, race icons |
 | `UI/Art.lua` | race to ear-texture mapping |
 | `UI/Pouch.lua` | the Ear Pouch window (built on first open) |
+| `UI/Toast.lua` | the loot toast when you collect an ear |
 | `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
 | `UI/Slash.lua` | `/ears` commands |
 | `Bindings.xml` | the "Toggle Ear Pouch" key binding |
@@ -223,6 +230,9 @@ Keep game-touching code thin and decisions in plain functions that specs call di
   and `:Wheel(delta)` act like the player. `GameTooltip.lines` records tooltip
   text. `wow.clickLink(link)` clicks a chat link, and
   `wow.pressBinding("EARCOLLECTOR_TOGGLE")` runs a `Bindings.xml` body.
+  `CreateAnimationGroup()` returns a group with `Play`/`Stop`/`IsPlaying`, and
+  `wow.finishAnimations()` completes playing groups and fires `OnFinished`.
+  `PlaySound` calls are recorded in `wow.state().sounds`.
 - `wow.replay(dofile("spec/fixtures/x.lua"))` plays an event sequence. In a
   fixture, `"<secret>"` becomes a secret value, which matches how `/ears debug`
   logs one.

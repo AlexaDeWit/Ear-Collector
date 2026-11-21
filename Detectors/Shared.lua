@@ -104,5 +104,8 @@ function ns.Collect(db, kill)
 	if ns.Pouch then
 		ns.Pouch.Refresh()
 	end
+	if isNew and ns.Toast then
+		ns.Toast.Show(ear)
+	end
 	return ear, isNew
 end

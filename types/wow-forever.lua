@@ -30,3 +30,7 @@ LOCALIZED_CLASS_NAMES_MALE = {}
 --- True when any bag frame is open. Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua.
 ---@return boolean
 function IsAnyBagOpen() end
+
+--- Sound kit IDs by name, for PlaySound. Blizzard_SharedXML/Mainline/SoundKitConstants.lua.
+---@type table<string, number>
+SOUNDKIT = {}
