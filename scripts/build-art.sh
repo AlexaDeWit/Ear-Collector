@@ -1,19 +1,22 @@
 #!/usr/bin/env bash
-# Rebuild the ear textures in Media/Ears/ from the SVG sources in art/ears/.
-# Run after changing any SVG, and commit both. The `art` step of
-# scripts/check.sh fails if a source changed without a rebuild.
+# Repaint the ear textures in Media/Ears/ from art/paint_ears.py, the source of
+# the art. Run after changing it, and commit both. The `art` step of
+# scripts/check.sh fails if the painter changed without a rebuild.
 #
-# Needs node with Playwright (preinstalled in Claude Code cloud sessions) and
-# python3 with Pillow.
+# Needs python3 with numpy and Pillow. The output is deterministic (fixed seed).
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-SIZE=64      # Blizzard's own icons are 64x64
-RENDER=256   # render larger, then downscale for clean edges
-tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+SIZE=128 # twice Blizzard's 64x64 icons, so detail survives at the pouch's slot size
 
-node scripts/render-ears.js art/ears "$tmp" "$RENDER"
-python3 scripts/png-to-tga.py "$tmp" Media/Ears "$SIZE"
-(cd art/ears && sha256sum -- *.svg) >Media/Ears/sources.sha256
-echo "Wrote Media/Ears/*.tga and Media/Ears/sources.sha256"
+rm -f Media/Ears/*.tga
+python3 art/paint_ears.py Media/Ears "$SIZE"
+{
+	echo "size $SIZE"
+	echo "source $(sha256sum art/paint_ears.py | cut -d' ' -f1) art/paint_ears.py"
+	for tga in Media/Ears/*.tga; do
+		echo "texture $(basename "$tga" .tga)"
+	done
+} >Media/Ears/manifest.txt
+rm -f Media/Ears/sources.sha256
+echo "Wrote Media/Ears/*.tga and Media/Ears/manifest.txt"

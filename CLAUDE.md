@@ -19,7 +19,7 @@ below, then a human test in game.
   - `names`: event and script-handler names against Blizzard's Forever docs
   - `luals`: lua-language-server with WoW API annotations
   - `xml`: XML against `UI.xsd`
-  - `art`: ear textures exist, are valid 64x64 32-bit TGAs, and match their SVG sources
+  - `art`: ear textures exist, are valid 32-bit TGAs, and match the painter that made them
   - `format`: StyLua
   - `test`: busted
 - `scripts/check.sh --fix` formats first. `scripts/check.sh luals test` runs only the named steps.
@@ -69,13 +69,22 @@ addon. Treat an escaped error as a serious bug.
 
 ## Ear art
 
-- Sources are SVGs in `art/ears/`, one per race plus `generic.svg` for unknown
-  races. They share one structure: shadow, skin gradient, inner ear, rim
-  highlight, and an optional race detail.
-- `scripts/build-art.sh` renders them with Chromium (Playwright), downscales
-  with Pillow, and writes `Media/Ears/<name>.tga` plus `Media/Ears/sources.sha256`.
-  Run it after changing an SVG and commit both. The `art` check fails on a
-  stale texture.
+- `art/paint_ears.py` is the source of the art: it paints each race's ear
+  procedurally (numpy + Pillow, fixed seed, so rebuilds are byte-identical).
+  - Anatomy is control points: outline, helix rim, antihelix, concha, canal,
+    tragus, antitragus and lobe. The shapes become a height map.
+  - The height map is lit from the top left: normals, diffuse and specular
+    light, ambient occlusion, and translucency at thin edges.
+  - Then skin mottling and pores, an outline for legibility, and blood along
+    the severed edge.
+  - Race features are separately lit layers: rings, the gnome's gear, undead
+    stitches, the Skyborne feather, the dwarf braid, tauren fur and beads.
+- `scripts/build-art.sh` writes `Media/Ears/<name>.tga` (128x128, uncompressed
+  32-bit) and `Media/Ears/manifest.txt` (size, painter hash, texture list). Run
+  it after changing the painter and commit both. The `art` check fails on a
+  stale, missing or malformed texture.
+- To look at the full-size renders while iterating:
+  `python3 art/paint_ears.py /tmp/ears 128 --preview /tmp/ears/png`.
 - `UI/Art.lua` maps race tokens to files (`Scourge` -> `undead`). WoW loads
   addon textures by path without the extension:
   `Interface\AddOns\EarCollector\Media\Ears\orc`.
@@ -183,7 +192,7 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
 | `UI/Slash.lua` | `/ears` commands |
 | `Bindings.xml` | the "Toggle Ear Pouch" key binding |
-| `art/ears/*.svg` -> `Media/Ears/*.tga` | ear art sources and the textures built from them |
+| `art/paint_ears.py` -> `Media/Ears/*.tga` | the ear painter and the textures it makes |
 
 Keep game-touching code thin and decisions in plain functions that specs call directly.
 

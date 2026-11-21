@@ -1,0 +1,12 @@
+size 128
+source cb2a6887ad1ed2cfa4db449a4b753efa2acade7cab122a2abc9c91cb3dfcb6fb art/paint_ears.py
+texture dwarf
+texture generic
+texture gnome
+texture human
+texture nightelf
+texture orc
+texture skyborne
+texture tauren
+texture troll
+texture undead
