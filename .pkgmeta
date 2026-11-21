@@ -1,0 +1,11 @@
+# BigWigsMods/packager configuration. Dotfiles and dot-directories are never packaged.
+package-as: EarCollector
+
+enable-nolib-creation: no
+
+ignore:
+  - spec
+  - scripts
+  - types
+  - CLAUDE.md
+  - README.md

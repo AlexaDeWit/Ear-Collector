@@ -1,0 +1,23 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.1",
+  "runtime.builtin": {
+    "debug": "disable",
+    "io": "disable",
+    "os": "disable",
+    "package": "disable",
+    "utf8": "disable"
+  },
+  "workspace.library": [".cache/wow-api/Annotations/Core"],
+  "workspace.ignoreDir": [".cache", ".release", ".luarocks", "spec", "scripts", "Libs"],
+  "workspace.checkThirdParty": false,
+  "diagnostics.globals": ["EarCollectorDB", "SLASH_EARCOLLECTOR1", "SLASH_EARCOLLECTOR2"],
+  "diagnostics.severity": {
+    "undefined-global": "Error",
+    "undefined-field": "Error",
+    "param-type-mismatch": "Error",
+    "missing-parameter": "Error",
+    "redundant-parameter": "Warning",
+    "deprecated": "Warning"
+  }
+}

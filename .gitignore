@@ -1,0 +1,6 @@
+# Tool data fetched by scripts/setup-tools.sh
+.cache/
+# Packager output
+.release/
+.luarocks/
+luacov.*
