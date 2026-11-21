@@ -35,6 +35,102 @@ function IsAnyBagOpen() end
 ---@type table<string, number>
 SOUNDKIT = {}
 
+-- Blizzard's Settings API, the parts the options page uses.
+-- Blizzard_Settings_Shared/Blizzard_Settings.lua (Settings.*), Blizzard_Category.lua
+-- (GetID), Blizzard_Setting.lua (GetValue/SetValue), Blizzard_SettingControls.lua
+-- (CreateSettingsListSectionHeaderInitializer), Blizzard_SharedXML/Shared/Slider/MinimalSlider.lua.
+
+---@class SettingsCategory
+local SettingsCategory = {}
+---@return integer
+function SettingsCategory:GetID() end
+
+---@class SettingsLayout
+local SettingsLayout = {}
+---@param initializer table
+function SettingsLayout:AddInitializer(initializer) end
+
+---@class SettingsSetting
+local SettingsSetting = {}
+---@return any
+function SettingsSetting:GetValue() end
+---@param value any
+---@param immediate boolean?
+function SettingsSetting:SetValue(value, immediate) end
+
+---@class SettingsSliderOptions
+local SettingsSliderOptions = {}
+---@param labelType integer a MinimalSliderWithSteppersMixin.Label value
+---@param formatter fun(value: number): string
+function SettingsSliderOptions:SetLabelFormatter(labelType, formatter) end
+
+Settings = {}
+
+---@param name string
+---@return SettingsCategory category
+---@return SettingsLayout layout
+function Settings.RegisterVerticalLayoutCategory(name) end
+
+---@param category SettingsCategory
+function Settings.RegisterAddOnCategory(category) end
+
+--- A setting stored in `tbl[key]`, read and written by Blizzard.
+---@param category SettingsCategory
+---@param variable string unique across all addons
+---@param key string the key in `tbl` (Blizzard: variableKey)
+---@param tbl table the saved table (Blizzard: variableTbl)
+---@param varType "boolean"|"number"|"string"
+---@param name string
+---@param default any
+---@return SettingsSetting
+function Settings.RegisterAddOnSetting(category, variable, key, tbl, varType, name, default) end
+
+--- A setting read and written through getValue/setValue (called inside securecall).
+---@param category SettingsCategory
+---@param variable string unique across all addons
+---@param variableType "boolean"|"number"|"string"
+---@param name string
+---@param defaultValue any
+---@param getValue fun(): any
+---@param setValue fun(value: any)
+---@return SettingsSetting
+function Settings.RegisterProxySetting(category, variable, variableType, name, defaultValue, getValue, setValue) end
+
+---@param category SettingsCategory
+---@param setting SettingsSetting
+---@param tooltip string?
+---@return table initializer
+function Settings.CreateCheckbox(category, setting, tooltip) end
+
+---@param minValue number
+---@param maxValue number
+---@param rate number? the step
+---@return SettingsSliderOptions
+function Settings.CreateSliderOptions(minValue, maxValue, rate) end
+
+---@param category SettingsCategory
+---@param setting SettingsSetting
+---@param options SettingsSliderOptions
+---@param tooltip string?
+---@return table initializer
+function Settings.CreateSlider(category, setting, options, tooltip) end
+
+--- Opens the Settings screen (C_SettingsUtil.OpenSettingsPanel, which has restrictions).
+---@param categoryID integer?
+---@param scrollToElementName string?
+function Settings.OpenToCategory(categoryID, scrollToElementName) end
+
+---@param name string
+---@param tooltip string?
+---@param newTagID any?
+---@return table initializer
+function CreateSettingsListSectionHeaderInitializer(name, tooltip, newTagID) end
+
+MinimalSliderWithSteppersMixin = {
+	---@enum MinimalSliderLabel
+	Label = { Left = 1, Right = 2, Top = 3, Min = 4, Max = 5 },
+}
+
 --- Names of frames that Escape hides: CloseSpecialWindows, run inside securecall
 --- by CloseAllWindows, the AddOnPost Escape handler.
 --- Blizzard_UIParentPanelManager/Shared/UIParentPanelManager.lua.

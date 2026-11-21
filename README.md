@@ -10,15 +10,18 @@ collection stays a record of real world PvP.
 
 ## Status
 
-Early development. The first version records open-world kills of enemy players
-by you, your pet or your group, and reports them in chat with the victim's race
-icon. It has not yet been tested in game.
+In development, and not yet tested in game. It records open-world kills of
+enemy players by you, your pet or your group, plus assists. Each ear has painted
+art for the victim's race and a grade by level gap. You get a chat line and a
+loot toast when you collect one, and your ears go in an Ear Pouch window. Its
+options are in Options > AddOns > Ear Collector.
 
 ## Commands
 
 | Command | What it does |
 |---|---|
 | `/ears` | Open or close your Ear Pouch |
+| `/ears options` | Open the options (also in Options > AddOns, or right-click Ear Collector in the minimap addon drawer) |
 | `/ears stats` | Totals and your latest ear |
 | `/ears recent [n]` | Your newest ears (default 5) |
 | `/ears bags on\|off` | Open the pouch with your bags (on by default) |

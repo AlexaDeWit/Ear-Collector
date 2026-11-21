@@ -32,6 +32,12 @@ function commands.pouch()
 	ns.Pouch.Toggle()
 end
 
+function commands.options()
+	ns.Options.Open()
+end
+commands.config = commands.options
+commands.settings = commands.options
+
 function commands.bags(db, args)
 	if args == "on" or args == "off" then
 		db.settings.openWithBags = args == "on"
@@ -127,6 +133,7 @@ end
 function commands.help()
 	Chat.Print(("version %s"):format(ns.version))
 	Chat.Print("/ears: open or close your Ear Pouch (also: minimap addon drawer, a key binding, your bags)")
+	Chat.Print("/ears options: open the options (also: Options > AddOns, or right-click in the minimap drawer)")
 	Chat.Print("/ears stats: totals and your latest ear")
 	Chat.Print("/ears recent [n]: your newest ears (default 5)")
 	Chat.Print("/ears debug: print every killing blow the addon sees, and why it did or didn't count")

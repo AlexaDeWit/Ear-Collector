@@ -24,5 +24,6 @@ Detectors\PartyKill.lua
 Detectors\HonorKill.lua
 UI\Pouch.lua
 UI\Toast.lua
+UI\Options.lua
 UI\Access.lua
 UI\Slash.lua

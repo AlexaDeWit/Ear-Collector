@@ -4,7 +4,7 @@
 std = "lua51"
 max_line_length = 120
 codes = true
-exclude_files = { ".cache/", ".release/", ".luarocks/", "Libs/", "types/" }
+exclude_files = { ".cache/", ".release/", ".luarocks/", "Libs/", "types/", ".claude/worktrees/" }
 not_globals = { "io", "package", "require", "dofile", "loadfile", "module", "debug" }
 
 -- Globals the addon writes: SavedVariables and slash-command registration.
@@ -33,6 +33,7 @@ read_globals = {
 	"C_Texture",
 	"C_Timer",
 	"CreateFrame",
+	"CreateSettingsListSectionHeaderInitializer",
 	"Enum",
 	"EventRegistry",
 	"GameTooltip",
@@ -42,11 +43,14 @@ read_globals = {
 	"GetServerTime",
 	"GetSubZoneText",
 	"GetTime",
+	"InCombatLockdown",
 	"IsAnyBagOpen",
 	"IsInInstance",
 	"LOCALIZED_CLASS_NAMES_MALE",
+	"MinimalSliderWithSteppersMixin",
 	"PlaySound",
 	"SOUNDKIT",
+	"Settings",
 	"RegionalUniqueNamesEnabled",
 	"UIParent",
 	"UISpecialFrames", -- the addon appends its pouch's name; see UI/Pouch.lua closeOnEscape
