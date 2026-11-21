@@ -106,10 +106,12 @@ end
 
 function commands.debug(db)
 	db.settings.debug = not db.settings.debug
-	Chat.Print(
-		db.settings.debug and "Debug on: every PARTY_KILL is printed and kept in EarCollectorDB.debugLog."
-			or "Debug off."
-	)
+	if not db.settings.debug then
+		Chat.Print("Debug off.")
+		return
+	end
+	Chat.Print("Debug on: kills, honorable kills and deaths are printed and saved in EarCollectorDB.debugLog.")
+	Chat.Print("It stays on, across /reload and logout, until you type /ears debug again.")
 end
 
 function commands.errors(db, args)
@@ -139,7 +141,7 @@ function commands.help()
 	Chat.Print("/ears options: open the options (also: Options > AddOns, or right-click in the minimap drawer)")
 	Chat.Print("/ears stats: totals and your latest ear")
 	Chat.Print("/ears recent [n]: your newest ears (default 5)")
-	Chat.Print("/ears debug: print every killing blow the addon sees, and why it did or didn't count")
+	Chat.Print("/ears debug: print and save each kill, honorable kill and death, and why it did or didn't count")
 	Chat.Print("/ears bags on|off: open the pouch with your bags")
 	Chat.Print("/ears toast on|off, /ears sound on|off: the pop-up when you collect an ear, and its sound")
 	Chat.Print("/ears errors: errors the addon caught (it keeps running); /ears errors clear")

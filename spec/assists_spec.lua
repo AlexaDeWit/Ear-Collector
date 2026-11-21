@@ -232,7 +232,11 @@ describe("Assists", function()
 			for _, entry in ipairs(ns.db.debugLog) do
 				decisions[#decisions + 1] = entry.event .. ": " .. entry.decision
 			end
-			assert.are.same({ "UNIT_DIED: assist candidate", "HONOR: new ear (assist)" }, decisions)
+			assert.are.same({
+				"UNIT_DIED: assist candidate",
+				"HONOR: +1 honorable kill(s), 121 lifetime",
+				"HONOR: new ear (assist)",
+			}, decisions)
 		end)
 
 		it("contains an error in the delayed matching", function()

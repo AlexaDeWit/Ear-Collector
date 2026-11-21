@@ -63,7 +63,7 @@ three or more times, and they've never killed you).
 | `/ears bags on\|off` | Open the pouch with your bags (on by default) |
 | `/ears toast on\|off` | The pop-up when you collect an ear |
 | `/ears sound on\|off` | The pop-up's loot sound |
-| `/ears debug` | Print every killing blow the addon sees, and why it did or didn't count |
+| `/ears debug` | Print and save each kill, honorable kill and death the addon sees, and why it did or didn't count. For testing and bug reports |
 | `/ears errors` | Errors the addon caught. It keeps running; include these in bug reports |
 
 The pouch also opens from the minimap addon drawer, a key binding (Key

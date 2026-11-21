@@ -44,7 +44,7 @@ describe("options page", function()
 			end
 			assert.are.same({
 				"When you collect an ear",
-				"Announce in chat",
+				"Note it in your chat",
 				"Show a toast",
 				"Play a loot sound",
 				"Ear Pouch",

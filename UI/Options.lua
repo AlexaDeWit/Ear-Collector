@@ -33,8 +33,9 @@ Options.SECTIONS = {
 		checkboxes = {
 			{
 				key = "announce",
-				label = "Announce in chat",
-				tooltip = "Print a line in chat, with a link to the ear, when you collect one.",
+				label = "Note it in your chat",
+				tooltip = "Print a line in your chat window when you collect an ear. Only you see it. "
+					.. "Click the ear's name in it to open the pouch on that ear.",
 			},
 			{
 				key = "toast",

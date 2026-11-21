@@ -5,7 +5,7 @@ Read this first in a new session, together with `CLAUDE.md` (how to work) and
 next, and what's waiting on the user. It's the memory that survives a session
 ending or a conversation being compacted.
 
-Last updated: 2026-11-21 (after merging PRs #7 to #9).
+Last updated: 2026-11-21 (after merging PRs #7 to #9; debug log made ready for in-game tests).
 
 ## Decisions made with the user
 
@@ -42,8 +42,9 @@ Last updated: 2026-11-21 (after merging PRs #7 to #9).
 - **PR #7** (merged): the pouch's tabs, with the Ledger and the Rivals list.
 - **PR #8** (merged): deaths from the death recap, the Rivals "Deaths" column, Nemesis, and Legendary Vengeance ears.
 - **PR #9** (merged): per-character data, fixes from an adversarial review of everything, README install section.
+- **PR #10** (open): `scripts/build-zip.sh`; the debug log made ready for in-game tests (millisecond times, honor steps, names in view at a death, NPC and dungeon lines capped, 300 entries); a dungeon's hidden mob kills no longer count as hidden kills; the chat option renamed "Note it in your chat" (the user asked whether the "link" shares anything: it doesn't, the line is only in their own chat); the test procedure in `docs/in-game-tests.md`.
 
-Every planned v1.0 feature is built and on `main`. What's left is in-game verification, CI, and the release. The user has a test zip of `main` at `9f19d0b`; `scripts/build-zip.sh` makes another.
+Every planned v1.0 feature is built and on `main`. What's left is in-game verification, CI, and the release. The user tests with a zip of PR #10's branch; `scripts/build-zip.sh` makes another.
 
 ## Waiting on the user
 
@@ -64,7 +65,9 @@ Every planned v1.0 feature is built and on `main`. What's left is in-game verifi
 
 4. **Release**, once CI is on and the in-game tests pass: push a tag (`v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
 
-When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fixtures/`, replayed with `wow.replay`), fix what fails, and keep the in-game sheet in step.
+The user's procedure is the "Procedure" and "Reporting back" sections of `docs/in-game-tests.md`: `/ears debug` on, play, `/reload`, then send the account file (debug log) and the character file (victim details).
+
+When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fixtures/`, replayed with `wow.replay`; `t` gives the gaps for `wow.advance`, the character file's ears give `setup.players`), anonymise names, fix what fails, and keep the in-game sheet in step.
 
 ## Next up (in order)
 
