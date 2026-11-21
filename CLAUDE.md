@@ -9,6 +9,10 @@ Battlegrounds and other instances never count: kills there would be noise.
 The game client can't run here. Correctness comes from the headless checks
 below, then a human test in game.
 
+**Start here:** `docs/STATUS.md` has the decisions made with the user, what's
+done, what's waiting on the user, and the ordered backlog. Update it at the end
+of every piece of work. It's the project's memory across sessions.
+
 ## Checks: run before you call anything done
 
 - `scripts/check.sh` runs every check in about 3 seconds. CI runs the same
@@ -19,6 +23,7 @@ below, then a human test in game.
   - `names`: event and script-handler names against Blizzard's Forever docs
   - `luals`: lua-language-server with WoW API annotations
   - `xml`: XML against `UI.xsd`
+  - `art`: ear textures exist, are valid 32-bit TGAs, and match the painter that made them
   - `format`: StyLua
   - `test`: busted
 - `scripts/check.sh --fix` formats first. `scripts/check.sh luals test` runs only the named steps.
@@ -65,6 +70,35 @@ addon. Treat an escaped error as a serious bug.
 - Tests: every new failure path gets a spec. `spec/errors_spec.lua` shows how
   to assert an error is contained. `wow.secret()` makes a value that errors when
   misused, so specs catch unguarded access.
+
+## Ear art
+
+- `art/paint_ears.py` is the source of the art: it paints each race's ear
+  procedurally (numpy + Pillow, fixed seed, so rebuilds are byte-identical).
+  - Anatomy is control points: outline, helix rim, antihelix, concha, canal,
+    tragus, antitragus and lobe. The shapes become a height map.
+  - The height map is lit from the top left: normals, diffuse and specular
+    light, ambient occlusion, and translucency at thin edges.
+  - Then skin mottling and pores, an outline for legibility, and blood along
+    the severed edge.
+  - Race features are separately lit layers: rings, the gnome's gear, undead
+    stitches, the Skyborne feather, the dwarf braid, tauren fur and beads.
+  - Each race comes in 4 skin tones (`TONES`; tauren: fur colours; dwarf hair
+    varies too), written as `Media/Ears/<race>-<tone>.tga`, plus `generic.tga`.
+- `scripts/build-art.sh` writes `Media/Ears/<name>.tga` (128x128, uncompressed
+  32-bit) and `Media/Ears/manifest.txt` (size, painter hash, texture list). Run
+  it after changing the painter and commit both. The `art` check fails on a
+  stale, missing or malformed texture.
+- To look at the full-size renders while iterating:
+  `python3 art/paint_ears.py /tmp/ears 128 --preview /tmp/ears/png`.
+- `UI/Art.lua` maps race tokens to files (`Scourge` -> `undead`). The game
+  doesn't expose skin tone, so `Art.Tone(guid)` picks one from a hash of the
+  victim's GUID: random across players, stable for each player.
+  `Art.TONES` must match the painter (a spec checks). WoW loads addon
+  textures by path without the extension:
+  `Interface\AddOns\EarCollector\Media\Ears\orc-2`.
+- Pouch slots show the ear art. Tooltips and chat lines use Blizzard's race
+  icons. The minimap drawer icon is `Media/Ears/human-2`.
 
 ## GitHub workflow files: the human moves them
 
@@ -162,10 +196,12 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `Detectors/PartyKill.lua` | kills by you, your pet, your group |
 | `Detectors/HonorKill.lua` | assists: `UNIT_DIED` + honorable-kill steps |
 | `UI/Chat.lua` | chat output, ear links, race icons |
+| `UI/Art.lua` | race to ear-texture mapping |
 | `UI/Pouch.lua` | the Ear Pouch window (built on first open) |
 | `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
 | `UI/Slash.lua` | `/ears` commands |
 | `Bindings.xml` | the "Toggle Ear Pouch" key binding |
+| `art/paint_ears.py` -> `Media/Ears/*.tga` | the ear painter and the textures it makes |
 
 Keep game-touching code thin and decisions in plain functions that specs call directly.
 
@@ -233,7 +269,7 @@ The basic checklist:
 6. No "action blocked" or taint messages, in combat or out. Open and close
    your bags in combat too.
 7. The pouch: `/ears` opens it. It also opens from the minimap addon drawer
-   (with a bag icon), from Key Bindings > AddOns > Ear Collector, from your bags
+   (with an ear icon), from Key Bindings > AddOns > Ear Collector, from your bags
    (B), and by clicking an ear name in chat. It keeps its position after a drag
    and `/reload`.
 8. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.

@@ -4,7 +4,7 @@
 -- in combat.
 local addonName, ns = ...
 
-local Chat, Errors = ns.Chat, ns.Errors
+local Art, Chat, Errors = ns.Art, ns.Chat, ns.Errors
 
 local Pouch = {}
 ns.Pouch = Pouch
@@ -14,7 +14,6 @@ Pouch.ROWS = 5
 Pouch.PER_PAGE = Pouch.COLUMNS * Pouch.ROWS
 
 local SLOT, GAP, PAD = 36, 4, 12
-local FALLBACK_ICON = "Interface\\Icons\\INV_Misc_QuestionMark"
 local GREY = { 0.62, 0.62, 0.62 }
 
 ---@class EarCollector.PouchFrame : Frame
@@ -88,6 +87,10 @@ function Pouch.TooltipLines(ear)
 	end
 	local level = ear.level and tostring(ear.level) or "??"
 	local race = ear.raceName or ear.race or ""
+	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
+	if atlas then
+		race = ("|A:%s:14:14|a %s"):format(atlas, race)
+	end
 	add((("Level %s %s %s"):format(level, race, classColored(ear)):gsub("  ", " ")))
 	add(" ")
 	if ear.subzone then
@@ -216,12 +219,7 @@ local function fillSlot(slot, ear)
 		return
 	end
 	slot:SetAlpha(1)
-	local atlas = Chat.RaceAtlas(ear.race, ear.sex)
-	if atlas then
-		slot.icon:SetAtlas(atlas)
-	else
-		slot.icon:SetTexture(FALLBACK_ICON)
-	end
+	slot.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	slot.icon:SetDesaturated(ear.quality == 0)
 	slot.icon:Show()
 	local quality = ns.QUALITY[ear.quality] or ns.QUALITY[2]
