@@ -1,5 +1,6 @@
 -- Ways to open the Ear Pouch, besides /ears (UI/Slash.lua):
---   * the minimap addon drawer (TOC AddonCompartmentFunc / OnEnter / OnLeave),
+--   * the minimap addon drawer (TOC AddonCompartmentFunc / OnEnter / OnLeave;
+--     right-click opens the options instead),
 --   * a key binding (Bindings.xml calls EarCollector_TogglePouch),
 --   * opening your bags (post-hooks on Blizzard's bag functions; setting openWithBags),
 --   * clicking an ear link in chat (EventRegistry "SetItemRef" for "addon" links).
@@ -17,9 +18,14 @@ EarCollector_TogglePouch = Errors.Wrap("key binding", function()
 	Pouch.Toggle()
 end)
 
--- Minimap addon drawer. The client calls these globals as (addonName, mouseButton | button).
-EarCollector_OnAddonCompartmentClick = Errors.Wrap("minimap drawer", function()
-	Pouch.Toggle()
+-- Minimap addon drawer. The client calls these globals as (addonName, mouseButton | button):
+-- the click passes the mouse button's name (Blizzard_Minimap/Mainline/AddonCompartment.lua).
+EarCollector_OnAddonCompartmentClick = Errors.Wrap("minimap drawer", function(_, mouseButton)
+	if mouseButton == "RightButton" then
+		ns.Options.Open()
+	else
+		Pouch.Toggle()
+	end
 end)
 
 EarCollector_OnAddonCompartmentEnter = Errors.Wrap("minimap drawer tooltip", function(_, button)
@@ -41,7 +47,7 @@ EarCollector_OnAddonCompartmentEnter = Errors.Wrap("minimap drawer tooltip", fun
 		local week = Ears.CountSince(db, GetServerTime() - 7 * 24 * 60 * 60)
 		GameTooltip:AddLine(("%d in the last 7 days"):format(week), 0.62, 0.62, 0.62)
 	end
-	GameTooltip:AddLine("Click to open your Ear Pouch.", 0.62, 0.62, 0.62)
+	GameTooltip:AddLine("Click to open your Ear Pouch. Right-click for options.", 0.62, 0.62, 0.62)
 	GameTooltip:Show()
 end)
 

@@ -22,6 +22,7 @@ Last updated: 2026-11-21.
 | Opening the pouch | `/ears`, the minimap addon drawer, a key binding, your bags (on by default; `/ears bags off`), and clicking an ear link in chat. |
 | Escape | Closes the pouch without opening the game menu, via `UISpecialFrames`: the one sanctioned write to a Blizzard global, because Blizzard reads it inside `securecall`. `RegisterGameMenuEscHandler` and keyboard propagation were rejected (reasons in `CLAUDE.md`). |
 | Loot toast | A pop-up for each new ear (not camped repeats), with a loot sound by grade. Up to 3 stack. Click to open the pouch on it. `/ears toast` and `/ears sound` toggle it. |
+| Options page | Options > AddOns > Ear Collector, built with Blizzard's Settings API for addons. Also `/ears options` (or `config`, `settings`) and right-click in the minimap drawer. Debug stays slash-only. The repeat-kill window shows minutes (0 to 60) and saves seconds. In combat it says it can't open instead of calling a restricted function. |
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
 | Workflow | One branch per piece of work from `main`, a PR, and the user merges. Never push to `main` directly. |
@@ -33,12 +34,13 @@ Last updated: 2026-11-21.
 - **PR #2** (merged): the Ear Pouch window and the five ways to open it.
 - **PR #3** (merged): painted ear art for 9 races × 4 tones plus a generic ear, the `art` check, and this status file.
 - **PR #4** (merged): the loot toast.
-- **PR #5** (open, `escape-close`): Escape closes the pouch.
+- **PR #5** (merged): Escape closes the pouch.
+- **PR #6** (open, `options-panel`): the options page; checks now skip Claude Code worktrees under `.claude/worktrees/`; README status refreshed.
 
 ## Waiting on the user
 
 1. **Turn CI on**: move `ci/workflows/ci.yml` and `release.yml` to `.github/workflows/` on `main` in GitHub's web editor (steps in `ci/README.md`), then delete `ci/`.
-2. **Merge PR #5** (Escape closes the pouch).
+2. **Merge PR #6** (the options page).
 3. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
    - T1: does `PARTY_KILL` fire with readable IDs for your and your group's open-world kills?
    - T2: do honorable kills arrive within about 2 s of the death, so assists match?
@@ -46,12 +48,13 @@ Last updated: 2026-11-21.
    - T10: the pouch, including opening your bags in combat without "action blocked", and the ear art loading.
    - T11: the loot toast and its sounds.
    - T12: Escape closes the pouch, in combat too, with a clean taint log.
+   - T13: the options page, including the Defaults button and combat.
    - T4: does the death recap name who killed you? It gates Rivals and Vengeance.
    - T6: is the 7th `GetPlayerInfoByGUID` value the surname?
 
 ## Next up (in order)
 
-1. **Options panel**: the settings that exist so far (announce, toast and its sound, open with bags, include battlefields and free-for-all areas, camping window) in Blizzard's Settings UI. Start, as for Escape, by reading how Forever's `Blizzard_Settings` registers an addon category (`Settings.RegisterVerticalLayoutCategory` or `RegisterCanvasLayoutCategory`) and whether opening it from addon code is allowed in combat.
+1. **Act on the adversarial review** of `main` at PR #5 (a subagent ran it in parallel with the options page). Its findings come back to the session; fix the important ones in their own PRs.
 2. **Ledger and Rivals tabs**, as in the concept mockup: totals, grades, classes and zones; who you've taken ears from.
 3. **Deaths, Rivals and Vengeance**: record who killed you from the death recap (if T4 passes), then Legendary "Vengeance" ears.
 4. Later: export ears as text, inspect another Ear Collector user's pouch, CurseForge and Wago publishing.

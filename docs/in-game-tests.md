@@ -183,6 +183,25 @@ reads inside `securecall`. This test checks that nothing else gets tainted.
    `ToggleGameMenu`) is a bug: paste it back.
 7. Turn the log off again with `/console taintLog 0`.
 
+## T13: the options page
+
+1. Open Options > AddOns. "Ear Collector" is listed, with three sections: "When
+   you collect an ear", "Ear Pouch" and "What counts". Each control shows a
+   tooltip on hover.
+2. `/ears options` opens the same page, and so does right-clicking Ear Collector
+   in the minimap addon drawer. Left-clicking it still opens the pouch.
+3. Untick "Show a toast" and collect an ear: no toast, but the ear is collected.
+   Tick it again.
+4. `/ears bags off`, then reopen the page: "Open with your bags" is unticked.
+5. Set "Repeat kill window" to 0, `/reload`, and reopen the page: it still says
+   0 min. Kill the same player twice: two ears. Set it back to 10.
+6. Click the page's "Defaults" button: everything returns to its default (the
+   window to 10 min).
+7. Enter combat and run `/ears options`: chat says it can't open during combat,
+   with no "action blocked" message. After combat it opens.
+8. With `/console taintLog 1` on, change a few options, log out, and search
+   `Logs/taint.log` for `EarCollector`: nothing should be blamed on it.
+
 ## Reporting back
 
 Paste the printed lines, or copy `EarCollectorDB.debugLog` from

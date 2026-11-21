@@ -190,6 +190,27 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
   (`UI_RAID_LOOT_TOAST_LESSER_ITEM_WON`, `UI_EPICLOOT_TOAST`,
   `UI_LEGENDARY_LOOT_TOAST`), played with `PlaySound(id, "SFX")`. Only new ears
   get a toast; camped repeats don't.
+- **Options page** (`UI/Options.lua`): Blizzard's Settings API for addons
+  (`Blizzard_Settings_Shared`), registered on `ADDON_LOADED` after the database
+  is migrated.
+  - Registration goes through Blizzard's secure attribute delegate
+    (`Blizzard_SettingsInbound.lua`), which wraps function arguments to keep
+    their taint.
+  - Checkboxes are `Settings.RegisterAddOnSetting` on `db.settings`; Blizzard
+    reads and writes the table itself, inside `securecall`. Never replace
+    `db.settings` after load: the settings hold a reference to it.
+  - The repeat-kill slider is `Settings.RegisterProxySetting`: minutes on screen,
+    seconds saved. Blizzard calls the getter and setter inside `securecall`,
+    where an error goes to the game's error handler, so they run in
+    `Errors.Call` and fall back to a valid value. A slider label formatter must
+    not error either.
+  - The rest of the addon reads `db.settings` when it needs a value, so no
+    change callback is needed. Keep it that way: don't cache settings.
+  - `Settings.OpenToCategory` calls `C_SettingsUtil.OpenSettingsPanel`, which
+    has restrictions (`HasRestrictions`): check `InCombatLockdown()` first and
+    tell the player instead of calling it in combat.
+  - The minimap drawer passes the mouse button name on click
+    (`Blizzard_Minimap/Mainline/AddonCompartment.lua`); right-click opens options.
 - Death recap (`C_DeathRecap.GetRecapEvents`) exposes `sourceName` for what
   killed you. It's the likely source for future Rivals/Vengeance features.
   Its behaviour in PvP is unverified.
@@ -226,6 +247,7 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `UI/Art.lua` | race to ear-texture mapping |
 | `UI/Pouch.lua` | the Ear Pouch window (built on first open) |
 | `UI/Toast.lua` | the loot toast when you collect an ear |
+| `UI/Options.lua` | the options page in Blizzard's Settings screen |
 | `UI/Access.lua` | ways to open it: drawer, key binding, bags, chat links |
 | `UI/Slash.lua` | `/ears` commands |
 | `Bindings.xml` | the "Toggle Ear Pouch" key binding |
@@ -258,7 +280,14 @@ Keep game-touching code thin and decisions in plain functions that specs call di
   it's open, otherwise closes the bags and hides shown `UISpecialFrames`, and
   opens the game menu (`state.gameMenuShown`) only if nothing closed.
 - `wow.state().inCombat = true` puts the client in combat. Frame methods Forever
-  restricts in combat (`SetPropagateKeyboardInput` and the like) then raise.
+  restricts in combat (`SetPropagateKeyboardInput` and the like) then raise, and
+  so does `Settings.OpenToCategory`.
+- The Settings screen follows `Blizzard_Settings_Shared`: `wow.settingsCategory(name)`
+  returns a registered category with its `layout.initializers` (section headers
+  and controls, in order) and `settings`. Call `setting:SetValue(v)` as the
+  control would. Proxy getters and setters run in a `securecall` stand-in:
+  an error there lands in `wow.state().gameErrors`, which specs expect to stay
+  empty.
 - `wow.replay(dofile("spec/fixtures/x.lua"))` plays an event sequence. In a
   fixture, `"<secret>"` becomes a secret value, which matches how `/ears debug`
   logs one.
@@ -309,4 +338,6 @@ The basic checklist:
    (B), and by clicking an ear name in chat. It keeps its position after a drag
    and `/reload`. Escape closes it without opening the game menu, in combat
    too, and the taint log stays clean (T12 in `docs/in-game-tests.md`).
+   `/ears options` and right-clicking in the minimap drawer open Options >
+   AddOns > Ear Collector (T13).
 8. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.
