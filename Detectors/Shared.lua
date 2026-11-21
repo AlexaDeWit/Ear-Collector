@@ -44,6 +44,7 @@ function ns.Trace(db, event, source, target, decision)
 	end
 	local entry = {
 		at = GetServerTime(),
+		t = math.floor(GetTime() * 1000 + 0.5) / 1000, -- seconds, for the gaps between events
 		event = event,
 		attacker = ns.Describe(source),
 		target = ns.Describe(target),
@@ -54,6 +55,34 @@ function ns.Trace(db, event, source, target, decision)
 	Chat.Print(
 		("%s %s -> %s: %s [restrictions: %s]"):format(event, entry.attacker, entry.target, decision, entry.restrictions)
 	)
+end
+
+-- Decisions about things that never count (NPC kills, kills in dungeons) are
+-- logged only a few times per session each: enough to show the event fires,
+-- without pushing PvP lines out of the bounded debug log or flooding chat.
+ns.ROUTINE_TRACES = 3
+local routineTraces = {} -- key -> times seen this session, while debug was on
+
+--- ns.Trace for a routine decision: logged at most ns.ROUTINE_TRACES times per
+--- session for each `key` (default: the decision).
+---@param db table
+---@param event string
+---@param source any
+---@param target any
+---@param decision string
+---@param key string? groups decisions whose text varies, e.g. by a count
+function ns.TraceRoutine(db, event, source, target, decision, key)
+	if not db.settings.debug then
+		return
+	end
+	key = event .. " " .. (key or decision)
+	local seen = (routineTraces[key] or 0) + 1
+	routineTraces[key] = seen
+	if seen < ns.ROUTINE_TRACES then
+		ns.Trace(db, event, source, target, decision)
+	elseif seen == ns.ROUTINE_TRACES then
+		ns.Trace(db, event, source, target, decision .. " (no more of these logged until /reload)")
+	end
 end
 
 --- What the client will tell us about a dead player, as the start of an ear.

@@ -66,9 +66,11 @@ ns.On("PLAYER_PVP_KILLS_CHANGED", function(unit)
 	end
 	local counts, reason = Context.Current(db.settings)
 	if not counts then
-		ns.Trace(db, "HONOR", nil, nil, ("%d honorable kill(s) ignored: %s"):format(kills - previous, reason))
+		local decision = ("%d honorable kill(s) ignored: %s"):format(kills - previous, reason)
+		ns.TraceRoutine(db, "HONOR", nil, nil, decision, "ignored: " .. reason)
 		return
 	end
+	ns.Trace(db, "HONOR", nil, nil, ("+%d honorable kill(s), %d lifetime"):format(kills - previous, kills))
 	Assists.NoteHonor(ns.assistTracker, kills - previous, GetTime())
 	ns.ScheduleAssistCheck()
 end)
