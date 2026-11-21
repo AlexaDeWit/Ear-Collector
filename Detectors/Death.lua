@@ -56,6 +56,26 @@ function DeathWatch.EnemiesInView()
 	return seen
 end
 
+DeathWatch.NAMES_LOGGED = 8 -- names in view listed when the recap's name matches none
+
+--- The names a recap could have matched, for the debug log.
+---@param seen table<string, string|false>
+---@return string
+function DeathWatch.NamesInView(seen)
+	local names = {}
+	for name, guid in pairs(seen) do
+		if guid then
+			names[#names + 1] = name
+		end
+	end
+	if #names == 0 then
+		return "nobody"
+	end
+	table.sort(names)
+	local shown = table.concat(names, ", ", 1, math.min(#names, DeathWatch.NAMES_LOGGED))
+	return #names > DeathWatch.NAMES_LOGGED and shown .. ", ..." or shown
+end
+
 --- Read the recap and record the death if the killing blow was an enemy player
 --- seen at the moment of death.
 ---@param seen table<string, string|false>
@@ -84,7 +104,8 @@ local function readRecap(seen)
 	else
 		guid, how = Deaths.MatchKiller(name, seen), "by name"
 		if not guid then
-			ns.Trace(db, "PLAYER_DEAD", name, nil, "killer isn't an enemy player you could see")
+			local decision = "killer isn't an enemy player you could see (in view: %s)"
+			ns.Trace(db, "PLAYER_DEAD", name, nil, decision:format(DeathWatch.NamesInView(seen)))
 			return
 		end
 	end

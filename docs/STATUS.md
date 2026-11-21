@@ -5,7 +5,7 @@ Read this first in a new session, together with `CLAUDE.md` (how to work) and
 next, and what's waiting on the user. It's the memory that survives a session
 ending or a conversation being compacted.
 
-Last updated: 2026-11-21 (after merging PR #10, with CI turned on in PR #11).
+Last updated: 2026-11-21 (after merging PRs #10 and #11; debug log made ready for in-game tests in PR #12).
 
 ## Decisions made with the user
 
@@ -26,6 +26,7 @@ Last updated: 2026-11-21 (after merging PR #10, with CI turned on in PR #11).
 | Options page | Options > AddOns > Ear Collector, built with Blizzard's Settings API for addons. Also `/ears options` (or `config`, `settings`) and right-click in the minimap drawer. Debug stays slash-only. The repeat-kill window shows minutes (0 to 60) and saves seconds. In combat it says it can't open instead of calling a restricted function. |
 | Deaths and Vengeance | Deaths come from the death recap, matched by name to an enemy player in view at the moment of death (target, focus, mouseover, nameplates) to get a GUID. No match, no record. 3 deaths to a player since you last killed them make their next ear Legendary ("Vengeance"), even inside the repeat-kill window; that clears the debt. Rivals marks: Avenge (vengeance owed) > Nemesis (killed you 2+ times, more than you've killed them) > Prey (3+ kills, never killed you). The Ledger's fourth box is "Ears lost"; the player count moved to the Rivals header. |
 | Per-character data | Each character has its own collection: ears, deaths and kill stats are in `EarCollectorCharDB` (`SavedVariablesPerCharacter`). Settings, the pouch's position and the error and debug logs are account-wide in `EarCollectorDB`. Chosen by the user over a shared collection tagged by character. |
+| Nothing public | The user plays on an RP-PvP realm. Everything the addon shows is local: chat lines print only to the player's own chat window, toasts and sounds play only on their client. It never sends chat, emotes, whispers or addon messages that other players could see, so it can't break anyone's immersion. Sharing ears with other players was never built. |
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
 | Workflow | One branch per piece of work from `main`, a PR, and the user merges. Never push to `main` directly. |
@@ -43,9 +44,10 @@ Last updated: 2026-11-21 (after merging PR #10, with CI turned on in PR #11).
 - **PR #8** (merged): deaths from the death recap, the Rivals "Deaths" column, Nemesis, and Legendary Vengeance ears.
 - **PR #9** (merged): per-character data, fixes from an adversarial review of everything, README install section.
 - **PR #10** (merged): `scripts/build-zip.sh` for test builds, and this file brought up to date.
-- **PR #11** (open, `enable-ci`): CI turned on. The workflows moved from `ci/workflows/` to `.github/workflows/`.
+- **PR #11** (merged): CI turned on. The workflows moved from `ci/workflows/` to `.github/workflows/`.
+- **PR #12** (open, `debug-log`): the debug log made ready for in-game tests (millisecond times, honor steps, names in view at a death, NPC and dungeon lines capped, 300 entries); a dungeon's hidden mob kills no longer count as hidden kills; the chat option renamed "Note it in your chat"; the test procedure in `docs/in-game-tests.md`.
 
-Every planned v1.0 feature is built and on `main`. What's left is in-game verification and the release. The user has a test zip of `main` at `9f19d0b`; `scripts/build-zip.sh` makes another.
+Every planned v1.0 feature is built and on `main`. What's left is in-game verification and the release. The user tests with a zip of PR #12's branch; `scripts/build-zip.sh` makes another.
 
 ## Waiting on the user
 
@@ -65,7 +67,9 @@ Every planned v1.0 feature is built and on `main`. What's left is in-game verifi
 
 3. **Release**, once the in-game tests pass: push a tag (`v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
 
-When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fixtures/`, replayed with `wow.replay`), fix what fails, and keep the in-game sheet in step.
+The user's procedure is the "Procedure" and "Reporting back" sections of `docs/in-game-tests.md`: `/ears debug` on, play, `/reload`, then send the account file (debug log) and the character file (victim details).
+
+When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fixtures/`, replayed with `wow.replay`; `t` gives the gaps for `wow.advance`, the character file's ears give `setup.players`), anonymise names, fix what fails, and keep the in-game sheet in step.
 
 ## Next up (in order)
 

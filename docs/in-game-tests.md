@@ -10,8 +10,29 @@ Most tests print values through a helper `S`, which shows `<S>` for a secret
 is fine for seeing *when* events fire, but it may print hidden values in clear,
 so judge readability from these `/run` lines instead.
 
-Ear Collector's own `/ears debug` covers T1 for the cases the addon handles. It
-prints each `PARTY_KILL`, the decision, and the active addon restrictions.
+Ear Collector's own `/ears debug` covers T1, T2 and T4 for the cases the addon
+handles. It prints and saves each kill, honorable kill and death, the decision,
+and the active addon restrictions. The `/run` probes below are for when it shows
+nothing at all.
+
+## Procedure
+
+1. Install the zip: delete the old `Interface/AddOns/EarCollector` folder first.
+2. `/console scriptErrors 1`, then `/reload`.
+3. `/ears debug`. It's saved, so it stays on across `/reload` and logout.
+   Smoke test: kill any mob. Chat shows `PARTY_KILL ... not a player`, which
+   proves the event fires. Only the first few NPC kills (and kills in a
+   dungeon) are logged each session, so questing between fights can't push your
+   PvP lines out of the log.
+4. T9 (saved data survives a reload), because every other result depends on it.
+5. Play world PvP as you normally would. Kills give you T1, assists give you T2,
+   and dying to an enemy player who's your target or has a nameplate showing
+   gives you T4. Note anything that looks wrong as it happens.
+6. The window tests (T10 to T14) can be done any time, and T12 and T13 need the
+   taint log on.
+7. When you're done, `/reload` or log out: the game writes the saved files only
+   then. Send the files listed under "Reporting back".
+8. `/ears debug` again to turn it off.
 
 ## T0: helper (once per session)
 
@@ -60,7 +81,7 @@ This is needed for the Rivals "Deaths" column, Nemesis and Vengeance. The quick 
 - `death recorded (...)`: it works.
 - `no death recap`: Forever doesn't fill the recap. Deaths can't be tracked this way.
 - `recap names no killer`: the recap is there but the killing blow has no name.
-- `killer isn't an enemy player you could see`: the name didn't match. Note the name it shows next to `PLAYER_DEAD` and the killer's name on screen (with or without a surname?).
+- `killer isn't an enemy player you could see (in view: ...)`: the name didn't match. The line shows the recap's name next to `PLAYER_DEAD` and the names it could have matched. Note the killer's name on screen too (with or without a surname?).
 
 For the details, right after the death run these, then again 2 seconds later:
 
@@ -230,7 +251,7 @@ reads inside `securecall`. This test checks that nothing else gets tainted.
 
 1. Open the pouch: three tabs sit under it (Ears, Ledger, Rivals), in
    Blizzard's tab style. Clicking one plays the tab sound and switches panels.
-2. Ledger: four boxes (Ears, Last 7 days, Players, Assists), a bar split by
+2. Ledger: four boxes (Ears, Last 7 days, Assists, Ears lost), a bar split by
    grade with a coloured legend, your top classes with bars in class colours,
    and your top zones. Long zone names are cut off, not wrapped.
 3. Rivals: one row per player, most kills first, with the date you last killed
@@ -260,6 +281,27 @@ Needs T4 to pass.
 
 ## Reporting back
 
-Paste the printed lines, or copy `EarCollectorDB.debugLog` from
-`WTF/Account/<ACCOUNT>/SavedVariables/EarCollector.lua`. Anonymise player names
-if you like. Those lines become test fixtures in `spec/fixtures/`.
+After a `/reload` or logout, attach these to the chat (or paste them):
+
+1. `WTF/Account/<ACCOUNT>/SavedVariables/EarCollector.lua`: the debug log, the
+   error log and your settings. The debug log keeps the newest 300 lines, which
+   holds a long session. Send it after each session if you test over several.
+2. `WTF/Account/<ACCOUNT>/<Realm>/<Character>/SavedVariables/EarCollector.lua`
+   for the character you played: your ears and deaths, with the details of the
+   players in the debug log.
+3. Your notes, and screenshots of anything on screen that looks wrong.
+4. `Logs/taint.log`, only if you ran T12 or T13 and it mentions `EarCollector`.
+
+What each part answers:
+
+- A `PARTY_KILL` line per kill: whether it fires for you, your pet, your group
+  and players outside it, and whether the GUIDs are readable or `<secret>` (T1).
+- `HONOR` and `UNIT_DIED` lines, each timed to the millisecond (`t`): whether
+  assists match within the 2.5-second window (T2).
+- `PLAYER_DEAD` lines: whether the death recap names your killer, and how the
+  name compares with the names in view (T4).
+- The restrictions on each line explain hidden values (T5).
+
+No need to anonymise anything. Player names are changed when the log becomes
+test fixtures in `spec/fixtures/`. Output from the `/run` probes goes to chat
+only and isn't saved, so screenshot it if you use them.

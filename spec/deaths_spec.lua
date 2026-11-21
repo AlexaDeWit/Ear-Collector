@@ -111,7 +111,7 @@ describe("deaths and vengeance", function()
 			assert.are.same({
 				"no death recap",
 				"recap names no killer",
-				"killer isn't an enemy player you could see",
+				"killer isn't an enemy player you could see (in view: Grimbash, Grimbash Ironhide, Grimbash-Ironhide)",
 			}, decisions)
 		end)
 

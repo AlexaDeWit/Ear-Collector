@@ -61,18 +61,23 @@ function ns.OnPartyKill(attackerGUID, targetGUID)
 	local function trace(decision)
 		ns.Trace(db, "PARTY_KILL", attackerGUID, targetGUID, decision)
 	end
+	local function traceRoutine(decision)
+		ns.TraceRoutine(db, "PARTY_KILL", attackerGUID, targetGUID, decision)
+	end
+	-- Location first: inside a dungeon every mob kill is hidden, and those
+	-- aren't kills the game hid from us in a place where they'd count.
+	local counts, reason = Context.Current(db.settings)
+	if not counts then
+		traceRoutine(reason)
+		return
+	end
 	if not Readable(attackerGUID) or not Readable(targetGUID) then
 		db.stats.hiddenKills = db.stats.hiddenKills + 1
 		trace("hidden by the client")
 		return
 	end
 	if not targetGUID:find("^Player%-") then
-		trace("not a player")
-		return
-	end
-	local counts, reason = Context.Current(db.settings)
-	if not counts then
-		trace(reason)
+		traceRoutine("not a player")
 		return
 	end
 	local kill = ns.VictimDetails(targetGUID)

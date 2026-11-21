@@ -35,6 +35,14 @@ of every piece of work. It's the project's memory across sessions.
 - Fix the cause of a finding. Don't silence it with `---@diagnostic disable`,
   `-- luacheck: ignore` or new `diagnostics.globals` entries unless the user agrees.
 
+## Nothing the addon does is seen by other players
+
+The user plays on an RP-PvP realm. Chat lines go to the player's own chat
+window (`print`, via `Chat.Print`), and toasts and sounds play only on their
+client. Never call `SendChatMessage`, `C_ChatInfo.SendAddonMessage`, `DoEmote`
+or anything else other players would see or hear. Any sharing feature needs the
+user's agreement first, and must be opt-in.
+
 ## Errors must never reach the player
 
 An error that escapes an addon goes to the game's error handler. Players see
@@ -375,6 +383,19 @@ Stub return values must match Blizzard's docs, in order. Prefer fixtures
 captured from real play (`/ears debug`, then copy `debugLog` from
 `WTF/Account/<ACCOUNT>/SavedVariables/EarCollector.lua`, anonymising names) over
 long hand-written sequences.
+
+The debug log (`ns.Trace`, `Detectors/Shared.lua`) is built for that:
+- Each entry has `at` (server time) and `t` (`GetTime()` to the millisecond,
+  for the gaps between events), the event, attacker and target (`<secret>` when
+  hidden), the decision and the active restrictions.
+- It keeps the newest `Database.DEBUG_LOG_SIZE` (300) entries. Decisions about
+  things that never count (NPC kills, kills in dungeons, honor in battlegrounds)
+  go through `ns.TraceRoutine`: `ns.ROUTINE_TRACES` (3) of each kind per
+  session, so they can't push PvP lines out.
+- Honor steps are logged as they arrive, and a death whose recap name matches
+  nobody lists the names in view (`DeathWatch.NamesInView`).
+- Victim details aren't in the log: take them from the character file's `ears`
+  and `deaths`, by GUID.
 
 ## What the checks can't tell you
 
