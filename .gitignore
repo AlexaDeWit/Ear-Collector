@@ -4,3 +4,5 @@
 .release/
 .luarocks/
 luacov.*
+# Git worktrees that Claude Code sessions and subagents create
+.claude/worktrees/

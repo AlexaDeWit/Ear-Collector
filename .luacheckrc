@@ -4,7 +4,7 @@
 std = "lua51"
 max_line_length = 120
 codes = true
-exclude_files = { ".cache/", ".release/", ".luarocks/", "Libs/", "types/" }
+exclude_files = { ".cache/", ".release/", ".luarocks/", "Libs/", "types/", ".claude/worktrees/" }
 not_globals = { "io", "package", "require", "dofile", "loadfile", "module", "debug" }
 
 -- Globals the addon writes: SavedVariables and slash-command registration.
