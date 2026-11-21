@@ -3,7 +3,7 @@
 -- lag the client or lead WoW to suggest disabling all addons. So every entry
 -- point (event handlers, slash commands) runs through Errors.Call, which:
 --   * catches the error so it never leaves the addon,
---   * keeps it in EarCollectorDB.errors (bounded) for /ears errors and bug reports,
+--   * keeps it in EarCollectorDB.errors (bounded, account-wide) for /ears errors and bug reports,
 --   * tells the player once per session, in one chat line,
 --   * switches a handler off until /reload after MAX_PER_HANDLER errors, so a bug
 --     cannot repeat on every event.

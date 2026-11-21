@@ -130,6 +130,22 @@ Then `/reload`, then:
 
 It should print the same number. Repeat across a full logout.
 
+Ears are saved per character, so check that file too:
+
+```
+/run EarCollectorCharDB.persistProbe=time()
+```
+
+Then `/reload`, then:
+
+```
+/dump EarCollectorCharDB.persistProbe
+```
+
+Finally, log in on another character: `/dump EarCollectorCharDB.persistProbe`
+prints nil (its own data), and `/dump EarCollectorDB.persistProbe` prints the
+number (shared).
+
 ## T10: the Ear Pouch
 
 1. `/ears` opens the pouch, and the close button and `/ears` close it.

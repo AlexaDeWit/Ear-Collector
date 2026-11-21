@@ -114,7 +114,7 @@ end
 
 function commands.errors(db, args)
 	if args == "clear" then
-		db.errors = {}
+		ns.Database.Clear(db.errors)
 		Chat.Print("Error log cleared.")
 		return
 	end

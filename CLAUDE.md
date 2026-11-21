@@ -56,8 +56,15 @@ addon. Treat an escaped error as a serious bug.
   - **Nil returns.** Assume any API can return nil. Check before indexing or
     doing arithmetic.
   - **Saved data.** It can be old, hand-edited or truncated.
-    `Database.Migrate` repairs it on load. Code that reads saved fields must
-    still tolerate missing ones.
+    `Database.MigrateAccount` / `MigrateCharacter` repair it on load. Code that
+    reads saved fields must still tolerate missing ones.
+  - **Where saved data lives.** `EarCollectorDB` (account-wide): `settings`,
+    `ui`, `errors`, `debugLog`. `EarCollectorCharDB` (per character,
+    `SavedVariablesPerCharacter`): `ears`, `deaths`, `stats`. `ns.db` is a view
+    whose fields are those saved tables (`Database.View`): change them in place
+    (`Database.Clear` empties a list); reassigning a field would stop it being
+    saved. Data an older version saved account-wide moves to the first character
+    that loads (`Database.MoveShared`), and is never dropped.
 - Never cause taint, which leads to "action blocked" messages and the
   disable-addons prompt:
   - Don't write to Blizzard globals or frames. The one exception is appending
@@ -261,7 +268,7 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
 | `Core/Init.lua` | namespace, version, quality colors |
 | `Core/Errors.lua` | error containment (see above) |
 | `Core/Events.lua` | `ns.On(event, fn)` dispatcher |
-| `Core/Database.lua` | SavedVariables migrate/repair |
+| `Core/Database.lua` | SavedVariables: account and per-character repair, the `ns.db` view |
 | `Core/Context.lua` | open-world decision; secret-safe reads |
 | `Core/Ears.lua` | pure grading and recording logic |
 | `Core/Assists.lua` | pure assist matching (honor credit to deaths) |
@@ -291,7 +298,7 @@ Keep game-touching code thin and decisions in plain functions that specs call di
 `spec/support/wow.lua` is a fake Forever client:
 
 - `wow.reset{...}` installs API stubs with the given state.
-- `wow.loadAddon("EarCollector.toc", { EarCollectorDB = saved })` loads files in
+- `wow.loadAddon("EarCollector.toc", { EarCollectorDB = saved, EarCollectorCharDB = char })` loads files in
   TOC order with `(addonName, ns)`, then fires `ADDON_LOADED`.
 - `wow.fireEvent(...)` dispatches an event. `wow.slash("/ears recent")` runs a command.
 - `wow.advance(seconds)` moves both clocks and runs due `C_Timer` callbacks.
@@ -361,14 +368,15 @@ The basic checklist:
 3. Run `/ears debug`, then kill an enemy player in the open world. The chat
    shows the decision "new ear (you)" and a "You collected ..." line with the
    victim's race icon.
-   `/dump EarCollectorDB.ears[#EarCollectorDB.ears]` shows the right name,
+   `/dump EarCollectorCharDB.ears[#EarCollectorCharDB.ears]` shows the right name,
    class, level and zone.
 4. A groupmate's killing blow in the open world says "new ear (group)". A
    battleground kill says "instance:pvp". For a pet's killing blow (yours or a
    groupmate's), note whether the attacker GUID is the pet or its owner. For a
    kill where someone outside your group lands the blow, note whether
    PARTY_KILL fires at all.
-5. Ears survive `/reload` and relog. `/ears errors` says "No errors recorded".
+5. Ears survive `/reload` and relog. Another character has its own (empty)
+   pouch but the same settings. `/ears errors` says "No errors recorded".
 6. No "action blocked" or taint messages, in combat or out. Open and close
    your bags in combat too.
 7. The pouch: `/ears` opens it. It also opens from the minimap addon drawer

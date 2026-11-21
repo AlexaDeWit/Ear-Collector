@@ -678,6 +678,7 @@ function wow.reset(overrides)
 	_G.SlashCmdList = {}
 	_G.SLASH_EARCOLLECTOR1, _G.SLASH_EARCOLLECTOR2 = nil, nil
 	_G.EarCollectorDB = nil
+	_G.EarCollectorCharDB = nil
 end
 
 --- Load the addon from its TOC like the client does: SavedVariables are set as

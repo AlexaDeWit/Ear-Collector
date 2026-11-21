@@ -10,6 +10,7 @@ not_globals = { "io", "package", "require", "dofile", "loadfile", "module", "deb
 -- Globals the addon writes: SavedVariables and slash-command registration.
 globals = {
 	"EarCollectorDB",
+	"EarCollectorCharDB",
 	"SLASH_EARCOLLECTOR1",
 	"SLASH_EARCOLLECTOR2",
 	SlashCmdList = { other_fields = true },

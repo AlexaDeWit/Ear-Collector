@@ -28,8 +28,9 @@ Options > AddOns > Ear Collector.
    Collector should be listed and enabled.
 
 To update, delete the old `EarCollector` folder and unzip the new one. Your
-ears are saved separately, in `WTF/Account/<account>/SavedVariables/EarCollector.lua`,
-so they survive updates.
+data is saved outside the addon folder, so it survives updates. Each character
+has its own collection (`WTF/Account/<account>/<realm>/<character>/SavedVariables/EarCollector.lua`);
+settings are shared by all your characters (`WTF/Account/<account>/SavedVariables/EarCollector.lua`).
 
 ## Grades
 

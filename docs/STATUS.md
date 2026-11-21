@@ -25,6 +25,7 @@ Last updated: 2026-11-21.
 | Pouch tabs | Ears, Ledger, Rivals, with Blizzard's tab style. Ledger: Ears, Last 7 days (rolling), Players, Assists; grades; classes; top 5 zones. Rivals: per player by GUID, most kills first (repeat kills count), 10 a page, "Prey" at 3+ kills; click opens their latest ear. The pouch keeps the last tab for the session. |
 | Options page | Options > AddOns > Ear Collector, built with Blizzard's Settings API for addons. Also `/ears options` (or `config`, `settings`) and right-click in the minimap drawer. Debug stays slash-only. The repeat-kill window shows minutes (0 to 60) and saves seconds. In combat it says it can't open instead of calling a restricted function. |
 | Deaths and Vengeance | Deaths come from the death recap, matched by name to an enemy player in view at the moment of death (target, focus, mouseover, nameplates) to get a GUID. No match, no record. 3 deaths to a player since you last killed them make their next ear Legendary ("Vengeance"), even inside the repeat-kill window; that clears the debt. Rivals marks: Avenge (vengeance owed) > Nemesis (killed you 2+ times, more than you've killed them) > Prey (3+ kills, never killed you). The Ledger's fourth box is "Ears lost"; the player count moved to the Rivals header. |
+| Per-character data | Each character has its own collection: ears, deaths and kill stats are in `EarCollectorCharDB` (`SavedVariablesPerCharacter`). Settings, the pouch's position and the error and debug logs are account-wide in `EarCollectorDB`. Chosen by the user over a shared collection tagged by character. |
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
 | Workflow | One branch per piece of work from `main`, a PR, and the user merges. Never push to `main` directly. |
@@ -48,7 +49,7 @@ Last updated: 2026-11-21.
 3. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
    - T1: does `PARTY_KILL` fire with readable IDs for your and your group's open-world kills?
    - T2: do honorable kills arrive within about 2 s of the death, so assists match?
-   - T9: does saved data survive `/reload`? One addon author claims Forever doesn't reload it.
+   - T9: does saved data survive `/reload`, for both the account file and the per-character file? One addon author claims Forever doesn't reload it.
    - T10: the pouch, including opening your bags in combat without "action blocked", and the ear art loading.
    - T11: the loot toast and its sounds.
    - T12: Escape closes the pouch, in combat too, with a clean taint log.
