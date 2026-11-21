@@ -7,5 +7,6 @@ ignore:
   - spec
   - scripts
   - types
+  - ci
   - CLAUDE.md
   - README.md
