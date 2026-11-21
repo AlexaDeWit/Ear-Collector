@@ -66,6 +66,14 @@ addon. Treat an escaped error as a serious bug.
   to assert an error is contained. `wow.secret()` makes a value that errors when
   misused, so specs catch unguarded access.
 
+## GitHub workflow files: the human moves them
+
+Claude sessions can't push changes under `.github/workflows/`. GitHub refuses
+them because Claude's GitHub connection lacks the `workflow` permission, and
+the user can't grant it. To add or change a workflow, put the file in
+`ci/workflows/`, explain the move in `ci/README.md` and the PR description, and
+ask the user to move it in GitHub's web editor. Everything else pushes normally.
+
 ## WoW Forever API facts the code relies on
 
 - **No combat log.** The combat log is closed to addons on Forever.
