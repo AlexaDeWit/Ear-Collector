@@ -5,7 +5,7 @@ Read this first in a new session, together with `CLAUDE.md` (how to work) and
 next, and what's waiting on the user. It's the memory that survives a session
 ending or a conversation being compacted.
 
-Last updated: 2026-11-21 (after merging PRs #10 and #11; debug log made ready for in-game tests in PR #12).
+Last updated: 2026-11-21 (after merging PRs #10 to #12).
 
 ## Decisions made with the user
 
@@ -45,9 +45,9 @@ Last updated: 2026-11-21 (after merging PRs #10 and #11; debug log made ready fo
 - **PR #9** (merged): per-character data, fixes from an adversarial review of everything, README install section.
 - **PR #10** (merged): `scripts/build-zip.sh` for test builds, and this file brought up to date.
 - **PR #11** (merged): CI turned on. The workflows moved from `ci/workflows/` to `.github/workflows/`.
-- **PR #12** (open, `debug-log`): the debug log made ready for in-game tests (millisecond times, honor steps, names in view at a death, NPC and dungeon lines capped, 300 entries); a dungeon's hidden mob kills no longer count as hidden kills; the chat option renamed "Note it in your chat"; the test procedure in `docs/in-game-tests.md`.
+- **PR #12** (merged): the debug log made ready for in-game tests (millisecond times, honor steps, names in view at a death, NPC and dungeon lines capped, 300 entries); a dungeon's hidden mob kills no longer count as hidden kills; the chat option renamed "Note it in your chat"; the test procedure in `docs/in-game-tests.md`.
 
-Every planned v1.0 feature is built and on `main`. What's left is in-game verification and the release. The user tests with a zip of PR #12's branch; `scripts/build-zip.sh` makes another.
+Every planned v1.0 feature is built and on `main`. What's left is in-game verification and the release. The user has a test build with PR #12's addon code (`dev-8244343`).
 
 ## Waiting on the user
 
@@ -81,7 +81,7 @@ When in-game results come back: turn `/ears debug` logs into fixtures (`spec/fix
    - The fake's `UnitCanAttack` is true for same-faction players.
 2. Later: export ears as text; inspect another Ear Collector user's pouch (addon messages, which Forever may restrict: the `Chat` addon restriction and `SecretInChatMessagingLockdown`).
 
-Making a test build: `scripts/build-zip.sh` writes `.release/EarCollector-dev-<commit>.zip` (committed files only, minus what `.pkgmeta` ignores), then send it with SendUserFile.
+Test builds: the user downloads them from CI and asked not to be sent zips. Every PR and push to `main` runs "Package (dry run)", which uploads the zip as the run's `EarCollector-<commit>` artifact (kept 14 days; GitHub wraps it in a second zip). Point the user at the PR's checks. `scripts/build-zip.sh` still makes one locally, for checking what a zip contains.
 
 Reading Forever's UI source: `.cache/wow-ui-source` is a sparse, blob-less checkout, so `git grep` there fetches one file at a time and stalls. Instead, add a worktree in the scratchpad (`git -C .cache/wow-ui-source worktree add --no-checkout <dir> HEAD`), set a sparse pattern such as `'/Interface/**/*.lua'`, and `git checkout`: it fetches in one batch (about 35 MB, a minute).
 

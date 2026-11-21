@@ -135,37 +135,37 @@ Out of combat after a fight, run these three in order:
 /run for _,c in ipairs(C_DamageMeter.GetCombatSessionFromID(ID,Enum.DamageMeterType.Deaths).combatSources)do print(S(c.name),S(c.isLocalPlayer),S(c.deathRecapID))end
 ```
 
-## T9: does saved data survive a reload?
+## T9: does the game keep the addon's saved data?
 
-One addon author claims Forever doesn't load saved data back. Others rely on it working.
+The addon keeps your ears in files the game saves when you log out. If the game
+doesn't load those files back, every ear vanishes at logout, so check this
+first. It takes about five minutes and needs no PvP.
 
-```
-/run EarCollectorDB.persistProbe=time()
-```
+You need two characters on the same account with the addon enabled for both (a
+new level 1 character is fine as the second one). Type each command into the
+chat box exactly as shown and press Enter.
 
-Then `/reload`, then:
+1. On your main character, type:
+   ```
+   /run EarCollectorDB.check="account" EarCollectorCharDB.check="character" print("Saved")
+   ```
+   Chat says `Saved`.
+2. Type `/reload`. The screen reloads.
+3. Type:
+   ```
+   /run print(EarCollectorDB.check, EarCollectorCharDB.check)
+   ```
+   Chat should say `account character`.
+4. Exit the game completely. Start it again and log in on the same character.
+   Type the command from step 3 again. It should still say `account character`.
+5. Log out, log in on your second character, and type the command from step 3.
+   It should say `account nil`. The settings are shared by all your characters
+   ("account"), but each character has its own ears ("nil": this one has none
+   of the first character's).
 
-```
-/dump EarCollectorDB.persistProbe
-```
-
-It should print the same number. Repeat across a full logout.
-
-Ears are saved per character, so check that file too:
-
-```
-/run EarCollectorCharDB.persistProbe=time()
-```
-
-Then `/reload`, then:
-
-```
-/dump EarCollectorCharDB.persistProbe
-```
-
-Finally, log in on another character: `/dump EarCollectorCharDB.persistProbe`
-prints nil (its own data), and `/dump EarCollectorDB.persistProbe` prints the
-number (shared).
+Send back what chat said at steps 3, 4 and 5. If it says `nil nil` at step 3 or
+4, the game isn't keeping the saved data. The two test words are harmless to
+leave in the files.
 
 ## T10: the Ear Pouch
 
