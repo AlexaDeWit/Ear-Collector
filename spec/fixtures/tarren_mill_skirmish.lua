@@ -1,6 +1,5 @@
--- A hand-written event sequence in the shape a recorded fixture takes.
--- Replace or add to it with real sequences captured with /ears debug
--- (EarCollectorDB.debugLog), anonymising player names.
+-- A hand-written event sequence covering the kill cases. Fixtures recorded in
+-- play sit beside it (docs/testing.md, "Fixtures from the game").
 local ME = "Player-4395-0000000A"
 local GRIMBASH = "Player-4395-0B1C2D3E"
 local VELARIA = "Player-1-00FF00FF"

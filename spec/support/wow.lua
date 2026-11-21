@@ -446,7 +446,7 @@ function wow.reset(overrides)
 		clock = 5000, -- GetTime(), seconds since the client started
 		timers = {}, -- pending C_Timer.After callbacks
 		lifetimeHonorableKills = 120,
-		players = {}, -- guid -> { name, realm (the surname on Forever), class, race, sex, level }
+		players = {}, -- guid -> { name, realm, class, race, sex, level }; Forever's name is "First Surname"
 		group = {}, -- guid -> true for players in your party/raid
 		units = {}, -- extra unit tokens -> guid, e.g. pet = "Pet-...", partypet1 = "Pet-..."
 		atlases = { -- atlases the client has; Skyborne is left out to exercise the fallback
@@ -858,7 +858,9 @@ function wow.replay(fixture)
 		state[k] = v
 	end
 	for _, e in ipairs(fixture.events) do
-		if e.set then
+		if e.advance then
+			wow.advance(e.advance)
+		elseif e.set then
 			for k, v in pairs(e.set) do
 				state[k] = v
 			end
