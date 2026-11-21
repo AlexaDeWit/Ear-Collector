@@ -20,6 +20,7 @@ Last updated: 2026-11-21.
 | Ear art | Painted procedurally by `art/paint_ears.py`. The user approved the painted look, after rejecting flat vector art as "looks like nothing". |
 | Icons elsewhere | Pouch slots use our ear art. Tooltips and chat use Blizzard's race icons. The minimap drawer uses `Media/Ears/human-2`. |
 | Opening the pouch | `/ears`, the minimap addon drawer, a key binding, your bags (on by default; `/ears bags off`), and clicking an ear link in chat. |
+| Escape | Closes the pouch without opening the game menu, via `UISpecialFrames`: the one sanctioned write to a Blizzard global, because Blizzard reads it inside `securecall`. `RegisterGameMenuEscHandler` and keyboard propagation were rejected (reasons in `CLAUDE.md`). |
 | Loot toast | A pop-up for each new ear (not camped repeats), with a loot sound by grade. Up to 3 stack. Click to open the pouch on it. `/ears toast` and `/ears sound` toggle it. |
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
@@ -31,36 +32,31 @@ Last updated: 2026-11-21.
 - **PR #1** (merged): scaffold, kill detection (`PARTY_KILL`), group kills, assists (honorable-kill matching), surnames, error containment, the check toolchain, `CLAUDE.md`, and the in-game test sheet.
 - **PR #2** (merged): the Ear Pouch window and the five ways to open it.
 - **PR #3** (merged): painted ear art for 9 races × 4 tones plus a generic ear, the `art` check, and this status file.
-- **PR #4** (open, `loot-toast`): the loot toast.
+- **PR #4** (merged): the loot toast.
+- **PR #5** (open, `escape-close`): Escape closes the pouch.
 
 ## Waiting on the user
 
 1. **Turn CI on**: move `ci/workflows/ci.yml` and `release.yml` to `.github/workflows/` on `main` in GitHub's web editor (steps in `ci/README.md`), then delete `ci/`.
-2. **Merge PR #4** (the loot toast).
+2. **Merge PR #5** (Escape closes the pouch).
 3. **In-game tests** (`docs/in-game-tests.md`). Nothing has been run in the game yet. The ones that decide the most:
    - T1: does `PARTY_KILL` fire with readable IDs for your and your group's open-world kills?
    - T2: do honorable kills arrive within about 2 s of the death, so assists match?
    - T9: does saved data survive `/reload`? One addon author claims Forever doesn't reload it.
    - T10: the pouch, including opening your bags in combat without "action blocked", and the ear art loading.
    - T11: the loot toast and its sounds.
+   - T12: Escape closes the pouch, in combat too, with a clean taint log.
    - T4: does the death recap name who killed you? It gates Rivals and Vengeance.
    - T6: is the 7th `GetPlayerInfoByGUID` value the surname?
 
 ## Next up (in order)
 
-1. **Escape closes the pouch** (agreed as the next piece of work). Plan:
-   1. Read Forever's UI source for the Escape path: `ToggleGameMenu`, `CloseSpecialWindows`, `CloseAllWindows` and how `UISpecialFrames` is iterated. A full checkout of the `forever` branch of Gethe/wow-ui-source has the files; `.cache` only has the API docs.
-   2. Weigh the options:
-      - `UISpecialFrames` (classic, but writes a Blizzard global)
-      - `SetPropagateKeyboardInput` with `OnKeyDown("ESCAPE")` (check whether it's restricted in combat)
-      - a `hooksecurefunc` post-hook on the close function (safe, but Escape might also open the game menu)
-      - any modern escape-handler API Forever has
-   3. Pick the safest option that behaves right. Spec it, including combat.
-   4. Add an in-game check using the taint log (`/console taintLog 1`; press Escape in and out of combat; read `Logs/taint.log`).
-2. **Options panel**: the settings that exist so far (announce, toast and its sound, open with bags, include battlefields and free-for-all areas, camping window) in Blizzard's Settings UI.
-3. **Ledger and Rivals tabs**, as in the concept mockup: totals, grades, classes and zones; who you've taken ears from.
-4. **Deaths, Rivals and Vengeance**: record who killed you from the death recap (if T4 passes), then Legendary "Vengeance" ears.
-5. Later: export ears as text, inspect another Ear Collector user's pouch, CurseForge and Wago publishing.
+1. **Options panel**: the settings that exist so far (announce, toast and its sound, open with bags, include battlefields and free-for-all areas, camping window) in Blizzard's Settings UI. Start, as for Escape, by reading how Forever's `Blizzard_Settings` registers an addon category (`Settings.RegisterVerticalLayoutCategory` or `RegisterCanvasLayoutCategory`) and whether opening it from addon code is allowed in combat.
+2. **Ledger and Rivals tabs**, as in the concept mockup: totals, grades, classes and zones; who you've taken ears from.
+3. **Deaths, Rivals and Vengeance**: record who killed you from the death recap (if T4 passes), then Legendary "Vengeance" ears.
+4. Later: export ears as text, inspect another Ear Collector user's pouch, CurseForge and Wago publishing.
+
+Reading Forever's UI source: `.cache/wow-ui-source` is a sparse, blob-less checkout, so `git grep` there fetches one file at a time and stalls. Instead, add a worktree in the scratchpad (`git -C .cache/wow-ui-source worktree add --no-checkout <dir> HEAD`), set a sparse pattern such as `'/Interface/**/*.lua'`, and `git checkout`: it fetches in one batch (about 35 MB, a minute).
 
 ## Open questions only the game can answer
 

@@ -156,6 +156,33 @@ It should print the same number. Repeat across a full logout.
 4. Several ears at once stack up to three.
 5. `/ears sound off` mutes it, and `/ears toast off` stops it.
 
+## T12: Escape closes the pouch, without taint
+
+The pouch adds its name to Blizzard's `UISpecialFrames` list, which Escape
+reads inside `securecall`. This test checks that nothing else gets tainted.
+
+1. Turn on the taint log, then `/reload`:
+   ```
+   /console taintLog 1
+   ```
+2. Open the pouch with `/ears` and press Escape. The pouch closes, and the game
+   menu does not open. Press Escape again: now the game menu opens.
+3. Open your bags with B (the pouch opens with them) and press Escape. Both
+   close, and the game menu does not open.
+4. Target something, make sure the pouch is closed, and press Escape: the
+   target clears, as it does without the addon. This is the step taint would
+   break: Escape still reads the pouch's entry when the pouch is closed.
+5. Do steps 2 to 4 in combat (a training dummy will do). Cast a spell with a
+   cast time, open the pouch, and press Escape mid-cast: the first press stops
+   the cast, the second closes the pouch. There should be no "action blocked"
+   or "interface action failed" message.
+6. Log out (the taint log is written then) and open `Logs/taint.log` in the
+   game folder. Search it for `EarCollector`. Lines that only say the addon
+   wrote `UISpecialFrames` are expected. A line that blames `EarCollector` for a
+   blocked action (`ADDON_ACTION_BLOCKED`, `ClearTarget`, `SpellStopCasting`,
+   `ToggleGameMenu`) is a bug: paste it back.
+7. Turn the log off again with `/console taintLog 0`.
+
 ## Reporting back
 
 Paste the printed lines, or copy `EarCollectorDB.debugLog` from

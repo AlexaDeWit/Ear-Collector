@@ -60,7 +60,9 @@ addon. Treat an escaped error as a serious bug.
     still tolerate missing ones.
 - Never cause taint, which leads to "action blocked" messages and the
   disable-addons prompt:
-  - Don't write to Blizzard globals or frames.
+  - Don't write to Blizzard globals or frames. The one exception is appending
+    the pouch's name to `UISpecialFrames`, a list Blizzard keeps for addons and
+    reads inside `securecall` (see "Escape" below).
   - Don't call protected functions.
   - Don't replace Blizzard functions. Use `hooksecurefunc` if a hook is ever needed.
 - Never cost frame time:
@@ -161,8 +163,27 @@ ask the user to move it in GitHub's web editor. Everything else pushes normally.
   - Chat links: `|Haddon:EarCollector:ear:<guid>:<time>|h`. Blizzard's "addon"
     link handler fires `EventRegistry` "SetItemRef" `(owner, link, text, button, frame)`.
   - The window uses `BasicFrameTemplateWithInset` (`.TitleText`, `.CloseButton`).
-    Escape doesn't close it yet: adding to `UISpecialFrames` writes a Blizzard
-    global, so it's left out until checked for taint.
+- **Escape** (`closeOnEscape` in `UI/Pouch.lua`). On Forever the Escape binding
+  runs `ToggleGameMenu` (`Blizzard_GameMenuEsc`). It offers the key to handlers
+  registered with `RegisterGameMenuEscHandler`, in `GameMenuEscPriority` order:
+  dialogs, menus, casting (`SpellStopCasting`), the game menu and settings,
+  Blizzard's own panels, then `CloseAllWindows`, then the world (`ClearTarget`).
+  It opens the game menu only if no handler took the key.
+  - `CloseAllWindows` closes the bags, then runs `securecall("CloseSpecialWindows")`,
+    which hides every shown frame named in `UISpecialFrames`
+    (`Blizzard_UIParentPanelManager/Shared/UIParentPanelManager.lua`). The pouch
+    appends its name there once, when it's built. The `securecall` keeps the
+    tainted entry from tainting the rest of Escape.
+  - Never call `RegisterGameMenuEscHandler`. Only Blizzard's code does.
+    Calling it from an addon would insert into and re-sort Blizzard's handler
+    list while tainted, so every Escape would run tainted and its protected calls
+    (`SpellStopCasting`, `ClearTarget`) would be blocked.
+  - Don't use `OnKeyDown` with `SetPropagateKeyboardInput`. That method is
+    restricted in combat (`HasRestrictions`), so the pouch would either swallow
+    every key or let Escape through to the game menu.
+  - The pouch also closes when Blizzard closes all windows for other reasons:
+    losing control of your character (not on a flight path), and the interface
+    being shown again after Alt+Z.
 - **Loot toast** (`UI/Toast.lua`): our own frames on `UIParent`, not Blizzard's
   alert system, which would risk taint. Fading uses animation groups, not
   `OnUpdate`. Sounds are `SOUNDKIT` names from Forever's `SoundKitConstants`
@@ -233,6 +254,11 @@ Keep game-touching code thin and decisions in plain functions that specs call di
   `CreateAnimationGroup()` returns a group with `Play`/`Stop`/`IsPlaying`, and
   `wow.finishAnimations()` completes playing groups and fires `OnFinished`.
   `PlaySound` calls are recorded in `wow.state().sounds`.
+- `wow.pressEscape()` follows Forever's Escape chain: it closes the game menu if
+  it's open, otherwise closes the bags and hides shown `UISpecialFrames`, and
+  opens the game menu (`state.gameMenuShown`) only if nothing closed.
+- `wow.state().inCombat = true` puts the client in combat. Frame methods Forever
+  restricts in combat (`SetPropagateKeyboardInput` and the like) then raise.
 - `wow.replay(dofile("spec/fixtures/x.lua"))` plays an event sequence. In a
   fixture, `"<secret>"` becomes a secret value, which matches how `/ears debug`
   logs one.
@@ -281,5 +307,6 @@ The basic checklist:
 7. The pouch: `/ears` opens it. It also opens from the minimap addon drawer
    (with an ear icon), from Key Bindings > AddOns > Ear Collector, from your bags
    (B), and by clicking an ear name in chat. It keeps its position after a drag
-   and `/reload`.
+   and `/reload`. Escape closes it without opening the game menu, in combat
+   too, and the taint log stays clean (T12 in `docs/in-game-tests.md`).
 8. Optional: copy `EarCollectorDB.debugLog` for a new spec fixture.
