@@ -1,7 +1,9 @@
 name: Release
 
-# Push an annotated tag such as v0.1.0 (or v0.2.0-beta.1) to publish.
-# All checks run first; then the packager builds EarCollector-<tag>.zip and
+# Push a signed tag such as v0.1.0 (or v0.2.0-beta.1) to publish:
+#   git tag -s v0.1.0 -m "Ear Collector 0.1.0" && git push origin v0.1.0
+# A ruleset rejects unsigned tags and never lets a tag move or be deleted.
+# All checks run first. Then the packager builds EarCollector-<tag>.zip and
 # attaches it to a GitHub Release for the tag.
 #
 # CurseForge or Wago later: create the project, add its ID to the TOC

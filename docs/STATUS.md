@@ -30,6 +30,7 @@ Last updated: 2026-11-21 (after merging PRs #10 and #11; debug log made ready fo
 | Error handling | Errors must never reach the player. See `CLAUDE.md`. |
 | License | MIT. |
 | Workflow | One branch per piece of work from `main`, a PR, and the user merges. Never push to `main` directly. |
+| Branch and tag rules | GitHub rulesets copied from the user's Saerskriven repo. `main`: PRs only, no force-push or deletion, signed commits, 1 approving review, and both CI jobs passing on an up-to-date branch. The user merges by admin bypass. Tags: only admins create them, and they must be signed. No one can move or delete a tag, so a bad release gets a new version. |
 | CI workflow files | Cloud sessions can't push `.github/workflows/`: they lack the `workflow` permission, and it can't be granted. A cloud session stages the file in `ci/workflows/` for the user to move. A local session pushes over SSH and can change it directly. |
 
 ## Done
@@ -65,7 +66,7 @@ Every planned v1.0 feature is built and on `main`. What's left is in-game verifi
    - T4: does the death recap name who killed you? It gates deaths, Nemesis and Vengeance. `/ears debug` now answers it from a single death.
    - T6: is the 7th `GetPlayerInfoByGUID` value the surname?
 
-3. **Release**, once the in-game tests pass: push a tag (`v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
+3. **Release**, once the in-game tests pass: push a signed tag (`git tag -s v1.0.0`, or `v1.0.0-beta1` for a test build) and the release workflow publishes the zip as a GitHub Release. CurseForge and Wago are optional: each needs a project the user creates, its ID in the TOC (`## X-Curse-Project-ID`, `## X-Wago-ID`), and an API token as a repository secret (`CF_API_TOKEN`, `WAGO_API_TOKEN`).
 
 The user's procedure is the "Procedure" and "Reporting back" sections of `docs/in-game-tests.md`: `/ears debug` on, play, `/reload`, then send the account file (debug log) and the character file (victim details).
 
