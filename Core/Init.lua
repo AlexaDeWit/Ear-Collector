@@ -17,3 +17,8 @@ ns.QUALITY = {
 	[4] = { name = "Epic", color = "ffa335ee" },
 	[5] = { name = "Legendary", color = "ffff8000" },
 }
+for _, quality in pairs(ns.QUALITY) do
+	quality.r = tonumber(quality.color:sub(3, 4), 16) / 255
+	quality.g = tonumber(quality.color:sub(5, 6), 16) / 255
+	quality.b = tonumber(quality.color:sub(7, 8), 16) / 255
+end

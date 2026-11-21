@@ -64,7 +64,7 @@ function ns.VictimDetails(guid)
 	-- The 8th return (level) exists on Forever and Retail 12.x but may be nil.
 	-- The 7th is the realm on most clients, but Forever characters have a first
 	-- name and a surname instead of realms, and it holds the surname there.
-	local _, class, _, race, sex, name, nameSuffix, level = GetPlayerInfoByGUID(guid)
+	local className, class, raceName, race, sex, name, nameSuffix, level = GetPlayerInfoByGUID(guid)
 	if not Readable(name) then
 		return nil
 	end
@@ -79,7 +79,9 @@ function ns.VictimDetails(guid)
 		surname = usesSurnames and suffix or nil,
 		realm = not usesSurnames and suffix or nil,
 		class = Readable(class) and class or nil,
+		className = Readable(className) and className or nil,
 		race = Readable(race) and race or nil,
+		raceName = Readable(raceName) and raceName or nil,
 		sex = Readable(sex) and sex or nil,
 		level = Readable(level) and level > 0 and level or nil,
 		yourLevel = Readable(yourLevel) and yourLevel > 0 and yourLevel or nil,
@@ -98,6 +100,9 @@ function ns.Collect(db, kill)
 	local ear, isNew = ns.Ears.Record(db, kill, GetServerTime())
 	if db.settings.announce then
 		Chat.Announce(ear, isNew)
+	end
+	if ns.Pouch then
+		ns.Pouch.Refresh()
 	end
 	return ear, isNew
 end

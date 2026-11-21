@@ -162,7 +162,8 @@ local findAll = ("cd %q && find . \\( %s \\) -prune -o -type f \\( -name '*.lua'
 	IGNORE
 )
 for _, f in ipairs(sh(findAll .. " | sed 's|^\\./||' | sort")) do
-	if not loaded[f] and f ~= ".luacheckrc" and not f:find("^%.") then
+	-- Bindings.xml is loaded by the client itself, never through the TOC.
+	if not loaded[f] and f ~= ".luacheckrc" and f ~= "Bindings.xml" and not f:find("^%.") then
 		warn(f, "not loaded by any .toc or XML <Script>/<Include>")
 	end
 end

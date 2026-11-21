@@ -4,6 +4,10 @@
 ## Author: Alexa DeWit
 ## Version: @project-version@
 ## SavedVariables: EarCollectorDB
+## IconTexture: Interface\Icons\INV_Misc_Bag_10
+## AddonCompartmentFunc: EarCollector_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: EarCollector_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: EarCollector_OnAddonCompartmentLeave
 ## X-License: MIT
 
 Core\Init.lua
@@ -17,4 +21,6 @@ UI\Chat.lua
 Detectors\Shared.lua
 Detectors\PartyKill.lua
 Detectors\HonorKill.lua
+UI\Pouch.lua
+UI\Access.lua
 UI\Slash.lua

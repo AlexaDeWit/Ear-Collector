@@ -1,0 +1,6 @@
+<Bindings>
+	<!-- Key Bindings > AddOns > Ear Collector. Strings are set in UI/Access.lua. -->
+	<Binding name="EARCOLLECTOR_TOGGLE" header="EARCOLLECTOR" category="ADDONS">
+		EarCollector_TogglePouch()
+	</Binding>
+</Bindings>

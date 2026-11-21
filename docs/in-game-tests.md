@@ -123,6 +123,23 @@ Then `/reload`, then:
 
 It should print the same number. Repeat across a full logout.
 
+## T10: the Ear Pouch
+
+1. `/ears` opens the pouch, and the close button and `/ears` close it.
+2. The minimap addon drawer lists "Ear Collector" with a bag icon. Hovering
+   shows your totals, and clicking toggles the pouch.
+3. Key Bindings > AddOns has "Ear Collector: Toggle Ear Pouch". Bind a key and
+   try it.
+4. Press B: the pouch opens with your bags and closes with them. Open it with
+   `/ears` first and it stays open when the bags close. `/ears bags off` stops
+   it opening with your bags.
+5. Do step 4 in combat. There should be no "action blocked" or "interface action
+   failed" message.
+6. Click an ear's name in a "You collected ..." chat line. The pouch opens on
+   that ear's page, highlights it and shows its tooltip.
+7. Drag the pouch, `/reload`, and open it again. It should be where you left it.
+8. Ear icons: race icons appear, and a question mark shows where a race has none.
+
 ## Reporting back
 
 Paste the printed lines, or copy `EarCollectorDB.debugLog` from
