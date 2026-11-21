@@ -461,6 +461,9 @@ function wow.reset(overrides)
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active
 		bagsOpen = false,
 		recap = nil, -- death recap events, newest first
+		-- The built-in damage meter: each fight is { sessionID, enemies = { { guid, name, amount } } },
+		-- newest last. wow.meterFight adds one.
+		damageMeter = { available = true, sessions = {} },
 		inCombat = false,
 		gameMenuShown = false,
 		gameErrors = {}, -- errors that reached the game's error handler (see securecall)
@@ -525,6 +528,9 @@ function wow.reset(overrides)
 	_G.CloseBag = _G.CloseAllBags
 	_G.IsAnyBagOpen = function()
 		return state.bagsOpen
+	end
+	_G.UnitAffectingCombat = function(unit)
+		return unit == "player" and state.inCombat
 	end
 	_G.InCombatLockdown = function()
 		return state.inCombat
@@ -627,11 +633,58 @@ function wow.reset(overrides)
 			return state.recap or {}
 		end,
 	}
+	-- The damage meter (DamageMeterDocumentation.lua). Session data is secret in
+	-- combat (SecretWhenInCombat), and the list of sessions isn't.
+	local function meterSession(session, kind)
+		if state.inCombat then
+			return wow.secretTable()
+		end
+		local sources = {}
+		if session and kind == _G.Enum.DamageMeterType.EnemyDamageTaken then
+			for _, enemy in ipairs(session.enemies) do
+				sources[#sources + 1] = {
+					sourceGUID = enemy.guid,
+					name = enemy.name,
+					totalAmount = enemy.amount or 100,
+					sourceDisplayType = _G.Enum.DamageMeterSourceDisplayType.Enemy,
+				}
+			end
+		end
+		return { combatSources = sources, maxAmount = 0, totalAmount = 0 }
+	end
+	_G.C_DamageMeter = {
+		IsDamageMeterAvailable = function()
+			return state.damageMeter.available, state.damageMeter.available and "" or "unavailable"
+		end,
+		GetAvailableCombatSessions = function()
+			local list = {}
+			for _, session in ipairs(state.damageMeter.sessions) do
+				list[#list + 1] = { sessionID = session.sessionID, name = "", durationSeconds = 10 }
+			end
+			return list
+		end,
+		GetCombatSessionFromID = function(sessionID, kind)
+			for _, session in ipairs(state.damageMeter.sessions) do
+				if session.sessionID == sessionID then
+					return meterSession(session, kind)
+				end
+			end
+			return meterSession(nil, kind)
+		end,
+		GetCombatSessionFromType = function(sessionType, kind)
+			local sessions = state.damageMeter.sessions
+			local current = sessionType == _G.Enum.DamageMeterSessionType.Current and sessions[#sessions] or nil
+			return meterSession(current, kind)
+		end,
+	}
 	_G.RegionalUniqueNamesEnabled = function()
 		return state.regionalNames
 	end
 	_G.Enum = {
 		AddOnRestrictionType = { Combat = 0, Encounter = 1, ChallengeMode = 2, PvPMatch = 3, Map = 4, Chat = 5 },
+		DamageMeterType = { DamageDone = 0, DamageTaken = 7, Deaths = 9, EnemyDamageTaken = 10 },
+		DamageMeterSessionType = { Overall = 0, Current = 1, Expired = 2 },
+		DamageMeterSourceDisplayType = { None = 0, Ally = 1, Enemy = 2 },
 	}
 	_G.C_RestrictedActions = {
 		IsAddOnRestrictionActive = function(kind)
@@ -813,26 +866,49 @@ end
 
 --- Let `seconds` pass: both clocks move and due C_Timer callbacks run, in order.
 function wow.advance(seconds)
-	state.clock = state.clock + seconds
-	state.now = state.now + math.floor(seconds)
-	local due, waiting = {}, {}
-	for _, timer in ipairs(state.timers) do
-		if timer.due <= state.clock then
-			due[#due + 1] = timer
-		else
-			waiting[#waiting + 1] = timer
+	-- Timers run in order, each at its own time, including timers that an
+	-- earlier one starts within the same span, as the client runs them.
+	local startClock, startNow = state.clock, state.now
+	local target = startClock + seconds
+	while true do
+		local nextIndex
+		for i, timer in ipairs(state.timers) do
+			if timer.due <= target and (not nextIndex or timer.due < state.timers[nextIndex].due) then
+				nextIndex = i
+			end
 		end
-	end
-	state.timers = waiting
-	table.sort(due, function(a, b)
-		return a.due < b.due
-	end)
-	for _, timer in ipairs(due) do
+		if not nextIndex then
+			break
+		end
+		local timer = table.remove(state.timers, nextIndex)
+		state.clock = math.max(state.clock, timer.due)
+		state.now = startNow + math.floor(state.clock - startClock)
 		timer.fn()
 	end
+	state.clock = target
+	state.now = startNow + math.floor(seconds)
 end
 
 --- Your honorable-kill count goes up by `n`, as the client reports it.
+--- A fight on the damage meter, in which you or your group damaged `enemies`
+--- ({ guid, name, amount? } each).
+function wow.meterFight(enemies)
+	local sessions = state.damageMeter.sessions
+	sessions[#sessions + 1] = { sessionID = #sessions + 1, enemies = enemies }
+end
+
+--- You enter combat, as the client reports it.
+function wow.startCombat()
+	state.inCombat = true
+	wow.fireEvent("PLAYER_REGEN_DISABLED")
+end
+
+--- You leave combat, as the client reports it.
+function wow.endCombat()
+	state.inCombat = false
+	wow.fireEvent("PLAYER_REGEN_ENABLED")
+end
+
 function wow.honorableKill(n)
 	state.lifetimeHonorableKills = state.lifetimeHonorableKills + (n or 1)
 	wow.fireEvent("PLAYER_PVP_KILLS_CHANGED", "player")

@@ -24,6 +24,7 @@ Core\Assists.lua
 UI\Chat.lua
 UI\Art.lua
 Detectors\Shared.lua
+Detectors\DamageMeter.lua
 Detectors\PartyKill.lua
 Detectors\HonorKill.lua
 Detectors\Death.lua

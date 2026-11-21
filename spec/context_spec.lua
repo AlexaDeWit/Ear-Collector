@@ -10,6 +10,28 @@ describe("Context", function()
 		settings = ns.db.settings
 	end)
 
+	describe("InCombat", function()
+		it("follows lockdown, the combat flag and the Combat restriction", function()
+			assert.is_false(Context.InCombat())
+			wow.state().inCombat = true
+			assert.is_true(Context.InCombat())
+			wow.state().inCombat = false
+			_G.UnitAffectingCombat = function()
+				return true -- flagged in combat before lockdown starts
+			end
+			assert.is_true(Context.InCombat())
+			_G.UnitAffectingCombat = function()
+				return wow.secret()
+			end
+			assert.is_true(Context.InCombat()) -- unreadable counts as combat
+			_G.UnitAffectingCombat = function()
+				return false
+			end
+			wow.state().restrictions.Combat = true
+			assert.is_true(Context.InCombat())
+		end)
+	end)
+
 	it("counts the open world", function()
 		assert.is_true((Context.Classify(false, "none", "contested", settings)))
 		assert.is_true((Context.Classify(false, "none", "hostile", settings)))

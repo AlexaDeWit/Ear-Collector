@@ -133,6 +133,76 @@ describe("Assists", function()
 			assert.are.equal(1, #tracker.deaths)
 			assert.are.equal(VELARIA, tracker.deaths[1].guid)
 		end)
+
+		it("hands back the deaths no credit named, once they settle", function()
+			death(GRIMBASH, 100) -- no credit at all
+			local _, _, _, early, settling = Assists.Resolve(tracker, 101)
+			assert.are.same({}, early)
+			assert.are.equal(1, settling)
+			death(VELARIA, 110)
+			death(ALLY, 110.5)
+			Assists.NoteHonor(tracker, 1, 111) -- one credit for two deaths
+			local _, unnamed, _, unclaimed = Assists.Resolve(tracker, 114)
+			assert.are.equal(1, unnamed)
+			local guids = {}
+			for _, d in ipairs(unclaimed) do
+				guids[#guids + 1] = d.guid
+			end
+			table.sort(guids)
+			local expected = { GRIMBASH, VELARIA, ALLY }
+			table.sort(expected)
+			assert.are.same(expected, guids)
+			local _, _, _, again = Assists.Resolve(tracker, 115)
+			assert.are.same({}, again) -- each death is handed back once
+		end)
+
+		it("keeps your group's kills out of the unclaimed deaths", function()
+			death(GRIMBASH, 100)
+			Assists.NoteGroupKill(tracker, GRIMBASH, 100)
+			local _, _, _, unclaimed = Assists.Resolve(tracker, 104)
+			assert.are.same({}, unclaimed)
+		end)
+
+		describe("from the damage meter", function()
+			local function kill(guid, t)
+				return { guid = guid, t = t, kill = { guid = guid, name = guid } }
+			end
+
+			it("names a death you damaged during your fight or soon after", function()
+				local fight = { start = 100, finish = 130 }
+				local assists, rejected = Assists.FromDamage({
+					kill(GRIMBASH, 99), -- just before the fight started
+					kill(VELARIA, 130 + Assists.RECENT),
+				}, { [GRIMBASH] = "Grimbash", [VELARIA] = false }, fight)
+				assert.are.equal(2, #assists)
+				assert.are.same({}, rejected)
+			end)
+
+			it("rejects a death you didn't damage, or outside your fight", function()
+				local fight = { start = 100, finish = 130 }
+				local _, rejected = Assists.FromDamage({
+					kill(GRIMBASH, 120),
+					kill(VELARIA, 100 - Assists.WINDOW - 1),
+					kill(ALLY, 130 + Assists.RECENT + 1),
+				}, { [VELARIA] = "Velaria", [ALLY] = "Ally" }, fight)
+				assert.are.same({
+					{ guid = GRIMBASH, reason = "not on the damage meter" },
+					{ guid = VELARIA, reason = "not during or just after your last fight" },
+					{ guid = ALLY, reason = "not during or just after your last fight" },
+				}, rejected)
+			end)
+
+			it("names nothing before your first fight, and counts a fight still going", function()
+				local _, rejected = Assists.FromDamage({ kill(GRIMBASH, 100) }, { [GRIMBASH] = "Grimbash" }, nil)
+				assert.are.same({ { guid = GRIMBASH, reason = "no fight on record" } }, rejected)
+				local assists = Assists.FromDamage(
+					{ kill(GRIMBASH, 500) },
+					{ [GRIMBASH] = "Grimbash" },
+					{ start = 100 }
+				)
+				assert.are.equal(1, #assists)
+			end)
+		end)
 	end)
 
 	describe("in game", function()

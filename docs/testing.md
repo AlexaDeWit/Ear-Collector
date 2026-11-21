@@ -47,7 +47,8 @@ in the order Blizzard's docs give.
   loads the files in TOC order with `(addonName, ns)`, then fires `ADDON_LOADED`.
 - `wow.fireEvent(event, ...)` dispatches an event, and `wow.slash("/ears recent")`
   runs a command.
-- `wow.advance(seconds)` moves both clocks and runs due `C_Timer` callbacks.
+- `wow.advance(seconds)` moves both clocks and runs due `C_Timer` callbacks in
+  order, each at its own time, including any that an earlier callback starts.
 - `wow.honorableKill(n)` raises the honorable-kill count and fires
   `PLAYER_PVP_KILLS_CHANGED`.
 
@@ -83,6 +84,12 @@ in the order Blizzard's docs give.
   `wow.advance(ns.DeathWatch.RECAP_DELAY)`.
 - `wow.state().inCombat = true` puts the client in combat. Functions with
   restrictions then raise, and so does `Settings.OpenToCategory`.
+- `wow.startCombat()` and `wow.endCombat()` enter and leave combat, firing
+  `PLAYER_REGEN_DISABLED` and `PLAYER_REGEN_ENABLED`.
+- `wow.meterFight({ { guid, name, amount? } })` adds a fight to the damage
+  meter, newest last, with the enemies you or your group damaged. Its data is
+  secret while `inCombat` is true, and `wow.state().damageMeter.available`
+  turns the meter off.
 - `wow.clickLink(link)` clicks a chat link, `wow.pressBinding("EARCOLLECTOR_TOGGLE")`
   runs a key binding, and `wow.pressEscape()` follows Forever's Escape chain.
 - `wow.settingsCategory(name)` returns a registered options page with its

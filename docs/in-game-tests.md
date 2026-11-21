@@ -85,7 +85,7 @@ take a screenshot of what it prints:
 ## Assists
 
 An assist is an ear for a kill someone outside your group finished, when you
-still earned honor for it.
+damaged the victim or earned honor for it.
 
 1. Without a group, fight an enemy player alongside a friendly player who isn't
    in your group, and let them land the killing blow. If you earned honor, chat
@@ -95,6 +95,10 @@ still earned honor for it.
    enemy players died around that moment.
 3. Kill an enemy player 10 or more levels below you. No honorable-kill line
    appears, and the ear is grey (Poor).
+4. Hit an enemy player too low to give you honor, and let a guard or a player
+   outside your group finish them. When you leave combat, chat shows a line
+   ending in `new ear (assist, damage)`, and a grey assist ear drops. If the
+   line ends in `no assist:` instead, take a screenshot: it says why.
 
 ## Your deaths
 
@@ -107,9 +111,12 @@ who killed you.
    - `death recorded`: it works, and chat also says `<name> killed you.`
    - `no death recap`: the game didn't record who killed you.
    - `recap names no killer`: the record is there, but without a name.
-   - `killer isn't an enemy player you could see (in view: ...)`: take a
+   - `killer isn't an enemy player you saw or damaged (names: ...)`: take a
      screenshot, and note the killer's name as the game showed it on screen.
-2. Die in a battleground or a dungeon. The line ends in `ignored:` and nothing
+2. Die to an enemy player you hit during the fight, with your target cleared and
+   their nameplate hidden. The line should say
+   `death recorded by name, from the damage meter`.
+3. Die in a battleground or a dungeon. The line ends in `ignored:` and nothing
    is recorded.
 
 ## Vengeance

@@ -17,10 +17,10 @@ to the game stays thin.
 | `Core/Database.lua` | Saved data: repair on load, the `ns.db` view |
 | `Core/Context.lua` | Whether a kill here counts; secret-safe reads |
 | `Core/Ears.lua` | Grading and recording ears |
-| `Core/Assists.lua` | Matching honorable kills to deaths |
+| `Core/Assists.lua` | Matching honorable kills and damage to deaths |
 | `Core/Deaths.lua` | Recording deaths, reading the recap, matching killers, vengeance |
 | `Core/Ledger.lua`, `Core/Rivals.lua` | Totals and per-player rows for the pouch's tabs |
-| `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`), your deaths (`Death`), and what they share (`Shared`) |
+| `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), your deaths (`Death`), and what they share (`Shared`) |
 | `UI/Pouch.lua` | The Ear Pouch window, its tabs and the Ears grid |
 | `UI/LedgerTab.lua`, `UI/RivalsTab.lua` | The Ledger and Rivals tabs |
 | `UI/Toast.lua` | The pop-up when you collect an ear |
@@ -44,7 +44,9 @@ flowchart LR
     PartyKill -->|you, your pet, your group| Collect
     PartyKill -->|someone else| Assists
     HonorKill --> Assists
-    Assists -->|matched| Collect
+    Assists -->|named by honor| Collect
+    Assists -->|unclaimed| DamageMeter
+    DamageMeter -->|you damaged them| Collect
     Collect[ns.Collect] --> Ears[Ears.Record]
     Collect --> UI[chat line, pouch, toast]
 ```
@@ -67,21 +69,35 @@ vengeance kill is Legendary.
 by default) adds to that ear's count and restarts the window, instead of
 dropping a new ear.
 
-**Assists.** There's no damage data, so the evidence is timing
-(`Core/Assists.lua`, `Detectors/HonorKill.lua`):
+**Assists.** An assist starts with an enemy player's death near you:
+`UNIT_DIED`, or a `PARTY_KILL` by someone outside your group. There's no combat
+log, so two kinds of evidence say you took part (`Core/Assists.lua`).
 
-- An honorable-kill step is matched to an enemy player's death (`UNIT_DIED`, or
-  a `PARTY_KILL` by someone outside your group) within `Assists.WINDOW` (2.5)
+Honor comes first (`Detectors/HonorKill.lua`):
+
+- An honorable-kill step is matched to a death within `Assists.WINDOW` (2.5)
   seconds.
-- Matching runs half a second after the window closes, because the events
-  arrive in any order.
+- Each death and each credit starts a matching pass half a second after its
+  window closes, because the events arrive in any order.
 - Credits and the deaths near them form connected groups, and each group
   resolves as a whole once nothing in it is newer than the window. Two enemies
   dying a second apart then get one assist each.
 - A credit next to your group's own kill belongs to that kill.
 - More deaths than credits names nobody, and the credit is counted in
   `stats.unnamedHonorKills`.
-- Grey victims give no honor, so they never become assists.
+
+A death no credit named is unclaimed, and the damage meter decides it
+(`Detectors/DamageMeter.lua`):
+
+- It's an assist if the meter shows you or your group damaged that player, and
+  the death came during your fight or within `Assists.RECENT` (60) seconds after
+  it ended. Grey victims give no honor, so this is the only way they become
+  assists.
+- The meter's data is secret in combat, so unclaimed deaths wait until combat
+  ends. A death after your fight is checked as soon as it's unclaimed.
+- Each death is judged against the fight it happened in, and that fight's meter
+  session is noted when combat ends, so a new fight doesn't hide an old one.
+- Your group's own kills are never unclaimed, so they can't become assists too.
 
 ## Deaths and vengeance
 
@@ -94,7 +110,9 @@ The death recap is the only record of who killed you
 3. A readable player `sourceGUID` identifies the killer, unless it's you or your
    group. Otherwise the recap's name must match one seen player exactly: their
    name, its first word, or name and surname joined by a space or a hyphen. A
-   form two players share matches nobody. No match records nothing.
+   form two players share matches nobody.
+4. If no player in view matches, the enemy players on the damage meter (those
+   you or your group hit) get the same test. No match records nothing.
 
 `Deaths.VENGEANCE` (3) deaths to one player since you last killed them make their
 next ear Legendary, even inside the repeat-kill window. Taking that ear clears
@@ -147,6 +165,8 @@ keeps them inside:
     the toast under their own names, so a UI bug can't stop kill detection.
   - Each `/ears` command has its own name. `/ears errors` and `/ears help` are
     never switched off.
+  - Reading the damage meter has its own name, so a change in the meter can't
+    stop honor assists or kills.
   - Each pouch tab builds and refreshes under its own name, so a broken tab is
     skipped.
   - The pouch window builds all or nothing. A failed build keeps it closed
