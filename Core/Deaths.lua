@@ -11,6 +11,7 @@ ns.Deaths = Deaths
 -- Deaths to one player since you last killed them that make their next ear a
 -- Legendary "Vengeance" ear. Taking it clears the debt.
 Deaths.VENGEANCE = 3
+Deaths.GRUDGE_AGE = 6 * 60 * 60 -- seconds since you last fought someone before a sighting reminds you
 
 ---@class EarCollector.Death : EarCollector.Kill
 ---@field at number server time of the death
@@ -88,15 +89,65 @@ end
 ---@param guid string
 ---@return integer
 function Deaths.Debt(db, guid)
+	local times = {}
+	for _, death in ipairs(db.deaths) do
+		if death.guid == guid then
+			times[#times + 1] = death.at
+		end
+	end
+	if #times == 0 then
+		return 0 -- most players never killed you: skip the search of your ears
+	end
 	local latest = ns.Ears.Latest(db, guid)
 	local since = latest and latest.lastAt or nil
 	local count = 0
-	for _, death in ipairs(db.deaths) do
-		if death.guid == guid and (not since or death.at > since) then
+	for _, at in ipairs(times) do
+		if not since or at > since then
 			count = count + 1
 		end
 	end
 	return count
+end
+
+--- When you last fought `guid`: their latest kill of you, or your latest ear from them.
+---@param db table
+---@param guid string
+---@return number|nil serverTime
+function Deaths.LastFought(db, guid)
+	local latest = ns.Ears.Latest(db, guid)
+	local last = latest and latest.lastAt or nil
+	for _, death in ipairs(db.deaths) do
+		if death.guid == guid and (not last or death.at > last) then
+			last = death.at
+		end
+	end
+	return last
+end
+
+local function sameDay(a, b)
+	local x, y = date("*t", a), date("*t", b)
+	return x.year == y.year and x.yday == y.yday
+end
+
+--- The deaths you owe `guid` when seeing them should remind you of the grudge:
+--- you owe them one, you last fought them on an earlier day and at least
+--- GRUDGE_AGE ago, and today's reminder hasn't come yet. 0 otherwise, so a day
+--- of back and forth stays quiet, and so does a fight just before midnight.
+---@param db table
+---@param guid string
+---@param now number server time
+---@param remindedAt number? when you were last reminded of them
+---@return integer
+function Deaths.Reminder(db, guid, now, remindedAt)
+	if remindedAt and sameDay(remindedAt, now) then
+		return 0
+	end
+	local debt = Deaths.Debt(db, guid)
+	local last = debt > 0 and Deaths.LastFought(db, guid)
+	if not last or sameDay(last, now) or now - last < Deaths.GRUDGE_AGE then
+		return 0
+	end
+	return debt
 end
 
 --- Record a death to an enemy player.

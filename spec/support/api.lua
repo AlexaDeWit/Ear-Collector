@@ -30,11 +30,34 @@ return function(state, frames)
 		IG_ABILITY_PAGE_TURN = 836,
 		IG_BACKPACK_OPEN = 862,
 		IG_BACKPACK_CLOSE = 863,
+		RAID_WARNING = 8959,
+	}
+	-- Post-calls run when the tooltip shows a unit (GameTooltip:SetUnit), as the
+	-- client's tooltip data system runs them.
+	local postCalls = {}
+	_G.TooltipDataProcessor = {
+		AddTooltipPostCall = function(dataType, fn)
+			postCalls[dataType] = postCalls[dataType] or {}
+			table.insert(postCalls[dataType], fn)
+		end,
 	}
 	_G.PlaySound = function(soundKitID, channel)
 		state.sounds[#state.sounds + 1] = { id = soundKitID, channel = channel }
 	end
 	_G.GameTooltip = Widgets.tooltip()
+	function _G.GameTooltip:SetUnit(unit)
+		self.unit, self.lines = unit, {}
+		for _, fn in ipairs(postCalls[_G.Enum.TooltipDataType.Unit] or {}) do
+			fn(self, {})
+		end
+	end
+	_G.TooltipUtil = {
+		GetDisplayedUnit = function(tooltip)
+			if tooltip.unit then
+				return _G.UnitName(tooltip.unit), tooltip.unit, _G.UnitGUID(tooltip.unit)
+			end
+		end,
+	}
 	_G.CreateFrame = function(frameType, name, parent, template)
 		local f = Widgets.new(frameType, name, parent, template)
 		frames[#frames + 1] = f
@@ -282,6 +305,7 @@ return function(state, frames)
 	end
 	_G.Enum = {
 		AddOnRestrictionType = { Combat = 0, Encounter = 1, ChallengeMode = 2, PvPMatch = 3, Map = 4, Chat = 5 },
+		TooltipDataType = { Unit = 2 },
 		DamageMeterType = {
 			DamageDone = 0,
 			Dps = 1,

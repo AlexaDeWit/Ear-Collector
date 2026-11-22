@@ -38,6 +38,17 @@ Options.SECTIONS = {
 		},
 	},
 	{
+		title = "Grudges",
+		checkboxes = {
+			{
+				key = "grudgeSound",
+				label = "Raid warning for an old grudge",
+				tooltip = "Play the raid warning sound when someone who took your ear three times in a row "
+					.. "shows up on a later day. Only you hear it.",
+			},
+		},
+	},
+	{
 		title = "Ear Pouch",
 		checkboxes = {
 			{

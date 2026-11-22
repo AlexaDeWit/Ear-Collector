@@ -21,7 +21,7 @@ to the game stays thin.
 | `Core/Appraisal.lua` | An ear's grade from its fight: bands, score, grade buckets |
 | `Core/Deaths.lua` | Recording deaths, reading the recap, matching killers, vengeance |
 | `Core/Ledger.lua`, `Core/Rivals.lua` | Totals and per-player rows for the pouch's tabs |
-| `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), the fight behind an ear (`FightFacts`), your deaths (`Death`), and what they share (`Shared`) |
+| `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), the fight behind an ear (`FightFacts`), your deaths (`Death`), grudges you see (`Grudges`), and what they share (`Shared`) |
 | `UI/Pouch.lua` | The Ear Pouch window, its tab strip and paging |
 | `UI/EarsTab.lua`, `UI/LedgerTab.lua`, `UI/RivalsTab.lua` | The pouch's three tabs |
 | `UI/GradeFilter.lua` | The Ears tab's grade buttons, which hide or show each grade |
@@ -182,6 +182,18 @@ The Rivals tab marks each player with at most one of these, in this order:
 | Nemesis | They killed you twice or more, and more often than you killed them |
 | Avenge | Revenge is owed: one or two deaths |
 | Prey | You killed them three or more times, and they never killed you |
+
+**Grudges.** A player you owe (`Deaths.Debt` above zero) is a grudge, and
+`Detectors/Grudges.lua` notices one when the game shows them to you:
+`NAME_PLATE_UNIT_ADDED`, `PLAYER_TARGET_CHANGED` or `UPDATE_MOUSEOVER_UNIT`, in a
+place where kills count. A sighting reminds you only of an old grudge
+(`Deaths.Reminder`): you last fought them on an earlier day and at least
+`Deaths.GRUDGE_AGE` (6 hours) ago, and you haven't been reminded of them today.
+So a day of back and forth stays quiet. A reminder is a chat line, plus for
+Vengeance a red pop-up and the raid warning sound (`grudgeSound`). Hovering a
+player you owe always adds the grudge to their tooltip, through
+`TooltipDataProcessor`. The reminders of the day are kept only until you log
+out.
 
 ## Saved data
 

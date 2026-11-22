@@ -135,7 +135,7 @@ This needs "Your deaths" to work.
    Revenge owed: their next ear is worth more.`, they appear on the pouch's
    Rivals tab with 1 under Lost, and their row shows "Avenge" in orange.
 2. If you kill them now, the pop-up says "Revenge!", and the ear's tooltip says
-   "revenge for 1 death". Their row loses the "Avenge" mark.
+   "+ Avenged your death". Their row loses the "Avenge" mark.
 3. Die to the same player three times without killing them. Chat says
    `Vengeance owed`. Kill them: the ear is orange (Legendary), the pop-up says
    "Vengeance!" and plays the legendary loot sound, and the ear's tooltip says
@@ -143,6 +143,26 @@ This needs "Your deaths" to work.
 4. A player who has killed you at least twice, and more often than you've
    killed them, shows "Nemesis" in red.
 5. The Ledger tab's "Ears lost" box counts your deaths.
+
+## Grudges
+
+This needs "Your deaths" to work, and enemy nameplates on (press V).
+
+1. Die to an enemy player, then hover them while they're still around. Under
+   their tooltip, an orange line says "You owe them one: their next ear is
+   worth more" and a grey line when they took your ear. Nothing else happens:
+   no chat line, no pop-up.
+2. On a later day (at least 6 hours after you last fought them), let them come
+   into view again. Chat says `You owe <name> one. They took your ear on
+   <date>. Their next ear is worth more.` Seeing them again that day says
+   nothing more.
+3. For someone who took your ear three times in a row, step 2 also shows a red
+   pop-up framed in orange: "You owe them one", their name, and "Their next ear
+   is Legendary". It plays the raid warning sound. If there's no sound, say so.
+4. In Options > AddOns > Ear Collector, turn off "Raid warning for an old
+   grudge": the next reminder is silent.
+5. If none of this happens for someone you know you owe, run `/ears debug`, look
+   at them, and send the log.
 
 ## The pouch
 

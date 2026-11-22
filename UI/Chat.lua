@@ -218,6 +218,56 @@ end
 
 Chat.REVENGE_OWED = "Revenge owed: their next ear is worth more."
 
+-- Grudges (Detectors/Grudges.lua): a player who took your ear since you last
+-- took theirs, remembered like an entry in a book of grudges.
+Chat.GRUDGE = "You owe them one"
+
+local function grudgeOwed(debt)
+	return debt >= ns.Deaths.VENGEANCE and "their next ear is Legendary" or "their next ear is worth more"
+end
+
+-- "took your ear three times in a row, last on Nov 18"
+local function grudgeHistory(debt, lastAt)
+	local times = debt == 1 and "took your ear"
+		or debt == 2 and "took your ear twice in a row"
+		or ("took your ear %s times in a row"):format(ns.Reasons.Word(debt))
+	if not lastAt then
+		return times
+	end
+	return ("%s%s %s"):format(times, debt == 1 and " on" or ", last on", Chat.Date(lastAt))
+end
+
+--- "You owe Cedric Vale one. They took your ear three times in a row, last on
+--- Nov 18. Their next ear is Legendary."
+---@param who table the player's details (ns.VictimDetails)
+---@param debt integer deaths you owe them
+---@param lastAt number? when you last fought them
+function Chat.AnnounceGrudge(who, debt, lastAt)
+	local name = Chat.RaceIcon(who.race, who.sex) .. Chat.InClassColour(who.name, who.class)
+	Chat.Print(
+		("You owe %s one. They %s. %s."):format(name, grudgeHistory(debt, lastAt), ns.Reasons.Capital(grudgeOwed(debt)))
+	)
+end
+
+--- The grudge on a player's tooltip, as lines like EarsTab.TooltipLines.
+---@param debt integer
+---@param lastAt number?
+---@return table[]
+function Chat.GrudgeLines(debt, lastAt)
+	local legendary = ns.QUALITY[5]
+	return {
+		{ text = ("%s: %s"):format(Chat.GRUDGE, grudgeOwed(debt)), r = legendary.r, g = legendary.g, b = legendary.b },
+		{ text = ns.Reasons.Capital(grudgeHistory(debt, lastAt)), r = 0.62, g = 0.62, b = 0.62 },
+	}
+end
+
+--- The pop-up's detail line for a grudge.
+---@param debt integer
+---@return string
+function Chat.GrudgeDetail(debt)
+	return ns.Reasons.Capital(grudgeOwed(debt))
+end
+
 --- "Grimbash killed you." plus the vengeance tally.
 ---@param death table
 ---@param debt integer deaths to them since you last killed them, this one included
