@@ -163,7 +163,8 @@ function ns.Collect(db, kill)
 		earlier = ns.Ears.CountFrom(db, kill.guid, now - ns.Appraisal.DAY),
 		assist = kill.by == "assist",
 	}
-	kill.quality = ns.Appraisal.Appraise(kill.appraise).quality -- until the fight is read
+	local ungraded = ns.Appraisal.Appraise(kill.appraise) -- until the fight is read
+	kill.quality, kill.fight = ungraded.quality, ns.Appraisal.Record(kill.appraise, ungraded)
 	local ear, isNew = ns.Ears.Record(db, kill, now)
 	-- Grading and UI work run in their own Errors.Call: a bug there must never
 	-- switch off detection. A failed grading keeps the ungraded grade.

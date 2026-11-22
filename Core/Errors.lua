@@ -15,7 +15,9 @@ local disabled = {} -- handler name -> true once switched off
 local pending = {} -- errors raised before SavedVariables loaded
 local warned = false
 
-local function say(message)
+--- One line in the player's own chat window, for problems the player should know about.
+---@param message string
+function Errors.Say(message)
 	print("|cffc8402f[Ear Collector]|r " .. message)
 end
 
@@ -57,9 +59,11 @@ function Errors.Report(name, failure)
 	end
 	if counts[name] >= Errors.MAX_PER_HANDLER and not disabled[name] then
 		disabled[name] = true
-		say(("Turned off %s after repeated errors. /reload to try again; /ears errors for details."):format(name))
+		Errors.Say(
+			("Turned off %s after repeated errors. /reload to try again; /ears errors for details."):format(name)
+		)
 	elseif not warned then
-		say("Hit an error and kept going. /ears errors for details.")
+		Errors.Say("Hit an error and kept going. /ears errors for details.")
 	end
 	warned = true
 end

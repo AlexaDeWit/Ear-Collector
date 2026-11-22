@@ -60,6 +60,10 @@ These bind everyone, human or agent. The mechanisms behind them are in
   maintainer's agreement and must be opt-in.
 - **Saved data changes in place.** `ns.db`'s fields are the saved tables, so
   modify them rather than reassign them.
+- **Every release loads every earlier save, and leaves a newer one intact.**
+  Add saved fields; never rename, retype or reuse one. A change of shape is a
+  numbered migration step with a saved-file fixture. The rules are in
+  [`docs/architecture.md`](docs/architecture.md#changing-whats-saved).
 - **WoW Forever only.** Interface `16001`, no Classic or Retail TOCs. The API
   facts the code relies on are in [`docs/forever-api.md`](docs/forever-api.md).
 - **WoW's Lua is 5.1** without `io`, `require`, `dofile`, `loadfile`, `package`

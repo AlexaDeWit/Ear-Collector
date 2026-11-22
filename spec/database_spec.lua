@@ -68,7 +68,7 @@ describe("Database", function()
 							taken = "lots",
 							secs = 40,
 							score = 0 / 0,
-							why = { "longFight", "bogus", 7 },
+							why = { "longFight", "fromANewerVersion", 7 },
 						},
 					},
 				},
@@ -76,7 +76,8 @@ describe("Database", function()
 			assert.is_nil(db.ears[1].pending)
 			assert.are.equal(3, db.ears[1].quality) -- keeps its grade
 			assert.is_nil(db.ears[1].fight)
-			assert.are.same({ read = false, secs = 40, why = { "longFight" } }, db.ears[2].fight)
+			-- A band it doesn't know may come from a newer version, so it stays.
+			assert.are.same({ read = false, secs = 40, why = { "longFight", "fromANewerVersion" } }, db.ears[2].fight)
 		end)
 
 		it("keeps only real grades in the hidden-grade list", function()
@@ -167,7 +168,7 @@ describe("Database", function()
 			local ns = load({ EarCollectorDB = { schema = 1, ears = ears, deaths = deaths, settings = {} } })
 			assert.are.equal(1, #ns.db.ears)
 			assert.are.equal(1, #ns.db.deaths)
-			assert.are.equal(ears[1], _G.EarCollectorCharDB.ears[1]) -- the same records, repaired
+			assert.are.same({ GRIMBASH, "Grimbash", 100 }, { ns.db.ears[1].guid, ns.db.ears[1].name, ns.db.ears[1].at })
 			assert.is_nil(_G.EarCollectorDB.ears)
 			assert.is_nil(_G.EarCollectorDB.deaths)
 		end)

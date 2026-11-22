@@ -34,6 +34,7 @@ Appraisal.DAY = 24 * 60 * 60 -- earlier ears from the same player within this lo
 ---@field fightScore number the fight's bands only: odds, danger, length and the rest
 ---@field why string[] the bands that counted, strongest first
 ---@field points table<string, number> each counted band's points
+---@field rule "vengeance"|"grey"|nil a fixed rule that set the grade instead of the score
 
 local LEVEL = { [4] = { "red", 16 }, [3] = { "orange", 8 }, [1] = { "green", -8 } }
 
@@ -191,27 +192,56 @@ function Appraisal.Appraise(kill, facts)
 		why[i], points[p.key] = p.key, p.points
 	end
 
-	local quality
+	local quality, rule
 	if debt >= ns.Deaths.VENGEANCE then
-		quality = 5 -- Vengeance, whatever the fight
+		quality, rule = 5, "vengeance" -- whatever the fight
 	elseif kill.level == 0 then
-		quality = math.min(debt, 2) -- grey: gave no honor, raised only by revenge
+		quality, rule = math.min(debt, 2), "grey" -- gave no honor, raised only by revenge
 	else
 		quality = Appraisal.Bucket(score)
 	end
-	return { quality = quality, score = score, fightScore = fightScore, why = why, points = points }
+	return { quality = quality, score = score, fightScore = fightScore, why = why, points = points, rule = rule }
 end
 
-local BANDS = { red = true, orange = true, green = true, revenge = true, ["repeat"] = true, assist = true }
+--- What an ear saves about its grade, before (or without) its fight's facts. It
+--- keeps each band's points and the rule, so the ear says the same after the
+--- bands are retuned.
+---@param kill { debt: integer?, earlier: integer? } the terms Appraise was given
+---@param result EarCollector.Appraisal
+---@return table
+function Appraisal.Record(kill, result)
+	return {
+		read = false,
+		debt = kill.debt,
+		earlier = kill.earlier,
+		score = result.score,
+		fightScore = result.fightScore,
+		why = result.why,
+		points = result.points,
+		rule = result.rule,
+	}
+end
+
+local POINTS = { assist = ASSIST }
+for _, level in pairs(LEVEL) do
+	POINTS[level[1]] = level[2]
+end
 for _, bands in ipairs(Appraisal.SIGNALS) do
 	for _, b in ipairs(bands) do
-		BANDS[b.key] = true
+		POINTS[b.key] = b.points
 	end
 end
 
---- Whether `key` names a band (for repairing saved ears).
----@param key any
----@return boolean
-function Appraisal.IsBand(key)
-	return BANDS[key] == true
+--- A band's points today, for an ear saved before ears kept them.
+---@param key any a band name
+---@param debt integer? deaths owed, for revenge
+---@param earlier integer? earlier ears that day, for repeats
+---@return number|nil
+function Appraisal.Points(key, debt, earlier)
+	if key == "revenge" then
+		return REVENGE[debt]
+	elseif key == "repeat" then
+		return type(earlier) == "number" and earlier > 0 and REPEAT * math.min(earlier, 2) or nil
+	end
+	return POINTS[key]
 end

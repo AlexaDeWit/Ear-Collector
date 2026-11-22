@@ -135,6 +135,35 @@ Recorded fixtures beat hand-written ones. To make one from a play session:
 3. Turn the differences in `t` into `{ advance = seconds }` steps.
 4. Replace player names before committing.
 
+## Saved files from past releases
+
+`spec/fixtures/saved/` holds the SavedVariables each release wrote after the
+same evening of world PvP: kills of every level colour, a camped repeat, a
+group kill, three deaths and a Vengeance ear. `newer.lua` is hand-written, as a
+version newer than this one would save. `spec/saved_data_spec.lua` loads each
+through today's code and checks that nothing is lost, that every ear's saved
+reasons explain its grade, that loading twice gives the same result as once,
+that the pouch shows it all without an error, and that the newer file keeps
+everything.
+
+When a release changes what's saved
+([architecture.md](architecture.md#changing-whats-saved)), record its file
+before the next change lands, and add it to `RELEASES` in the spec. Play the
+evening in a checkout of that release:
+
+```bash
+git worktree add ../ec-v2.0.0 v2.0.0
+```
+
+```bash
+cd ../ec-v2.0.0 && SAVED_OUT="$OLDPWD/spec/fixtures/saved/v2.0.0.lua" busted "$OLDPWD/spec/support/saved_evening.lua"
+```
+
+Then add a comment at the top of the new file saying which release wrote it,
+and run `stylua` on it. If the evening
+needs a feature the release lacks, guard it the way `saved_evening.lua` guards
+`wow.meterFight`.
+
 ## What headless checks can't tell you
 
 - Whether `PARTY_KILL` fires in the live client, and with readable GUIDs.

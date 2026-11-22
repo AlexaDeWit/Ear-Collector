@@ -14,7 +14,7 @@ to the game stays thin.
 | `Core/Init.lua` | Namespace, version, grade colours |
 | `Core/Errors.lua` | Error containment |
 | `Core/Events.lua` | The `ns.On(event, fn)` dispatcher |
-| `Core/Database.lua` | Saved data: repair on load, the `ns.db` view |
+| `Core/Database.lua` | Saved data: migration steps and repair on load, the `ns.db` view |
 | `Core/Context.lua` | Whether a kill here counts; secret-safe reads |
 | `Core/Ears.lua` | Grading and recording ears |
 | `Core/Assists.lua` | Matching honorable kills and damage to deaths |
@@ -92,8 +92,10 @@ at once. In combat it waits: chat says "Appraising the fight...", and when
 combat ends (`PLAYER_REGEN_ENABLED`, then `DamageMeter.SETTLE`) the meter's
 views for that fight are read once, every waiting ear is graded, and each gets
 its chat line and pop-up. If combat goes on for `FightFacts.WAIT` (30 seconds)
-after a kill, its pop-up shows ungraded. The facts and the bands that counted
-are saved on the ear as `fight`, and `/ears debug` logs the arithmetic.
+after a kill, its pop-up shows ungraded. Every new ear saves how it was graded
+as `fight` (`Appraisal.Record`): the bands that counted, each one's points, and
+the rule (`vengeance` or `grey`) when one set the grade instead of the score.
+Once the fight is read, its facts join them. `/ears debug` logs the arithmetic.
 Camped repeats are never graded.
 
 **Repeat kills.** Killing the same player again within `campWindow` (10 minutes
@@ -166,20 +168,68 @@ The Rivals tab marks each player with at most one of these, in this order:
 | `EarCollectorDB` | The account | `settings`, `ui` (pouch position), `errors`, `debugLog` |
 | `EarCollectorCharDB` | Each character | `ears`, `deaths`, `stats`, `hiddenGrades` (grades the Ears tab hides) |
 
-- `Database.MigrateAccount` and `Database.MigrateCharacter` repair whatever is
-  on disk at `ADDON_LOADED`: missing tables, wrong types, damaged records.
-  Saved data can be old, hand-edited or truncated, so code that reads a field
-  still tolerates it missing. An ear still marked `pending` (a reload mid-fight)
-  keeps its grade, and its saved `fight` keeps only numbers and known bands.
-- Schema 1 kept ears account-wide. `Database.MoveShared` moves them to the first
-  character that loads, and drops nothing.
-- `ns.db` is a view whose fields are the saved tables themselves
-  (`Database.View`). Change them in place (`Database.Clear` empties a list).
-  Reassigning a field would stop it being saved, and the options page holds a
-  reference to `db.settings`.
-- The addon reads settings when it needs them and caches none, so a change
-  takes effect without a callback.
-- Every log is bounded: 20 errors, 300 debug entries.
+`ns.db` is a view whose fields are the saved tables themselves
+(`Database.View`). Change them in place (`Database.Clear` empties a list).
+Reassigning a field would stop it being saved, and the options page holds a
+reference to `db.settings`. The addon reads settings when it needs them and
+caches none, so a change takes effect without a callback. Every log is
+bounded: 20 errors, 300 debug entries.
+
+### Loading
+
+At `ADDON_LOADED`, before anything else can read saved data:
+
+1. `Database.MoveShared` moves ears saved account-wide (schema 1) to the first
+   character with none of its own. It runs on every load, because the ears
+   wait for such a character.
+2. `Database.MigrateAccount` and `Database.MigrateCharacter` bring each table
+   up to `Database.SCHEMA`. The steps in `Database.STEPS` that the table hasn't
+   had run once each, in order, on a copy. The copy replaces the table only if
+   every step finishes. If one fails, the table stays exactly as it was, at its
+   old schema, the error goes to `/ears errors`, and the steps run again next
+   load.
+3. They then repair damage: missing tables, wrong types, damaged records. Code
+   that reads a field still tolerates it missing. An ear still marked `pending`
+   (a reload mid-fight) keeps its grade.
+4. A table saved by a newer version (its schema is above `Database.SCHEMA`)
+   gets no steps, keeps its schema and everything in it, and the player is told
+   once in chat.
+5. `ns.db` is built from the result.
+
+| Schema | Saved by | Change |
+|---|---|---|
+| 1 | Builds before v1.0 | Ears, deaths and stats saved account-wide |
+| 2 | v1.0 | Moved per character (`MoveShared`) |
+| 3 | v2.0 | Every ear keeps how it was graded (`fight.points`, `fight.rule`). Older ears get the record that grading by level colour would save, when it gives the grade they have |
+
+### Changing what's saved
+
+Every release must load the saved files of every earlier release, and leave a
+newer release's files intact, so a player can go back a version and forward
+again without losing anything.
+
+- **Add fields. Never rename, retype or reuse one.** An older version keeps
+  reading the old field. When a meaning changes, add a new field.
+- **Read defensively.** Tolerate any field missing, and skip a value you don't
+  know, such as a band name from a newer version.
+- **Repair only what you know.** Repair drops a known field of the wrong type.
+  It never drops a field it doesn't know, which may come from a newer version.
+- **Save decisions, not just inputs.** When the addon works something out that
+  it shows later, such as a grade and its reasons, save the result. Then
+  retuning the rules never needs old code to explain an old record.
+- **A change of shape is a step.** Raise `Database.SCHEMA`, add the step to
+  `Database.STEPS.account` or `.character` under the new number, and add a row
+  to the table above. A step:
+  - gets the table as the schema before it left it, possibly damaged, so it
+    checks a value's type before trusting it;
+  - leaves a record that's already in the new shape alone, because a failed
+    load runs it again over records saved since;
+  - works on the saved tables alone: no game API, and no `ns.db`;
+  - never deletes the player's ears or deaths;
+  - keeps working forever, since a player can jump straight from v1.0 to the
+    latest release.
+- **Record a saved file** when a release changes what's saved, and prove every
+  release still loads ([testing.md](testing.md#saved-files-from-past-releases)).
 
 ## Error containment
 
