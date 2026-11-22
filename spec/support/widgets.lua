@@ -217,10 +217,8 @@ function widgetMethods.CreateAnimationGroup(owner)
 	animationGroups[#animationGroups + 1] = group
 	return group
 end
-function widgetMethods:CreateTexture(name, layer, _, sublevel)
-	local texture = newWidget("Texture", name, self)
-	texture.layer, texture.sublevel = layer, sublevel or 0
-	return texture
+function widgetMethods:CreateTexture(name)
+	return newWidget("Texture", name, self)
 end
 function widgetMethods:CreateFontString(name)
 	return newWidget("FontString", name, self)
@@ -251,8 +249,8 @@ function Widgets.tooltip()
 	local tip = newWidget("GameTooltip", "GameTooltip")
 	tip.shown = false
 	tip.lines = {}
-	function tip:SetOwner(owner)
-		self.owner = owner
+	function tip:SetOwner(owner, anchor)
+		self.owner, self.anchor = owner, anchor
 		self.lines = {}
 	end
 	function tip:IsOwned(frame)

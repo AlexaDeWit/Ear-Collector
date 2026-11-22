@@ -46,6 +46,7 @@ The options are in Options > AddOns > Ear Collector.
 | `/ears bags on\|off` | Open the pouch with your bags |
 | `/ears popup on\|off` | The pop-up when you collect an ear |
 | `/ears popup move` | Drag pop-ups where you want them |
+| `/ears popup reset` | Put pop-ups back near the top of the screen |
 | `/ears sound on\|off` | The pop-up's sound |
 | `/ears debug` | Print and save what the addon sees, for testing and bug reports |
 | `/ears errors` | Errors the addon caught (it keeps running) |

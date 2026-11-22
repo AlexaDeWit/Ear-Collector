@@ -203,14 +203,15 @@ every API return, and repair of saved data on load.
   keyboard propagation is restricted in combat, and a post-hook on
   `ToggleGameMenu` can't stop the game menu opening
   ([details](forever-api.md#interface-hooks)).
-- **The pop-up** (`UI/Toast.lua`) stacks upward from bottom centre, above the
-  action bars and clear of Blizzard's error and zone text, or from wherever you
-  drag the stand-in (`UI/ToastMover.lua`, saved in `db.ui.toast`). It's a
-  plain dark panel with the ear framed in its grade colour. A Vengeance ear gets
-  an orange edge, a death a red "Ear lost" pop-up. One loot sound plays per burst unless a grander one follows,
-  and Poor ears are silent. It is the addon's own frames on `UIParent`, not Blizzard's alert
-  system, which could spread taint. Animation groups fade it, with no
-  `OnUpdate`. Up to `Toast.MAX` (3) stack. Only new ears get one.
+- **The pop-up** (`UI/Toast.lua`) stacks downward from near the top of the
+  screen, or from wherever you drag the stand-in (`UI/ToastMover.lua`, saved in
+  `db.ui.toast`), growing away from the screen edge it's anchored to. It's a
+  plain bronze panel with the ear framed in its grade colour, and a death gets a
+  red "Ear lost" one. One loot sound plays per
+  burst unless a grander one follows, and Poor ears are silent. It is the
+  addon's own frames on `UIParent`, not Blizzard's alert system, which could
+  spread taint. Animation groups fade it, with no `OnUpdate`. Up to `Toast.MAX`
+  (3) stack. Only new ears get one.
 - **The options page** uses the Settings API. Checkboxes bind straight to
   `db.settings`. The repeat-kill slider is a proxy setting (minutes on screen,
   seconds saved) whose getter and setter run in `Errors.Call`, because Blizzard

@@ -173,24 +173,24 @@ This needs "Your deaths" to work.
 
 ## The pop-up
 
-1. Collect an ear. A pop-up fades in at the bottom of the screen, above your
-   action bars: a dark panel with a thin bronze edge. It shows the ear framed
-   in its grade colour, the name in that colour, and one line under it with the
+1. Collect an ear. A pop-up fades in near the top of the screen, in the
+   middle: a bronze panel. It shows the ear framed in its grade colour, the name in that colour, and one line under it with the
    grade, level, race and class (and who landed the blow). It says "Ear
    collected" at the top, or "Assist collected" for an assist.
 2. A loot sound plays, and a Rare or better ear plays the epic loot sound. A
    Poor ear is silent. Several ears in quick succession play one sound, unless a
    grander one follows.
 3. It fades after about 4 seconds. Hovering keeps it up and shows the ear's
-   tooltip, which ends with what clicking does.
+   tooltip under it, ending with what clicking does.
 4. Left-click opens the pouch on that ear. Right-click dismisses it.
-5. Several ears at once stack upward, up to three.
-6. A Vengeance ear's pop-up says "Vengeance!" and has an orange edge.
+5. Several ears at once stack downward, newest on top, up to three.
+6. A Vengeance ear's pop-up says "Vengeance!", with the name in orange.
 7. Die to an enemy player: a red pop-up says "<name> took your ear", and says
    "Vengeance owed" on the third death. Clicking it opens the Rivals tab.
 8. `/ears popup move` (or "Move pop-up" in the options) shows a blue stand-in.
    Drag it somewhere, right-click it, and collect an ear: the pop-up appears
-   there, and still does after `/reload`.
+   there, and still does after `/reload`. `/ears popup reset` puts it back near
+   the top.
 9. `/ears sound off` mutes it, and `/ears popup off` stops it.
 
 ## Escape

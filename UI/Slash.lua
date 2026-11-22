@@ -58,6 +58,10 @@ function commands.popup(db, args)
 		ns.Toast.Move()
 		Chat.Print("Drag the pop-up where you want it, then right-click it.")
 		return
+	elseif args == "reset" then
+		ns.Toast.ResetAnchor()
+		Chat.Print("Pop-ups are back near the top of the screen.")
+		return
 	end
 	toggle(
 		db,
@@ -152,7 +156,7 @@ function commands.help()
 	Chat.Print("/ears debug: print and save each kill, honorable kill and death, and why it did or didn't count")
 	Chat.Print("/ears bags on|off: open the pouch with your bags")
 	Chat.Print("/ears popup on|off, /ears sound on|off: the pop-up when you collect an ear, and its sound")
-	Chat.Print("/ears popup move: drag pop-ups where you want them")
+	Chat.Print("/ears popup move: drag pop-ups where you want them (/ears popup reset puts them back)")
 	Chat.Print("/ears errors: errors the addon caught (it keeps running); /ears errors clear")
 end
 
