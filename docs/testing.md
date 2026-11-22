@@ -78,8 +78,14 @@ in the order Blizzard's docs give.
 **The player and the world**
 
 - `wow.state().units[token] = guid` makes a unit exist (`target`, `focus`,
-  `mouseover`, `nameplateN`). You can attack any player who isn't you or in
-  `wow.state().group`.
+  `mouseover`, `nameplateN`). Each `nameplateN` also shows up in
+  `C_NamePlate.GetNamePlates()`.
+- You're Alliance (`wow.state().faction`), and other players are Horde unless
+  their info gives a `faction`. You can attack players of the other faction
+  outside your group, or anyone in a free-for-all area
+  (`wow.state().freeForAll`).
+- `wow.state().trivialRange` is how far below you the game shows levels green
+  (12 by default).
 - `wow.state().recap` is the death recap, newest first. Fire `PLAYER_DEAD`, then
   `wow.advance(ns.DeathWatch.RECAP_DELAY)`.
 - `wow.state().inCombat = true` puts the client in combat. Functions with

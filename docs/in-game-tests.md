@@ -67,7 +67,9 @@ leave in the files.
    `You collected <name>'s Ear`.
 3. Hover over the ear's name in that line, or find the ear in the pouch
    (`/ears`). The tooltip shows the victim's full name, surname included, their
-   level, race and class, and where you killed them.
+   level, race and class, and where you killed them. The grade matches the
+   colour their level had on their nameplate or target frame: grey is Poor,
+   green Common, yellow Uncommon, orange Rare, and red Epic.
 4. In a group, let a groupmate land the killing blow on an enemy player. The line
    ends in `new ear (group)`, and the ear names who landed the blow.
 5. If you play a class with a pet, let your pet finish an enemy player. The line
@@ -93,7 +95,7 @@ damaged the victim or earned honor for it.
    in `new ear (assist)`. The pop-up says "Assist".
 2. If you see `honorable kill(s) not tied to one victim` instead, note how many
    enemy players died around that moment.
-3. Kill an enemy player 10 or more levels below you. No honorable-kill line
+3. Kill an enemy player whose level shows grey to you. No honorable-kill line
    appears, and the ear is grey (Poor).
 4. Hit an enemy player too low to give you honor, and let a guard or a player
    outside your group finish them. When you leave combat, chat shows a line

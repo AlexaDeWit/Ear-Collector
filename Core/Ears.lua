@@ -32,8 +32,9 @@ end
 ---@field sex number? 2 male, 3 female (GetPlayerInfoByGUID)
 ---@field level number? nil when the client doesn't say
 ---@field yourLevel number?
+---@field trivialRange number? how far below you the game still shows levels green, at the kill
 ---@field by "you"|"group"|"assist" who landed the killing blow: you (or your pet), your group,
---- or someone else while you earned honorable-kill credit
+--- or someone else after you damaged the victim or earned honor for them
 ---@field killer string? the group member's name, when by == "group" and known
 ---@field mapID number?
 ---@field zone string?
@@ -41,24 +42,42 @@ end
 ---@field vengeance integer? deaths to this player since you last killed them, when
 --- enough for a Vengeance ear (set by ns.Collect from Deaths.Debt)
 
---- Base grade from the level gap between the victim and you.
---- Unknown levels count as an even fight.
+-- Grades follow the colour the game gives the victim's level
+-- (GetRelativeDifficultyColor in Blizzard_FrameXMLUtil/Mainline/DifficultyUtil.lua):
+-- red is Epic, orange Rare, yellow Uncommon, green Common, grey Poor.
+Ears.RED_GAP = 5 -- levels above you
+Ears.ORANGE_GAP = 3
+Ears.YELLOW_GAP = -4 -- levels below you still yellow
+Ears.TRIVIAL_FALLBACK = 9 -- green reaches this far below when the game doesn't say
+
+--- Base grade from the level gap between the victim and you, by the game's
+--- level colours. Unknown levels count as an even fight.
 ---@param victimLevel number|nil
 ---@param yourLevel number|nil
----@return integer quality 0 Poor .. 3 Rare
-function Ears.Grade(victimLevel, yourLevel)
+---@param trivialRange number|nil UnitQuestTrivialLevelRange("player"): how far below you green reaches
+---@return integer quality 0 Poor .. 4 Epic
+function Ears.Grade(victimLevel, yourLevel, trivialRange)
 	if not victimLevel or not yourLevel then
 		return 2
 	end
 	local gap = victimLevel - yourLevel
-	if gap <= -10 then
-		return 0
-	elseif gap <= -5 then
-		return 1
-	elseif gap >= 3 then
+	if gap >= Ears.RED_GAP then
+		return 4
+	elseif gap >= Ears.ORANGE_GAP then
 		return 3
+	elseif gap >= Ears.YELLOW_GAP then
+		return 2
+	elseif -gap <= (trivialRange or Ears.TRIVIAL_FALLBACK) then
+		return 1
 	end
-	return 2
+	return 0
+end
+
+--- True when the victim was grey to you, so killing them gave no honor.
+---@param kill EarCollector.Kill
+---@return boolean
+function Ears.IsTrivial(kill)
+	return Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange) == 0
 end
 
 --- The most recent ear taken from `guid`, if any.
@@ -110,7 +129,7 @@ function Ears.Record(db, kill, now)
 		at = now,
 		lastAt = now,
 		camped = 0,
-		quality = kill.vengeance and 5 or Ears.Grade(kill.level, kill.yourLevel),
+		quality = kill.vengeance and 5 or Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange),
 		vengeance = kill.vengeance,
 	}
 	db.ears[#db.ears + 1] = ear

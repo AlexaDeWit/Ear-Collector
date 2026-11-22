@@ -115,6 +115,36 @@ describe("deaths and vengeance", function()
 			}, decisions)
 		end)
 
+		it("reads every nameplate on screen, however it's numbered", function()
+			die({ nameplate57 = GRIMBASH }, recap("Grimbash"))
+			assert.are.equal(1, #ns.db.deaths)
+		end)
+
+		it("falls back to the numbered nameplates without C_NamePlate", function()
+			_G.C_NamePlate = nil
+			die({ nameplate57 = VELARIA, ["nameplate" .. ns.DeathWatch.NAMEPLATES] = GRIMBASH }, recap("Grimbash"))
+			assert.are.equal(1, #ns.db.deaths)
+			local seen = {}
+			for _, guid in pairs(ns.DeathWatch.EnemiesInView()) do
+				seen[guid] = true
+			end
+			assert.are.same({ [GRIMBASH] = true }, seen) -- nameplate57 is past the numbered range
+		end)
+
+		it("doesn't let a friendly player in view share the killer's name", function()
+			wow.state().players[OTHER_GRIMBASH].faction = "Alliance" -- your faction
+			die({ target = GRIMBASH, nameplate1 = OTHER_GRIMBASH }, recap("Grimbash"))
+			assert.are.equal(1, #ns.db.deaths)
+			assert.are.equal(GRIMBASH, ns.db.deaths[1].guid)
+		end)
+
+		it("counts anyone in a free-for-all area", function()
+			wow.state().freeForAll = true
+			wow.state().players[GRIMBASH].faction = "Alliance"
+			die({ target = GRIMBASH }, recap("Grimbash"))
+			assert.are.equal(1, #ns.db.deaths)
+		end)
+
 		it("ignores a name two players in view share", function()
 			die({ target = GRIMBASH, nameplate1 = OTHER_GRIMBASH }, recap("Grimbash"))
 			assert.are.equal(0, #ns.db.deaths)

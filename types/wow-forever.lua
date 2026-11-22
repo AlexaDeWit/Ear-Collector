@@ -146,3 +146,8 @@ function PanelTemplates_SetTab(frame, id) end
 --- Blizzard_UIParentPanelManager/Shared/UIParentPanelManager.lua.
 ---@type string[]
 UISpecialFrames = {}
+
+--- Mixed into every frame C_NamePlate.GetNamePlates() returns.
+--- Blizzard_NamePlates/Blizzard_NamePlateBase.lua: GetUnit returns the unit token it shows.
+---@class NamePlateBaseMixin
+---@field GetUnit fun(self: NamePlateBaseMixin): string?

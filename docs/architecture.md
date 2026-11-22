@@ -61,9 +61,13 @@ victim's name, surname, class, race and level.
 Battlegrounds, arenas, dungeons, raids and scenarios never count. Zone-wide
 battles and free-for-all areas count only when their options are on.
 
-**Grades.** `Ears.Grade` compares levels: 10 or more below you is Poor, 5 to 9
-below is Common, 3 or more above is Rare, and anything else is Uncommon. A
-vengeance kill is Legendary.
+**Grades.** `Ears.Grade` follows the colour the game gives the victim's level
+([forever-api.md](forever-api.md#kills)): red (5 or more above you) is Epic,
+orange (3 or 4 above) Rare, yellow (4 below to 2 above) Uncommon, green
+Common, and grey Poor. How far below you green reaches comes from
+`UnitQuestTrivialLevelRange("player")` at the kill, which varies with your
+level, and is 9 levels when the game doesn't say. A vengeance kill is
+Legendary.
 
 **Repeat kills.** Killing the same player again within `campWindow` (10 minutes
 by default) adds to that ear's count and restarts the window, instead of
@@ -82,7 +86,8 @@ Honor comes first (`Detectors/HonorKill.lua`):
 - Credits and the deaths near them form connected groups, and each group
   resolves as a whole once nothing in it is newer than the window. Two enemies
   dying a second apart then get one assist each.
-- A credit next to your group's own kill belongs to that kill.
+- A credit next to your group's own kill belongs to that kill, unless the
+  victim was grey to you: that kill gave no credit, so it uses none.
 - More deaths than credits names nobody, and the credit is counted in
   `stats.unnamedHonorKills`.
 
@@ -105,7 +110,7 @@ The death recap is the only record of who killed you
 (`Detectors/Death.lua`, `Core/Deaths.lua`).
 
 1. On `PLAYER_DEAD` in a place that counts, `DeathWatch` notes the enemy players
-   in view: target, focus, mouseover and nameplates.
+   in view: target, focus, mouseover and every nameplate on screen.
 2. After `DeathWatch.RECAP_DELAY` (1 second) it reads the recap's killing blow.
 3. A readable player `sourceGUID` identifies the killer, unless it's you or your
    group. Otherwise the recap's name must match one seen player exactly: their

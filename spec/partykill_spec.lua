@@ -94,6 +94,21 @@ describe("PARTY_KILL detection", function()
 		assert.are.equal(3, #ns.db.ears)
 	end)
 
+	it("grades by the game's green range at the kill", function()
+		wow.addPlayer(VELARIA, { name = "Velaria", class = "Rogue", race = "Scourge", level = 50 })
+		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- 10 below, inside the game's range of 12
+		wow.state().trivialRange = 8
+		wow.state().now = wow.state().now + 3600
+		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- the same gap, past a range of 8
+		wow.state().trivialRange = wow.secret()
+		wow.state().now = wow.state().now + 3600
+		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- hidden: the fixed range of 9
+		assert.are.equal(1, ns.db.ears[1].quality)
+		assert.are.equal(0, ns.db.ears[2].quality)
+		assert.are.equal(0, ns.db.ears[3].quality)
+		assert.are.same({}, ns.db.errors)
+	end)
+
 	it("ignores NPCs", function()
 		wow.fireEvent("PARTY_KILL", ME, "Creature-0-4395-0-1-2738-00001234")
 		assert.are.equal(0, #ns.db.ears)
