@@ -177,6 +177,9 @@ where an issue completes.
 - **Keep workflows injection-free**. Never interpolate untrusted
   `${{ github.event.* }}` or `${{ github.head_ref }}` into `run:` blocks. Pass
   them through `env:`.
+- **Keep secrets in the `release` environment**, never at the repository level.
+  Pass a secret only to the step that needs it, never to a whole job or a
+  called workflow. Never use `pull_request_target`.
 
 ## Releases
 
@@ -187,12 +190,17 @@ git tag -s v1.0.0 -m "Ear Collector 1.0.0"
 git push origin v1.0.0
 ```
 
-The release workflow runs every check, then the
+The release workflow runs every check. Then the
 [BigWigs packager](https://github.com/BigWigsMods/packager) builds
-`EarCollector-<tag>.zip` and attaches it to a GitHub Release. Tags can't be
-moved or deleted, so a bad release gets a new version. A tag containing `alpha`
-or `beta` (`v1.0.0-beta1`) makes a pre-release.
+`EarCollector-<tag>-forever.zip`, uploads it to CurseForge, and attaches it to a
+GitHub Release. Tags can't be moved or deleted, so a bad release gets a new
+version. A tag containing `alpha` or `beta` (`v1.0.0-beta1`) makes a GitHub
+pre-release and a CurseForge file of that type.
 
-Publishing to CurseForge or Wago needs the project's ID in the TOC
-(`## X-Curse-Project-ID`, `## X-Wago-ID`) and an API token as a repository secret
-(`CF_API_TOKEN`, `WAGO_API_TOKEN`) passed to the packager step.
+The CurseForge upload goes first. If it fails, the packager stops before the
+GitHub Release. Re-run the failed job, because the tag is still good.
+
+CurseForge finds the project from `## X-Curse-Project-ID` in the TOC. The API
+token is `CURSE_PUBLICATION_SECRET` in the `release` environment, which only
+`v*` tags can deploy to. Wago would need `## X-Wago-ID` in the TOC and a
+`WAGO_API_TOKEN` secret in the same environment, passed to the packager step.
