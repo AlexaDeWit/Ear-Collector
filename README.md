@@ -67,7 +67,7 @@ Common, Uncommon, Rare, Epic and Legendary. Each of these counts for or against:
 - **Whether they fought back:** picking off a smaller, lower player who never
   hit you counts against you.
 - **Your part:** your healing and shields, your side's interrupts and dispels,
-  and allies who fell.
+  and group members who fell.
 - **Their level's colour:** red counts for you, green against.
 - **Revenge:** each time they've killed you since you last killed them. Three
   times makes their next ear Legendary.
@@ -78,8 +78,12 @@ The fight is read from the game's damage meter, which addons can only see once
 combat ends. So an ear taken in a fight is graded when the fight ends: chat
 says "Appraising the fight...", then the pop-up shows the grade. With no record
 of the fight, the grade follows the victim's level colour. Grey victims, who give
-no honor, are Poor unless revenge raises them. The ear's tooltip says what
-counted.
+no honor, are Poor unless revenge raises them.
+
+Hover an ear to see why it has its grade: each reason with a + or -, squares
+for how much it counted, and a sentence about the fight, such as "You were
+outnumbered two to one and took more than a full health bar, but it was your
+second ear from them in a day."
 
 Killing the same player again within 10 minutes adds to that ear instead of
 dropping a new one. The options set the window.

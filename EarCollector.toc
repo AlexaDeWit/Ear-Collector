@@ -25,6 +25,7 @@ Core\Deaths.lua
 Core\Assists.lua
 Core\Appraisal.lua
 UI\Chat.lua
+UI\Reasons.lua
 UI\FightSummary.lua
 UI\Art.lua
 Detectors\Shared.lua

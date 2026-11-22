@@ -171,7 +171,11 @@ function Appraisal.Appraise(kill, facts)
 	if earlier > 0 then
 		add(parts, "repeat", REPEAT * earlier, false)
 	end
-	local didLittle = facts and facts.read and not contested(facts) and (facts.healed or 0) < 0.5
+	local didLittle = facts
+		and facts.read
+		and type(facts.taken) == "number" -- a known figure, so "took little damage" is never a guess
+		and not contested(facts)
+		and (facts.healed or 0) < 0.5
 	if kill.assist and didLittle then
 		add(parts, "assist", ASSIST, true)
 	end

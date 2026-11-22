@@ -76,7 +76,16 @@ function Chat.ShowTooltip(owner, anchor, lines)
 	GameTooltip:SetOwner(owner, anchor)
 	for _, line in ipairs(lines) do
 		if line.left then
-			GameTooltip:AddDoubleLine(line.left, line.right, 1, 1, 1, line.r, line.g, line.b)
+			GameTooltip:AddDoubleLine(
+				line.left,
+				line.right,
+				line.lr or 1,
+				line.lg or 1,
+				line.lb or 1,
+				line.r,
+				line.g,
+				line.b
+			)
 		else
 			GameTooltip:AddLine(line.text, line.r, line.g, line.b, true)
 		end
@@ -163,13 +172,15 @@ function Chat.ParseEarLink(link)
 	return guid, tonumber(at)
 end
 
--- " Hard-fought: alone against 3, 35 seconds." for an ear whose fight was read.
-local function fightSentence(ear)
-	local fight = ear.fight
-	if type(fight) ~= "table" or not fight.read then
-		return ""
+-- " You took more than a full health bar and died too.": the ear's story, or why
+-- there's none when the meter had no record of the fight.
+local function story(ear)
+	local text = ns.FightSummary.Story(ear)
+	if text then
+		return " " .. text
 	end
-	return (" %s."):format(ns.FightSummary.Summary(fight, 3))
+	local fight = ear.fight
+	return type(fight) == "table" and not fight.read and " No record of the fight." or ""
 end
 
 ---@param ear table
@@ -188,17 +199,11 @@ function Chat.Announce(ear, isNew, waiting)
 		end
 		if ear.vengeance then
 			Chat.Print(
-				("Vengeance! You collected %s (%s). They had killed you %d times.%s%s"):format(
-					Chat.EarLink(ear),
-					quality.name,
-					ear.vengeance,
-					by,
-					fightSentence(ear)
-				)
+				("Vengeance! You collected %s (%s).%s%s"):format(Chat.EarLink(ear), quality.name, by, story(ear))
 			)
 			return
 		end
-		Chat.Print(("You collected %s (%s).%s%s"):format(Chat.EarLink(ear), quality.name, by, fightSentence(ear)))
+		Chat.Print(("You collected %s (%s).%s%s"):format(Chat.EarLink(ear), quality.name, by, story(ear)))
 	else
 		local name = Chat.InClassColour(ear.name, ear.class)
 		Chat.Print(("Camped %s again (kill %d). No new ear."):format(name, ear.camped + 1))
@@ -208,7 +213,7 @@ end
 --- The grade of an ear that waited for its fight to end.
 ---@param ear table
 function Chat.AnnounceAppraisal(ear)
-	Chat.Print(("Appraised %s: %s.%s"):format(Chat.EarLink(ear), ns.Quality(ear.quality).name, fightSentence(ear)))
+	Chat.Print(("Appraised %s: %s.%s"):format(Chat.EarLink(ear), ns.Quality(ear.quality).name, story(ear)))
 end
 
 Chat.REVENGE_OWED = "Revenge owed: their next ear is worth more."

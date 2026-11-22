@@ -240,13 +240,36 @@ describe("Ear Pouch", function()
 				"Grimbash Ironhide",
 				"Level 60 |A:raceicon-orc-male:14:14|a Orc |cffc69b6dWarrior|r",
 				" ",
+				"Why it's |cff1eff00Uncommon|r",
+				"No record of the fight",
+				" ",
 				"Taken at Tarren Mill",
 				"Hillsbrad Foothills",
 				"Killing blow: you",
-				"No fight record",
 				"You were level 60",
 				os.date("%b %d, %Y %H:%M", ns.db.ears[1].at),
 			}, lines)
+		end)
+
+		it("lists what counted, with a sign and squares for each, and closes with the story", function()
+			wow.state().players[GRIMBASH].level = 63 -- orange to you: raised a grade
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			local ear = ns.db.ears[1]
+			ear.fight.read = true -- as if the meter had a record, so no "No record" line
+			local lines = ns.EarsTab.TooltipLines(ear)
+			local why
+			for i, line in ipairs(lines) do
+				why = why or (line.text == "Why it's |cff0070ddRare|r" and i)
+			end
+			local reason = lines[why + 1]
+			assert.are.equal("+ Above your level", reason.left)
+			assert.are.same({ 0.1, 1, 0.1 }, { reason.lr, reason.lg, reason.lb })
+			local square = "|TInterface\\Buttons\\WHITE8X8:7:7:0:0:8:8:0:8:0:8:%s|t"
+			assert.are.equal(
+				table.concat({ square:format("26:255:26"), square:format("26:255:26"), square:format("74:77:84") }, " "),
+				reason.right
+			)
+			assert.are.equal('"They were three levels above you."', lines[#lines].text)
 		end)
 
 		it("names group killers, assists, camping and unknown levels", function()
