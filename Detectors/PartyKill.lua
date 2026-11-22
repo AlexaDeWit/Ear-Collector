@@ -1,13 +1,7 @@
--- Kill detection for WoW Forever (Retail engine). The combat log is closed to
--- addons there; the PARTY_KILL event still reports who landed a killing blow on
--- whom. Both GUIDs become secret wherever the client hides unit identity
--- (instances, PvP matches, some maps), and a secret value must never be
--- compared or indexed, so every check below starts with Context.Readable.
---
--- Kills by you, your pet, anyone in your group or their pets all count: in the
--- open world a group kill is a world PvP kill. Instanced PvP is excluded by
--- Context, where group kills would be noise. Kills where someone outside the
--- group lands the blow can still become assists (Detectors/HonorKill.lua).
+-- Kills by you, your pet, your group or their pets, from PARTY_KILL (Forever has
+-- no combat log). Its GUIDs turn secret where the client hides identity, so
+-- every check starts with Context.Readable. Kills by anyone else can become
+-- assists (Detectors/HonorKill.lua).
 local _, ns = ...
 
 local Context, Assists = ns.Context, ns.Assists

@@ -21,8 +21,8 @@ to the game stays thin.
 | `Core/Deaths.lua` | Recording deaths, reading the recap, matching killers, vengeance |
 | `Core/Ledger.lua`, `Core/Rivals.lua` | Totals and per-player rows for the pouch's tabs |
 | `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), your deaths (`Death`), and what they share (`Shared`) |
-| `UI/Pouch.lua` | The Ear Pouch window, its tabs and the Ears grid |
-| `UI/LedgerTab.lua`, `UI/RivalsTab.lua` | The Ledger and Rivals tabs |
+| `UI/Pouch.lua` | The Ear Pouch window, its tab strip and paging |
+| `UI/EarsTab.lua`, `UI/LedgerTab.lua`, `UI/RivalsTab.lua` | The pouch's three tabs |
 | `UI/Toast.lua` | The pop-up when you collect an ear |
 | `UI/Options.lua` | The page in Options > AddOns |
 | `UI/Access.lua` | Ways to open the pouch: drawer, key binding, bags, chat links |
@@ -198,8 +198,9 @@ every API return, and repair of saved data on load.
 - **Escape.** The pouch appends its frame name to `UISpecialFrames` once, when
   it's built. Blizzard reads that list inside `securecall`, so the addon's entry
   can't taint the rest of Escape. It's the one write to a Blizzard global the
-  addon makes. Registering an Escape handler would taint every Escape, and
-  keyboard propagation is restricted in combat
+  addon makes. Registering an Escape handler would taint every Escape,
+  keyboard propagation is restricted in combat, and a post-hook on
+  `ToggleGameMenu` can't stop the game menu opening
   ([details](forever-api.md#interface-hooks)).
 - **The toast** is the addon's own frames on `UIParent`, not Blizzard's alert
   system, which could spread taint. Animation groups fade it, with no

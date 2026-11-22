@@ -1,7 +1,5 @@
--- The pouch's Rivals tab: everyone you have taken ears from or died to, most
--- encounters first, ten to a page. Hover a row for details; click it to see
--- their latest ear.
--- The list comes from Core/Rivals.lua; this file only draws it.
+-- The pouch's Rivals tab: the list from Core/Rivals.lua, ten to a page. Hover a
+-- row for details; click it to open their latest ear.
 local _, ns = ...
 
 local Chat, Errors, Pouch, Rivals = ns.Chat, ns.Errors, ns.Pouch, ns.Rivals

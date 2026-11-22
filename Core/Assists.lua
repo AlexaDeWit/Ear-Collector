@@ -1,23 +1,6 @@
--- Assists: kills where someone outside your group landed the killing blow but
--- you took part. Forever gives addons no combat log, so there are two kinds of
--- evidence for an enemy player's death:
---
--- Honor. An honorable kill (HK) credit arriving within WINDOW seconds of the
--- death. Credits and the deaths within WINDOW of them form groups, resolved
--- together. Rules, in order, for each group:
---   1. Credits next to kills your group already collected are used up by them
---      (no double ear). A grey victim gave no credit, so its kill uses none.
---   2. If enough credits remain for every other death, each is an assist.
---   3. If more players died than credits remain, name nobody: the credits are
---      counted as unnamed rather than guessed.
---
--- Damage. A death that no credit named is "unclaimed". It's still an assist if
--- the game's damage meter shows you or your group damaged that player in your
--- latest fight, and the death came during that fight or within RECENT seconds
--- after it (FromDamage).
---
--- Pure logic over a session tracker; Detectors/HonorKill.lua and
--- Detectors/DamageMeter.lua feed it.
+-- Assists: kills someone outside your group finished while you took part, shown
+-- by honor arriving within WINDOW seconds of the death or, failing that, by the
+-- damage meter (FromDamage). Pure logic; docs/architecture.md has the rules.
 local _, ns = ...
 
 local Assists = {}
@@ -87,14 +70,9 @@ local function find(parent, i)
 	return i
 end
 
---- Match settled credits to deaths.
----
---- Each credit is linked to every death and group kill within WINDOW of it, and
---- each connected group is resolved as a whole, once nothing in it is newer than
---- WINDOW (so late events have arrived). Resolving one credit at a time loses
---- assists: two enemies dying a second apart, each followed by a credit, would
---- leave both credits seeing two candidates. As a group it is two credits for
---- two deaths, so both are assists.
+--- Match settled credits to deaths. Credits and the deaths within WINDOW of them
+--- form groups, each resolved whole once nothing in it is newer than WINDOW: one
+--- credit at a time would see two candidates when two enemies die close together.
 ---@param tracker EarCollector.AssistTracker
 ---@param now number GetTime()
 ---@return EarCollector.Kill[] assists victims to collect as assist ears
@@ -211,12 +189,8 @@ function Assists.Resolve(tracker, now)
 	return assists, unnamed, #waiting, unclaimed, settling
 end
 
---- Unclaimed deaths the damage meter ties to you.
----
---- A death counts when the meter shows you or your group damaged that player,
---- and the death came during your fight (or just before it, within WINDOW) or
---- within RECENT seconds after it ended. Each death is judged against its own
---- `fight` when it has one.
+--- Unclaimed deaths the damage meter ties to you: you or your group damaged the
+--- player, and they died during the death's own fight or within RECENT after it.
 ---@param deaths { guid: string, t: number, kill: EarCollector.Kill, fight: table? }[] unclaimed deaths
 ---@param damaged table<string, any> enemy players on the meter, by GUID
 ---@param fight { start: number, finish: number? }|nil the fight for deaths without one, GetTime()

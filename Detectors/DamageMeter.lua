@@ -1,11 +1,7 @@
--- The game's built-in damage meter (C_DamageMeter), read after a fight. Forever
--- gives addons no combat log, but the client keeps its own totals for each fight,
--- including the enemies you and your group damaged. That's the evidence for an
--- assist no honor named (Core/Assists.lua), and a way to put a GUID to the name
--- in your death recap.
---
--- The meter's data is secret during combat, so it's read only once combat ends,
--- and only when a death is waiting on it: no cost while nothing needs it.
+-- The game's damage meter (C_DamageMeter), read after a fight: it lists the
+-- enemies you and your group damaged. That's the evidence for an assist no honor
+-- named, and a way to put a GUID to your killer's name. Its data is secret in
+-- combat, so it's read when combat ends, and only when a death waits on it.
 local _, ns = ...
 
 local Assists, Context, Errors = ns.Assists, ns.Context, ns.Errors

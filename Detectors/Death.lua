@@ -1,21 +1,8 @@
--- Your deaths to enemy players in the open world, from the death recap. They
--- fill the Rivals tab's "Deaths" column and build up vengeance (Core/Deaths.lua).
---
--- Forever gives addons no combat log, so the death recap (C_DeathRecap) is the
--- only record of who killed you. If the killing blow's event carries a readable
--- player sourceGUID, that's the killer. Otherwise there's only `sourceName`,
--- and NPCs appear too. So at the moment of death the addon notes the enemy
--- players it can see (target, focus, mouseover, nameplates), and a moment
--- later matches the recap's name to one of them exactly. If none matches, the
--- enemy players on the damage meter (those you or your group hit) get a turn.
--- A match gives the killer's GUID, which keys Rivals and vengeance, and proves
--- the killer was a player. No match, no record: a wrong rival is worse than
--- none. A pet's killing blow names the pet, which matches nobody.
---
--- Whether Forever fills the recap at all is for the game to show: Blizzard's
--- recap window loads only on Retail, though C_DeathRecap is documented for every
--- client. With /ears debug on, every death logs what the recap held and why it
--- did or didn't count.
+-- Your deaths to enemy players, from the death recap. A readable player
+-- sourceGUID names the killer; otherwise the recap's name must match exactly one
+-- enemy player in view at the moment of death, or on the damage meter. No match,
+-- no record: a wrong rival is worse than none. DeathWatch reads the game;
+-- Core/Deaths.lua decides.
 local _, ns = ...
 
 local Context, Deaths, Errors = ns.Context, ns.Deaths, ns.Errors
@@ -44,10 +31,8 @@ local function see(seen, unit)
 	end
 end
 
---- The unit tokens of the nameplates on screen. Each frame from
---- C_NamePlate.GetNamePlates() carries NamePlateBaseMixin:GetUnit()
---- (Blizzard_NamePlates/Blizzard_NamePlateBase.lua). Without the API, every
---- numbered token up to NAMEPLATES.
+--- The unit tokens of the nameplates on screen (NamePlateBaseMixin:GetUnit on each
+--- C_NamePlate.GetNamePlates() frame), or every numbered token without the API.
 ---@return string[]
 function DeathWatch.NameplateUnits()
 	local units = {}

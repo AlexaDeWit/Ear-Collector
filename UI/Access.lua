@@ -1,11 +1,6 @@
--- Ways to open the Ear Pouch, besides /ears (UI/Slash.lua):
---   * the minimap addon drawer (TOC AddonCompartmentFunc / OnEnter / OnLeave;
---     right-click opens the options instead),
---   * a key binding (Bindings.xml calls EarCollector_TogglePouch),
---   * opening your bags (post-hooks on Blizzard's bag functions; setting openWithBags),
---   * clicking an ear link in chat (EventRegistry "SetItemRef" for "addon" links).
--- Every entry point runs inside Errors.Wrap. Hooks use hooksecurefunc, which
--- runs after Blizzard's function and never replaces it, so nothing is tainted.
+-- Ways to open the pouch besides /ears: the minimap addon drawer (right-click
+-- opens options), the key binding, your bags (hooksecurefunc post-hooks), and
+-- ear links in chat (EventRegistry "SetItemRef").
 local addonName, ns = ...
 
 local Chat, Ears, Errors, Pouch = ns.Chat, ns.Ears, ns.Errors, ns.Pouch

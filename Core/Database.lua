@@ -1,16 +1,7 @@
--- SavedVariables: create, upgrade, repair and fill defaults. Pure functions plus
--- one ADDON_LOADED handler, so specs can exercise migrations directly.
--- Saved data can be hand-edited, truncated by a crash or written by an older
--- version, so the Migrate functions never assume a field has the right type.
---
--- Two saved variables (see the TOC):
---   * EarCollectorDB, account-wide: settings, the pouch's position, the error
---     and debug logs.
---   * EarCollectorCharDB, per character: ears, deaths and kill stats. Each
---     character has its own collection.
--- ns.db is a view holding both sets of saved tables (Database.View), so code
--- reads db.ears and db.settings alike. Its fields ARE the saved tables: change
--- them in place, never reassign one, or the change won't be saved.
+-- Saved data: EarCollectorDB (account: settings, ui, logs) and EarCollectorCharDB
+-- (per character: ears, deaths, stats), repaired on load because they can be
+-- old, hand-edited or truncated. ns.db's fields ARE the saved tables: change them
+-- in place, never reassign one.
 local addonName, ns = ...
 
 local Database = {}
@@ -145,10 +136,8 @@ function Database.MigrateCharacter(saved)
 	return db
 end
 
---- Schema 1 saved ears account-wide. Move them (and deaths and stats) to the
---- first character that loads. A character that already has its own keeps them,
---- and the shared ones stay where they are for the next character: nothing is
---- dropped. Runs on the raw saved tables, before the Migrate functions.
+--- Schema 1 saved ears account-wide: move them to the first character that loads
+--- with none of its own. Nothing is dropped. Runs before the Migrate functions.
 ---@param account table
 ---@param character table
 function Database.MoveShared(account, character)

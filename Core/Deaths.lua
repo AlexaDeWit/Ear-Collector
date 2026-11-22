@@ -16,11 +16,8 @@ Deaths.VENGEANCE = 3
 ---@field at number server time of the death
 ---@field spell string? the killing blow's spell, from the death recap
 
---- The killing blow's source from death recap events. Blizzard_DeathRecap lists
---- them newest first and marks the first as the one that caused the death.
---- Blizzard's PTR feedback code also reads the event's sourceGUID; when that is
---- a readable player GUID it identifies the killer outright.
---- Returns nothing when the recap is empty, hides the caster, or holds secrets.
+--- The killing blow's source from recap events (newest first; the first killed
+--- you). Nothing when the recap is empty, hides the caster, or holds secrets.
 ---@param events any C_DeathRecap.GetRecapEvents()
 ---@return string|nil name, string|nil spell, string|nil guid
 function Deaths.KillerFromRecap(events)
@@ -51,10 +48,8 @@ function Deaths.KillerFromRecap(events)
 	return name, spell, guid
 end
 
---- The GUID of the enemy player a recap name refers to, from the players seen at
---- the moment of death (see Deaths.See). Only an exact match counts: a recap name
---- with a surname must match that surname, so "Grimbash Stonefist" can't be
---- blamed on the "Grimbash Ironhide" you were targeting.
+--- The GUID a recap name refers to, among the players Deaths.See noted. Exact
+--- matches only: "Grimbash Stonefist" can't be blamed on "Grimbash Ironhide".
 ---@param name string
 ---@param seen table<string, string|false> name -> GUID; false when two players shared the name
 ---@return string|nil guid
@@ -62,10 +57,9 @@ function Deaths.MatchKiller(name, seen)
 	return seen[name] or nil
 end
 
---- Note a player seen at the moment of death, under every form the recap might
---- write their name in: the name as UnitName gives it, its first word (in case
---- the name includes the surname), and name plus surname joined by a space or a
---- hyphen. A form two players share is marked false, so it can never match.
+--- Note a player under every form a recap might write their name in: the name,
+--- its first word, and name plus surname with a space or a hyphen. A form two
+--- players share is marked false, so it never matches.
 ---@param seen table<string, string|false>
 ---@param name string
 ---@param guid string

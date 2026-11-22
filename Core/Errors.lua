@@ -1,14 +1,7 @@
--- Error containment. A Lua error that escapes an addon reaches the game's error
--- handler: a popup for players with script errors on, and repeated errors can
--- lag the client or lead WoW to suggest disabling all addons. So every entry
--- point (event handlers, slash commands) runs through Errors.Call, which:
---   * catches the error so it never leaves the addon,
---   * keeps it in EarCollectorDB.errors (bounded, account-wide) for /ears errors and bug reports,
---   * tells the player once per session, in one chat line,
---   * switches a handler off until /reload after MAX_PER_HANDLER errors, so a bug
---     cannot repeat on every event.
--- With /ears debug on, errors are also passed to the game's error handler so
--- tools like BugSack show them during development.
+-- Error containment: every entry point runs through Errors.Call, which keeps an
+-- error inside the addon, logs it (bounded) for /ears errors, tells the player
+-- once, and switches a handler off after MAX_PER_HANDLER errors until /reload.
+-- With /ears debug on, errors also reach the game's handler, for BugSack.
 local _, ns = ...
 
 local Errors = {}
