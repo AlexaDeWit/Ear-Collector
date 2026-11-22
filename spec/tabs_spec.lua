@@ -38,14 +38,7 @@ describe("pouch tabs", function()
 		end
 	end
 
-	local function tab(title)
-		for _, t in ipairs(_G.EarCollectorPouch.Tabs) do
-			if t:GetText() == title then
-				return t
-			end
-		end
-		error("no tab " .. title)
-	end
+	local tab = wow.tab
 
 	describe("the tab strip", function()
 		it("has Ears, Ledger and Rivals, as Blizzard tabs under the window", function()

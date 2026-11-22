@@ -156,13 +156,9 @@ describe("PARTY_KILL detection", function()
 		wow.fireEvent("PARTY_KILL", ME, wow.secret())
 		wow.fireEvent("PARTY_KILL", "Player-4395-0000BEEF", GRIMBASH)
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
-		local decisions = {}
-		for _, entry in ipairs(ns.db.debugLog) do
-			decisions[#decisions + 1] = entry.decision
-		end
 		assert.are.same(
 			{ "hidden by the client", "not you or your group: assist candidate", "new ear (you)" },
-			decisions
+			wow.decisions("PARTY_KILL")
 		)
 		assert.are.equal("<secret>", ns.db.debugLog[1].target)
 		assert.are.equal("none", ns.db.debugLog[3].restrictions)

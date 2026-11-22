@@ -20,24 +20,7 @@ describe("assists from the damage meter", function()
 		ns.db.settings.debug = true
 	end)
 
-	local function printed(pattern)
-		for _, line in ipairs(wow.state().printed) do
-			if line:find(pattern) then
-				return true
-			end
-		end
-		return false
-	end
-
-	local function decisions(event)
-		local list = {}
-		for _, entry in ipairs(ns.db.debugLog) do
-			if entry.event == event then
-				list[#list + 1] = entry.decision
-			end
-		end
-		return list
-	end
+	local decisions = wow.decisions
 
 	-- Leave combat and let the meter be read.
 	local function leaveCombat()
@@ -55,7 +38,7 @@ describe("assists from the damage meter", function()
 		assert.are.equal(1, #ns.db.ears)
 		assert.are.equal("assist", ns.db.ears[1].by)
 		assert.are.same({ "new ear (assist, damage)" }, decisions("DAMAGE_METER"))
-		assert.is_true(printed("You collected .*Grimbash's Ear.*Assist%."))
+		assert.are.equal(1, wow.printed("You collected .*Grimbash's Ear.*Assist%."))
 	end)
 
 	it("gives a grey victim you damaged a Poor assist ear", function()
