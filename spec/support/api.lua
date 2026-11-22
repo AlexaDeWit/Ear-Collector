@@ -262,6 +262,8 @@ return function(state, frames)
 			return list
 		end,
 		GetCombatSessionFromID = function(sessionID, kind)
+			-- Like the client's own functions, it rejects an argument of the wrong type.
+			assert(type(sessionID) == "number", "bad argument #1 to 'GetCombatSessionFromID'")
 			for _, session in ipairs(state.damageMeter.sessions) do
 				if session.sessionID == sessionID then
 					return meterSession(session, kind)

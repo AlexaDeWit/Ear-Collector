@@ -5,7 +5,7 @@
 -- announced. One taken out of combat is graded at once.
 local _, ns = ...
 
-local Appraisal, Context, DamageMeter, Errors = ns.Appraisal, ns.Context, ns.DamageMeter, ns.Errors
+local Appraisal, Assists, Context, DamageMeter, Errors = ns.Appraisal, ns.Assists, ns.Context, ns.DamageMeter, ns.Errors
 local Readable = Context.Readable
 
 local FightFacts = {}
@@ -52,8 +52,7 @@ end
 -- had one, and the enemy players among them. Nil when it can't be read.
 local function view(sessionID, kind)
 	local meter = C_DamageMeter
-	local session = sessionID and meter.GetCombatSessionFromID(sessionID, kind)
-		or meter.GetCombatSessionFromType(Enum.DamageMeterSessionType.Current, kind)
+	local session = meter.GetCombatSessionFromID(sessionID, kind)
 	local sources = Readable(session) and type(session) == "table" and session.combatSources
 	if not Readable(sources) or type(sources) ~= "table" then
 		return nil
@@ -90,7 +89,7 @@ end
 ---@return EarCollector.FightFacts
 function FightFacts.Read(entry)
 	local meter, types = C_DamageMeter, Enum.DamageMeterType
-	if not entry.fight or not meter or not types or not Enum.DamageMeterSessionType or Context.InCombat() then
+	if not entry.fight or not meter or not types or Context.InCombat() then
 		return { read = false }
 	end
 	local available = meter.IsDamageMeterAvailable()
@@ -98,6 +97,9 @@ function FightFacts.Read(entry)
 		return { read = false }
 	end
 	local id = entry.fight.sessionID
+	if not id then
+		return { read = false } -- the meter kept no record of this fight
+	end
 	local enemies, taken = view(id, types.EnemyDamageTaken), view(id, types.DamageTaken)
 	local done, healing, absorbs = view(id, types.DamageDone), view(id, types.HealingDone), view(id, types.Absorbs)
 	local deaths = view(id, types.Deaths)
@@ -241,6 +243,9 @@ end
 ---@return boolean waiting true when the ear waits for its fight to end
 function FightFacts.Hold(db, ear, kill)
 	local fight = DamageMeter.Fight()
+	if fight and fight.finish and GetTime() - fight.finish > Assists.RECENT then
+		fight = nil -- your last fight ended well before this kill, so it isn't this kill's fight
+	end
 	local entry = { ear = ear, kill = kill, fight = fight, health = victimHealth(ear.guid) }
 	if fight and fight.start then
 		entry.secs = (fight.finish or GetTime()) - fight.start
