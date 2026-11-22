@@ -1,4 +1,6 @@
-<img src="docs/logo.png" alt="Ear Collector logo: a severed ear in a gold ring" width="128" align="right">
+<p align="center">
+  <img src="docs/logo.png" alt="Ear Collector logo: a severed ear in a gold ring" width="160">
+</p>
 
 # Ear Collector
 
