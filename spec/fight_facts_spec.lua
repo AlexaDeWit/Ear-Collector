@@ -116,6 +116,48 @@ describe("grading an ear from its fight", function()
 		assert.are.equal(1, wow.printed("You collected .*Grimbash's Ear.* %(Uncommon%)%.$"))
 	end)
 
+	describe("matches a kill to its own fight", function()
+		local function aFight()
+			wow.startCombat()
+			wow.advance(40)
+			hardFight()
+			endFight()
+		end
+
+		it("grades a kill just after a fight from that fight", function()
+			aFight()
+			wow.advance(5)
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			assert.is_true(ns.db.ears[1].fight.read)
+		end)
+
+		it("doesn't grade a kill long after a fight from it", function()
+			aFight()
+			wow.advance(ns.Assists.RECENT + 1)
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH) -- your group's kill, say, while you weren't fighting
+			assert.is_false(ns.db.ears[1].fight.read)
+			assert.are.equal(2, ns.db.ears[1].quality)
+		end)
+
+		it("doesn't grade a fight the meter kept no record of from the one before", function()
+			aFight()
+			wow.advance(120)
+			wow.startCombat()
+			wow.fireEvent("PARTY_KILL", ME, KORGA)
+			endFight()
+			assert.is_false(ns.db.ears[1].fight.read)
+		end)
+
+		it("doesn't take a record from before you logged in for your first fight", function()
+			wow.meterFight({ { guid = KORGA, name = "Korga" } }, { DamageTaken = { { amount = 1500, me = true } } })
+			wow.fireEvent("PLAYER_ENTERING_WORLD", false, true)
+			wow.startCombat()
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			endFight()
+			assert.is_false(ns.db.ears[1].fight.read)
+		end)
+	end)
+
 	it("measures how tough the victim was from their health at the kill", function()
 		wow.startCombat()
 		wow.state().units.target = GRIMBASH

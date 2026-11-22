@@ -88,7 +88,9 @@ victims give no honor (`Ears.IsTrivial`).
 
 **Grading after the fight.** `ns.Collect` gives a new ear its grade from the
 kill alone, then hands it to `FightFacts.Hold`. Out of combat the ear is graded
-at once. In combat it waits: chat says "Appraising the fight...", and when
+at once, from your last fight only if it ended within `Assists.RECENT` (60
+seconds), so a kill your group makes while you aren't fighting isn't graded from
+an old fight. In combat it waits: chat says "Appraising the fight...", and when
 combat ends (`PLAYER_REGEN_ENABLED`, then `DamageMeter.SETTLE`) the meter's
 views for that fight are read once, every waiting ear is graded, and each gets
 its chat line and pop-up. If combat goes on for `FightFacts.WAIT` (30 seconds)
@@ -130,7 +132,10 @@ A death no credit named is unclaimed, and the damage meter decides it
 - The meter's data is secret in combat, so unclaimed deaths wait until combat
   ends. A death after your fight is checked as soon as it's unclaimed.
 - Each death is judged against the fight it happened in, and that fight's meter
-  session is noted when combat ends, so a new fight doesn't hide an old one.
+  session is noted when combat ends, so a new fight doesn't hide an old one. A
+  fight has a session of its own only if the newest one changed since the last
+  fight ended (or since you logged in); otherwise it has none, and its kills
+  are graded by the kill alone.
 - Your group's own kills are never unclaimed, so they can't become assists too.
 
 ## Deaths and vengeance

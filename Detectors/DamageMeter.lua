@@ -14,6 +14,7 @@ DamageMeter.SETTLE = 0.5 -- seconds after combat ends before reading the meter
 DamageMeter.QUEUE_SIZE = 20 -- unclaimed deaths waiting for a check, at most
 
 local fight -- your latest fight: { start, finish } in GetTime(), and its meter sessionID
+local noted -- the newest meter session when your last fight ended (or at login)
 local queue = {} -- unclaimed deaths waiting for the meter
 local checkScheduled = false
 
@@ -169,6 +170,17 @@ function DamageMeter.Queue(deaths)
 	end
 end
 
+local function newestSession()
+	local meter = C_DamageMeter
+	return meter and latestSessionID(meter.GetAvailableCombatSessions()) or nil
+end
+
+ns.On("PLAYER_ENTERING_WORLD", function()
+	if not Context.InCombat() then
+		noted = newestSession()
+	end
+end)
+
 ns.On("PLAYER_REGEN_DISABLED", function()
 	fight = { start = GetTime() }
 end)
@@ -177,8 +189,10 @@ ns.On("PLAYER_REGEN_ENABLED", function()
 	if fight and not fight.finish then
 		fight.finish = GetTime()
 		-- The session list isn't secret, so the fight's session can be noted now.
-		local meter = C_DamageMeter
-		fight.sessionID = meter and latestSessionID(meter.GetAvailableCombatSessions()) or nil
+		-- If the newest is the one noted before, the meter kept no record of this fight.
+		local newest = newestSession()
+		fight.sessionID = newest ~= noted and newest or nil
+		noted = newest
 	end
 	if #queue > 0 then
 		schedule()
