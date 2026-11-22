@@ -56,6 +56,7 @@ describe("Ear Pouch", function()
 			wow.slash("/ears")
 			local w, ears = Pouch.Widgets(), ns.EarsTab.Widgets()
 			assert.is_true(ears.empty:IsShown())
+			assert.is_true(ears.empty:GetFrameLevel() > ears.slots[1]:GetFrameLevel()) -- drawn over the slots
 			assert.are.equal("0 ears", ears.count:GetText())
 			assert.are.equal("Page 1 / 1", w.page:GetText())
 			assert.is_false(w.prev:IsEnabled())
@@ -78,7 +79,51 @@ describe("Ear Pouch", function()
 			assert.matches("\\Ears\\orc%-[1-4]$", slots[1].icon.texture)
 			assert.are.equal("3", slots[1].count:GetText())
 			local rare = ns.QUALITY[3]
-			assert.are.same({ rare.r, rare.g, rare.b, 1 }, slots[2].edges[1].color)
+			assert.is_true(slots[2].border:IsShown())
+			assert.are.same({ rare.r, rare.g, rare.b }, slots[2].border.vertexColor)
+		end)
+
+		it("frames Uncommon and better in their grade colour, as bags do, and not Common or Poor", function()
+			collect(3)
+			ns.db.ears[1].quality, ns.db.ears[2].quality, ns.db.ears[3].quality = 0, 1, 2
+			wow.slash("/ears")
+			local slots = ns.EarsTab.Widgets().slots
+			assert.is_true(slots[1].border:IsShown()) -- newest first: the Uncommon ear
+			assert.is_false(slots[2].border:IsShown())
+			assert.is_false(slots[3].border:IsShown())
+			assert.is_false(slots[4].border:IsShown()) -- an empty slot
+		end)
+
+		it("marks each ear with its class colour", function()
+			collect(1)
+			ns.db.ears[1].class = "MAGE"
+			wow.slash("/ears")
+			local dot = ns.EarsTab.Widgets().slots[1].dot
+			assert.is_true(dot:IsShown())
+			assert.are.same({ ns.Chat.RGB("ff3fc7eb") }, { unpack(dot.color, 1, 3) })
+			ns.db.ears[1].class = nil
+			ns.Pouch.Refresh()
+			assert.is_false(dot:IsShown())
+		end)
+
+		it("makes new ears glow until hovered, or until the pouch closes", function()
+			collect(2) -- before this session's start: not new
+			wow.state().now = wow.state().now + 3600 * 24
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			wow.slash("/ears")
+			local slots = ns.EarsTab.Widgets().slots
+			assert.is_true(slots[1].new:IsShown()) -- Grimbash, newest
+			assert.is_false(slots[2].new:IsShown())
+			slots[1]:Enter()
+			assert.is_false(slots[1].new:IsShown())
+			wow.state().now = wow.state().now + 60
+			wow.addPlayer("Player-4395-00000040", { name = "Late", class = "Mage", race = "Orc", level = 60 })
+			wow.fireEvent("PARTY_KILL", ME, "Player-4395-00000040")
+			assert.is_true(slots[1].new:IsShown())
+			assert.is_false(slots[2].new:IsShown()) -- Grimbash stays seen after the refresh
+			wow.slash("/ears") -- close
+			wow.slash("/ears") -- and open again
+			assert.is_false(slots[1].new:IsShown())
 		end)
 
 		it("uses the generic ear for an unknown race, and greys out Poor ears", function()
@@ -88,6 +133,7 @@ describe("Ear Pouch", function()
 			local slot = ns.EarsTab.Widgets().slots[1]
 			assert.are.equal("Interface\\AddOns\\EarCollector\\Media\\Ears\\generic", slot.icon.texture)
 			assert.is_true(slot.icon.desaturated)
+			assert.are.same({ 0.6, 0.6, 0.6 }, slot.icon.vertexColor) -- dimmed, not just grey
 		end)
 
 		it("pages through more ears than fit", function()

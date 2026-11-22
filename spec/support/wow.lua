@@ -46,6 +46,7 @@ function wow.reset(overrides)
 			["raceicon-undead-female"] = true,
 			["raceicon-troll-male"] = true,
 			["raceicon-tauren-male"] = true,
+			["bags-glow-white"] = true,
 		},
 		regionalNames = true, -- Forever: first name + surname instead of realms
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active

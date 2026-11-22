@@ -16,6 +16,9 @@ a fixed seed, so a rebuild is byte-identical.
    along the severed edge.
 4. Race features are separately lit layers: rings, the gnome's gear, undead
    stitches, the Skyborne feather, the dwarf braid, tauren fur and beads.
+5. Each ear is tilted (`TILT`), then scaled and centred so its bounding box
+   fills the canvas inside `MARGIN`, with a small drop shadow. The ear fills
+   its pouch slot whatever its shape.
 
 Each race comes in four skin tones (`TONES`: fur colours for tauren, and dwarf
 hair varies too), plus a generic ear.
@@ -43,5 +46,7 @@ python3 art/paint_ears.py /tmp/ears 128 --preview /tmp/ears/png
 - The game doesn't expose skin tone, so `Art.Tone(guid)` picks one from a hash of
   the victim's GUID. Tones look random across players and stay the same for each
   player. `Art.TONES` must match the painter, and a spec checks it.
-- Pouch slots show the ear art. Tooltips and chat lines use Blizzard's race
+- Pouch slots show the ear art in Blizzard's bag-slot frame
+  (`Interface\Common\WhiteIconFrame`), tinted by grade from Uncommon up. Poor
+  ears are desaturated and dimmed. Tooltips and chat lines use Blizzard's race
   icons. The minimap drawer icon is `Media/Ears/human-2`.

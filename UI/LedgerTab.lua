@@ -31,10 +31,6 @@ function LedgerTab.ClassStyle(entry)
 	return name, ns.Chat.ClassHex(entry.class) or UNKNOWN_GREY
 end
 
-local function rgb(hex)
-	return tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255, tonumber(hex:sub(7, 8), 16) / 255
-end
-
 --- The grade legend: "Poor 1  Common 4 ..." in grade colours, grades you have only.
 ---@param byQuality table<integer, integer>
 ---@return string
@@ -186,7 +182,7 @@ local function refresh()
 		local entry = summary.byClass[i]
 		if entry then
 			local name, hex = LedgerTab.ClassStyle(entry)
-			local r, g, b = rgb(hex)
+			local r, g, b = ns.Chat.RGB(hex)
 			row.name:SetText(("|c%s%s|r"):format(hex, name))
 			row.bar:SetColorTexture(r, g, b, 0.85)
 			row.bar:SetSize(math.max(1, CLASS_BAR * entry.count / most), 8)
