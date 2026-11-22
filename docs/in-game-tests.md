@@ -177,8 +177,8 @@ This needs "Your deaths" to work.
    action bars, in Blizzard's loot style with your faction's background. It
    shows the ear framed in its grade colour, the name in that colour, and one
    line under it with the grade, level, race and class (and who landed the
-   blow). It glows briefly as it appears. An assist says "Assist collected" at
-   the top.
+   blow). It glows briefly as it appears. It says "Ear collected" at the top,
+   or "Assist collected" for an assist.
 2. A loot sound plays, and a Rare or better ear plays the epic loot sound. A
    Poor ear is silent. Several ears in quick succession play one sound, unless a
    grander one follows.

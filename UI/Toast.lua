@@ -301,7 +301,7 @@ function Toast.Show(ear)
 	paint(toast.iconBorder, "loottoast-itemborder-" .. border, quality.r, quality.g, quality.b, 1)
 	toast.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	toast.icon:SetDesaturated(ear.quality == 0)
-	local label = ear.by == "assist" and "Assist collected" or "You collected"
+	local label = ear.by == "assist" and "Assist collected" or "Ear collected"
 	toast.label:SetText(ear.vengeance and "Vengeance!" or label)
 	toast.title:SetText(("|c%s%s's Ear|r"):format(quality.color, ear.name))
 	toast.detail:SetText(Toast.Detail(ear))
@@ -324,8 +324,7 @@ function Toast.ShowDeath(death, debt)
 	toast.icon:SetTexture(Art.EarTexture(death.race, death.guid))
 	toast.icon:SetDesaturated(true)
 	toast.label:SetText("|cffff4a3aEar lost|r")
-	local hex = Chat.ClassHex(death.class) or "ffffffff"
-	toast.title:SetText(("|c%s%s|r took your ear"):format(hex, death.name))
+	toast.title:SetText(Chat.InClassColour(death.name, death.class) .. " took your ear")
 	if debt >= ns.Deaths.VENGEANCE then
 		toast.detail:SetText(("|c%sVengeance owed:|r their next ear is Legendary"):format(ns.QUALITY[5].color))
 	elseif debt > 1 then

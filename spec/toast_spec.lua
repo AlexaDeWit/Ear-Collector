@@ -32,7 +32,7 @@ describe("loot toast", function()
 		assert.are.equal(1, #active)
 		local toast = active[1]
 		assert.is_true(toast:IsShown())
-		assert.are.equal("You collected", toast.label:GetText())
+		assert.are.equal("Ear collected", toast.label:GetText())
 		assert.are.equal("|cff1eff00Grimbash's Ear|r", toast.title:GetText())
 		assert.are.equal("Uncommon · Level 60 Orc Warrior", toast.detail:GetText())
 		assert.are.equal(ns.Art.EarTexture("Orc", GRIMBASH), toast.icon.texture)
