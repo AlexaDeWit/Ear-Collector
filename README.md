@@ -12,8 +12,8 @@ dropped in Diablo II.
   someone outside your group finished after you damaged the victim or earned
   honor for them.
 - Battlegrounds, arenas and dungeons never count.
-- Each ear shows the victim's race and a grade set by the level gap. Ears go in
-  an Ear Pouch, with a Ledger of totals and a list of Rivals.
+- Each ear shows the victim's race and a grade for how hard-won the kill was.
+  Ears go in an Ear Pouch, with a Ledger of totals and a list of Rivals.
 - Everything stays on your screen. Ear Collector never posts to chat or sends
   anything other players can see.
 
@@ -57,16 +57,26 @@ count in the Ledger and Rivals.
 
 ### Grades
 
-An ear's grade follows the colour the game shows for the victim's level.
+An ear's grade says how much the kill felt like an achievement, from Poor to
+Common, Uncommon, Rare, Epic and Legendary. Each of these counts for or against:
 
-| Grade | Their level showed | Which means |
-|---|---|---|
-| Poor | Grey | Far enough below you to give no honor |
-| Common | Green | Below you, but still worth honor |
-| Uncommon | Yellow | From 4 levels below you to 2 above |
-| Rare | Orange | 3 or 4 levels above you |
-| Epic | Red | 5 or more levels above you |
-| Legendary | | Owed vengeance: they had killed you 3 times since you last killed them |
+- **The odds:** being outnumbered counts for you, outnumbering them counts against.
+- **The danger to you:** how much damage you took, in health bars.
+- **How long the fight lasted**, how tough they were, and whether they fought back.
+- **Your part:** your healing and shields, your side's interrupts and dispels,
+  and allies who fell.
+- **Their level's colour:** red counts for you, green against.
+- **Revenge:** each time they've killed you since you last killed them. Three
+  times makes their next ear Legendary.
+- **Repeats:** a second or third ear from the same player in a day counts a
+  little less.
+
+The fight is read from the game's damage meter, which addons can only see once
+combat ends. So an ear taken in a fight is graded when the fight ends: chat
+says "Appraising the fight...", then the pop-up shows the grade. With no record
+of the fight, the grade follows the victim's level colour. Grey victims, who give
+no honor, are Poor unless revenge raises them. The ear's tooltip says what
+counted.
 
 Killing the same player again within 10 minutes adds to that ear instead of
 dropping a new one. The options set the window.
@@ -74,7 +84,8 @@ dropping a new one. The options set the window.
 ### Rivals
 
 The Rivals tab lists everyone you've taken an ear from or died to. **Avenge**
-means their next ear is Legendary, **Nemesis** means they've killed you more
+means they've killed you since you last killed them, so their next ear is worth
+more (Legendary after three times). **Nemesis** means they've killed you more
 often than you've killed them, and **Prey** means you've killed them three times
 or more and they've never killed you.
 

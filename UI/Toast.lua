@@ -274,7 +274,8 @@ end
 --- Pop up a newly collected ear, unless pop-ups are off or it's below the
 --- grade the options ask for (a Vengeance ear is Legendary, so it always shows).
 ---@param ear table
-function Toast.Show(ear)
+---@param label string? replaces the top line, e.g. while the fight is still on
+function Toast.Show(ear, label)
 	local db = ns.db
 	if not db or not db.settings.toast or (ear.quality or 2) < db.settings.toastMinQuality then
 		return
@@ -285,8 +286,14 @@ function Toast.Show(ear)
 	colour(toast, PANEL, { quality.r, quality.g, quality.b })
 	toast.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	toast.icon:SetDesaturated(ear.quality == 0)
-	local label = ear.by == "assist" and "Assist collected" or "Ear collected"
-	toast.label:SetText(ear.vengeance and "Vengeance!" or label)
+	local revenge = type(ear.fight) == "table" and type(ear.fight.debt) == "number" and ear.fight.debt > 0
+	toast.label:SetText(
+		label
+			or ear.vengeance and "Vengeance!"
+			or revenge and "Revenge!"
+			or ear.by == "assist" and "Assist collected"
+			or "Ear collected"
+	)
 	toast.title:SetText(("|c%s%s's Ear|r"):format(quality.color, ear.name))
 	toast.detail:SetText(Toast.Detail(ear))
 	present(toast)
@@ -310,12 +317,8 @@ function Toast.ShowDeath(death, debt)
 	toast.title:SetText(Chat.InClassColour(death.name, death.class) .. " took your ear")
 	if debt >= ns.Deaths.VENGEANCE then
 		toast.detail:SetText(("|c%sVengeance owed:|r their next ear is Legendary"):format(ns.QUALITY[5].color))
-	elseif debt > 1 then
-		toast.detail:SetText(("Killed you %d times since you last killed them"):format(debt))
 	else
-		toast.detail:SetText(
-			Chat.ClassName(death.class) .. (death.level and (" · Level %d"):format(death.level) or "")
-		)
+		toast.detail:SetText(Chat.REVENGE_OWED)
 	end
 	present(toast)
 end

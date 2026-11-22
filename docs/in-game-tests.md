@@ -64,12 +64,15 @@ leave in the files.
    `not a player`. That shows the game tells the addon about your kills.
 2. Kill an enemy player in the open world, landing the killing blow yourself.
    Chat shows a line ending in `new ear (you)`, then
-   `You collected <name>'s Ear`.
+   `You collected <name>'s Ear. Appraising the fight...`. When you leave
+   combat, chat says `Appraised <name>'s Ear: <grade>.` with what counted, and
+   the pop-up appears. A line starting `APPRAISAL` shows the arithmetic: send it
+   with your report.
 3. Hover over the ear's name in that line, or find the ear in the pouch
    (`/ears`). The tooltip shows the victim's full name, surname included, their
-   level, race and class, and where you killed them. The grade matches the
-   colour their level had on their nameplate or target frame: grey is Poor,
-   green Common, yellow Uncommon, orange Rare, and red Epic.
+   level, race and class, where you killed them, and a line about the fight,
+   for example "Hard-fought: alone against 2, 40 seconds". If it says "No fight
+   record", say so.
 4. In a group, let a groupmate land the killing blow on an enemy player. The line
    ends in `new ear (group)`, and the ear names who landed the blow.
 5. If you play a class with a pet, let your pet finish an enemy player. The line
@@ -125,13 +128,15 @@ who killed you.
 
 This needs "Your deaths" to work.
 
-1. Die to an enemy player in the open world. Chat says `<name> killed you.`, and
-   they appear on the pouch's Rivals tab with 1 under Lost.
-2. Die to the same player three times without killing them. Chat says
-   `Vengeance owed`, and their Rivals row shows "Avenge" in orange.
-3. Kill them. The ear is orange (Legendary), the pop-up says "Vengeance!" and
-   plays the legendary loot sound, and the ear's tooltip says how many deaths it
-   avenged. Their row loses the "Avenge" mark.
+1. Die to an enemy player in the open world. Chat says `<name> killed you.
+   Revenge owed: their next ear is worth more.`, they appear on the pouch's
+   Rivals tab with 1 under Lost, and their row shows "Avenge" in orange.
+2. If you kill them now, the pop-up says "Revenge!", and the ear's tooltip says
+   "revenge for 1 death". Their row loses the "Avenge" mark.
+3. Die to the same player three times without killing them. Chat says
+   `Vengeance owed`. Kill them: the ear is orange (Legendary), the pop-up says
+   "Vengeance!" and plays the legendary loot sound, and the ear's tooltip says
+   how many deaths it avenged.
 4. A player who has killed you at least twice, and more often than you've
    killed them, shows "Nemesis" in red.
 5. The Ledger tab's "Ears lost" box counts your deaths.
@@ -181,8 +186,9 @@ This needs "Your deaths" to work.
 
 ## The pop-up
 
-1. Collect an ear. A pop-up fades in near the top of the screen, in the
-   middle: a bronze panel. It shows the ear framed in its grade colour, the name in that colour, and one line under it with the
+1. Collect an ear. Once the fight ends, a pop-up fades in near the top of the
+   screen, in the middle: a bronze panel. If the fight goes on for more than 30
+   seconds after the kill, it appears then, saying "Appraising the fight". It shows the ear framed in its grade colour, the name in that colour, and one line under it with the
    grade, level, race and class (and who landed the blow). It says "Ear
    collected" at the top, or "Assist collected" for an assist.
 2. A loot sound plays, and a Rare or better ear plays the epic loot sound. A
@@ -193,8 +199,9 @@ This needs "Your deaths" to work.
 4. Left-click opens the pouch on that ear. Right-click dismisses it.
 5. Several ears at once stack downward, newest on top, up to three.
 6. A Vengeance ear's pop-up says "Vengeance!", with the name in orange.
-7. Die to an enemy player: a red pop-up says "<name> took your ear", and says
-   "Vengeance owed" on the third death. Clicking it opens the Rivals tab.
+7. Die to an enemy player: a red pop-up says "<name> took your ear" and
+   "Revenge owed", or "Vengeance owed" on the third death. Clicking it opens the
+   Rivals tab.
 8. `/ears popup move` (or "Move pop-up" in the options) shows a blue stand-in.
    Drag it somewhere, right-click it, and collect an ear: the pop-up appears
    there, and still does after `/reload`. `/ears popup reset` puts it back near

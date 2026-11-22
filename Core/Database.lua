@@ -56,6 +56,41 @@ local function dropWrongTypes(record)
 	end
 end
 
+-- An ear's saved fight (FightFacts): numbers, flags and known band names only.
+local FIGHT_NUMBERS = {
+	"enemies",
+	"allies",
+	"secs",
+	"taken",
+	"sideTaken",
+	"healed",
+	"toughness",
+	"disrupts",
+	"allyDeaths",
+	"debt",
+	"earlier",
+	"score",
+	"fightScore",
+}
+local function repairFight(fight)
+	if type(fight) ~= "table" then
+		return nil
+	end
+	local kept = { read = fight.read == true, died = fight.died == true or nil, why = {} } ---@type table<string, any>
+	for _, key in ipairs(FIGHT_NUMBERS) do
+		local value = fight[key]
+		if type(value) == "number" and value == value and math.abs(value) < 1e9 then
+			kept[key] = value
+		end
+	end
+	for _, band in ipairs(type(fight.why) == "table" and fight.why or {}) do
+		if ns.Appraisal.IsBand(band) then
+			kept.why[#kept.why + 1] = band
+		end
+	end
+	return kept
+end
+
 -- Keep only ears with the fields the rest of the addon relies on.
 local function repairEars(ears)
 	local kept = {}
@@ -73,6 +108,8 @@ local function repairEars(ears)
 			if type(ear.quality) ~= "number" or not ns.QUALITY[ear.quality] then
 				ear.quality = 2
 			end
+			ear.pending = nil -- its fight can't be read after a reload: it keeps its grade
+			ear.fight = repairFight(ear.fight)
 			dropWrongTypes(ear)
 			kept[#kept + 1] = ear
 		end

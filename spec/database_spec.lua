@@ -56,6 +56,29 @@ describe("Database", function()
 			assert.is_nil(db.settings)
 		end)
 
+		it("clears an ear left waiting on its fight, and repairs its saved fight", function()
+			local db = Database.MigrateCharacter({
+				ears = {
+					{ guid = "Player-1-A", at = 1, quality = 3, pending = true, fight = "junk" },
+					{
+						guid = "Player-1-B",
+						at = 2,
+						fight = {
+							read = 1,
+							taken = "lots",
+							secs = 40,
+							score = 0 / 0,
+							why = { "longFight", "bogus", 7 },
+						},
+					},
+				},
+			})
+			assert.is_nil(db.ears[1].pending)
+			assert.are.equal(3, db.ears[1].quality) -- keeps its grade
+			assert.is_nil(db.ears[1].fight)
+			assert.are.same({ read = false, secs = 40, why = { "longFight" } }, db.ears[2].fight)
+		end)
+
 		it("keeps only real grades in the hidden-grade list", function()
 			local db = Database.MigrateCharacter({
 				hiddenGrades = { [0] = true, [2] = "yes", [3] = false, [9] = true, poor = true },

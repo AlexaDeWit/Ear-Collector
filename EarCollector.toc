@@ -23,10 +23,13 @@ Core\Ledger.lua
 Core\Rivals.lua
 Core\Deaths.lua
 Core\Assists.lua
+Core\Appraisal.lua
 UI\Chat.lua
+UI\FightSummary.lua
 UI\Art.lua
 Detectors\Shared.lua
 Detectors\DamageMeter.lua
+Detectors\FightFacts.lua
 Detectors\PartyKill.lua
 Detectors\HonorKill.lua
 Detectors\Death.lua

@@ -65,6 +65,7 @@ read_globals = {
 	"UnitCanAttack",
 	"UnitExists",
 	"UnitGUID",
+	"UnitHealthMax",
 	"UnitIsPlayer",
 	"UnitLevel",
 	"UnitQuestTrivialLevelRange",

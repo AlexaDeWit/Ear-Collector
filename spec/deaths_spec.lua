@@ -47,7 +47,10 @@ describe("deaths and vengeance", function()
 			assert.are.equal("Hillsbrad Foothills", death.zone)
 			assert.are.equal("Mortal Strike", death.spell)
 			assert.are.equal(wow.state().now, death.at)
-			assert.matches("Grimbash|r killed you%.$", wow.state().printed[#wow.state().printed])
+			assert.matches(
+				"Grimbash|r killed you%. Revenge owed: their next ear is worth more%.$",
+				wow.state().printed[#wow.state().printed]
+			)
 		end)
 
 		it("finds the killer by nameplate, focus or mouseover too", function()

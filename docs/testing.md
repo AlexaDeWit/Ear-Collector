@@ -99,10 +99,13 @@ to assert an error stays contained.
   restrictions then raise, and so does `Settings.OpenToCategory`.
 - `wow.startCombat()` and `wow.endCombat()` enter and leave combat, firing
   `PLAYER_REGEN_DISABLED` and `PLAYER_REGEN_ENABLED`.
-- `wow.meterFight({ { guid, name, amount? } })` adds a fight to the damage
-  meter, newest last, with the enemies you or your group damaged. Its data is
+- `wow.meterFight({ { guid, name, amount? } }, views?)` adds a fight to the
+  damage meter, newest last, with the enemies you or your group damaged.
+  `views` gives your side's rows in the other views, by `Enum.DamageMeterType`
+  name: `{ DamageTaken = { { amount = 1200, me = true } } }`. Its data is
   secret while `inCombat` is true, and `wow.state().damageMeter.available`
-  turns the meter off.
+  turns the meter off. `wow.state().playerMaxHealth` is your health, and a
+  player's `maxHealth` in `wow.addPlayer` is theirs.
 - `wow.decisions(event?)` lists what `/ears debug` logged, `wow.printed(pattern)`
   counts matching chat lines, and `wow.tab(title)` finds a pouch tab button.
 - `wow.clickLink(link)` clicks a chat link, `wow.pressBinding("EARCOLLECTOR_TOGGLE")`

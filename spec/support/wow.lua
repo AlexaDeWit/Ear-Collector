@@ -23,6 +23,7 @@ function wow.reset(overrides)
 	state = {
 		playerGUID = "Player-4395-0000000A",
 		playerLevel = 60,
+		playerMaxHealth = 1000,
 		trivialRange = 12, -- how far below you the game shows levels green
 		faction = "Alliance", -- yours; other players are Horde unless their info says
 		freeForAll = false, -- in a free-for-all area anyone can be attacked
@@ -186,10 +187,11 @@ function wow.advance(seconds)
 end
 
 --- A fight on the damage meter, in which you or your group damaged `enemies`
---- ({ guid, name, amount? } each).
-function wow.meterFight(enemies)
+--- ({ guid, name, amount? } each). `views` gives your side's other totals, by
+--- Enum.DamageMeterType name: { DamageTaken = { { amount = 1200, me = true } } }.
+function wow.meterFight(enemies, views)
 	local sessions = state.damageMeter.sessions
-	sessions[#sessions + 1] = { sessionID = #sessions + 1, enemies = enemies }
+	sessions[#sessions + 1] = { sessionID = #sessions + 1, enemies = enemies, views = views or {} }
 end
 
 --- You enter combat, as the client reports it.

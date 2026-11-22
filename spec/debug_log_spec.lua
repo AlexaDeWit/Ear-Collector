@@ -29,6 +29,7 @@ describe("the debug log", function()
 			expected[#expected + 1] = "PARTY_KILL: not a player"
 		end
 		expected[#expected + 1] = "PARTY_KILL: not a player (no more of these logged until /reload)"
+		expected[#expected + 1] = "APPRAISAL: no fight record; no bands = 0: Uncommon (was Uncommon)"
 		expected[#expected + 1] = "PARTY_KILL: new ear (you)"
 		assert.are.same(expected, decisions())
 	end)

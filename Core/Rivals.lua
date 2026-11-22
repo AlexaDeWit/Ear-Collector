@@ -22,7 +22,8 @@ Rivals.NEMESIS = 2 -- deaths to one player, more than your kills of them, that m
 ---@field lastSeen number the later of the two
 ---@field prey boolean
 ---@field nemesis boolean
----@field owed boolean vengeance owed: their next ear is Legendary
+---@field owed boolean revenge owed: they've killed you since you last killed them
+---@field vengeance boolean vengeance owed: their next ear is Legendary
 
 local function newRow(guid, record)
 	return { guid = guid, ears = 0, kills = 0, killedYou = 0, debt = 0, firstAt = record.at, latest = record }
@@ -73,14 +74,15 @@ function Rivals.List(ears, deaths)
 	for _, row in ipairs(rows) do
 		row.name = row.latest.name
 		row.lastSeen = math.max(row.lastAt or row.firstAt, row.lastDeathAt or row.firstAt)
-		row.owed = row.debt >= ns.Deaths.VENGEANCE
+		row.owed = row.debt > 0
+		row.vengeance = row.debt >= ns.Deaths.VENGEANCE
 		row.nemesis = row.killedYou >= Rivals.NEMESIS and row.killedYou > row.kills
 		row.prey = row.kills >= Rivals.PREY and row.killedYou == 0
 	end
-	-- Avenge first: it's the mark you can act on. Then most encounters.
+	-- Vengeance first: it's the mark you can act on. Then most encounters.
 	table.sort(rows, function(a, b)
-		if a.owed ~= b.owed then
-			return a.owed
+		if a.vengeance ~= b.vengeance then
+			return a.vengeance
 		end
 		local ae, be = a.kills + a.killedYou, b.kills + b.killedYou
 		if ae ~= be then
@@ -95,14 +97,16 @@ function Rivals.List(ears, deaths)
 end
 
 --- The mark for a rival's row, most pressing first: "Avenge" (vengeance owed),
---- "Nemesis", "Prey", or nil.
+--- "Nemesis", "Avenge" (revenge owed), "Prey", or nil.
 ---@param rival EarCollector.Rival
 ---@return string|nil
 function Rivals.Mark(rival)
-	if rival.owed then
+	if rival.vengeance then
 		return "Avenge"
 	elseif rival.nemesis then
 		return "Nemesis"
+	elseif rival.owed then
+		return "Avenge"
 	elseif rival.prey then
 		return "Prey"
 	end

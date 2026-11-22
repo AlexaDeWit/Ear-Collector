@@ -158,6 +158,15 @@ describe("Ledger and Rivals logic", function()
 			assert.are.same({ "A", "P", "K" }, { rows[1].guid, rows[2].guid, rows[3].guid }) -- by encounters
 		end)
 
+		it("marks Avenge from the first death owed, under a nemesis but over prey", function()
+			local rows = ns.Rivals.List({ ear({ guid = "R", at = NOW - DAY, camped = 3 }) }, {
+				{ guid = "R", name = "R", at = NOW - 10 },
+			})
+			assert.is_true(rows[1].owed)
+			assert.is_false(rows[1].vengeance)
+			assert.are.equal("Avenge", ns.Rivals.Mark(rows[1]))
+		end)
+
 		it("marks a nemesis at two deaths, more than your kills", function()
 			local rows = ns.Rivals.List({ ear({ guid = "N" }) }, {
 				{ guid = "N", name = "N", at = NOW - 10 },
