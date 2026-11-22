@@ -38,7 +38,7 @@ The options are in Options > AddOns > Ear Collector.
 | `/ears stats` | Your totals and latest ear |
 | `/ears recent [n]` | Your newest ears (5 unless you give a number) |
 | `/ears bags on\|off` | Open the pouch with your bags |
-| `/ears toast on\|off` | The pop-up when you collect an ear |
+| `/ears popup on\|off` | The pop-up when you collect an ear |
 | `/ears sound on\|off` | The pop-up's sound |
 | `/ears debug` | Print and save what the addon sees, for testing and bug reports |
 | `/ears errors` | Errors the addon caught (it keeps running) |

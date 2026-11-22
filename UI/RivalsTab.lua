@@ -70,16 +70,16 @@ function RivalsTab.TooltipLines(rival)
 	if rival.killedYou > 0 then
 		add(("They killed you %s"):format(times(rival.killedYou)))
 	end
-	add(("First met: %s"):format(date("%b %d, %Y", rival.firstAt)), GREY)
+	add(("First met: %s"):format(ns.Chat.Date(rival.firstAt, "year")), GREY)
 	if rival.lastAt then
-		local last = ("Last killed: %s"):format(date("%b %d, %Y %H:%M", rival.lastAt))
+		local last = ("Last killed: %s"):format(ns.Chat.Date(rival.lastAt, "full"))
 		if rival.ears > 0 and ear.zone then
 			last = ("%s, %s"):format(last, ear.subzone or ear.zone)
 		end
 		add(last, GREY)
 	end
 	if rival.lastDeathAt then
-		add(("Last killed you: %s"):format(date("%b %d, %Y %H:%M", rival.lastDeathAt)), GREY)
+		add(("Last killed you: %s"):format(ns.Chat.Date(rival.lastDeathAt, "full")), GREY)
 	end
 	local mark = Rivals.Mark(rival)
 	if mark == "Avenge" then
@@ -166,8 +166,8 @@ local function build(panel)
 	for _, column in ipairs({
 		{ "Player", "LEFT", PAD + 4 },
 		{ "Kills", "RIGHT", KILLS_RIGHT },
-		{ "Deaths", "RIGHT", DEATHS_RIGHT },
-		{ "Last", "LEFT", LAST_LEFT },
+		{ "Lost", "RIGHT", DEATHS_RIGHT },
+		{ "Last met", "LEFT", LAST_LEFT },
 	}) do
 		local label = headings:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 		label:SetPoint("TOP" .. column[2], headings, "TOPLEFT", column[3], -32)
@@ -180,8 +180,9 @@ local function build(panel)
 	emptyText:SetPoint("CENTER", panel, "CENTER", 0, 0)
 	emptyText:SetWidth(INNER - 20)
 	emptyText:SetText("No rivals yet. Everyone you take an ear from, or who kills you, is listed here.")
+	-- In the bottom bar, left of the next-page button.
 	countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	countText:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -PAD, -32)
+	countText:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -(PAD + 30), 14)
 	countText:SetJustifyH("RIGHT")
 end
 
@@ -197,7 +198,7 @@ local function refresh()
 			row.name:SetText(("|c%s%s|r"):format(classHex(rival.latest.class), rival.name))
 			row.kills:SetText(tostring(rival.kills))
 			row.deaths:SetText(tostring(rival.killedYou))
-			row.last:SetText(date("%b %d", rival.lastSeen) --[[@as string]])
+			row.last:SetText(ns.Chat.Date(rival.lastSeen))
 			local mark = Rivals.Mark(rival)
 			local color = MARK_COLORS[mark] or GREY
 			row.mark:SetText(mark or "")
@@ -209,7 +210,7 @@ local function refresh()
 	end
 	headings:SetShown(#list > 0)
 	emptyText:SetShown(#list == 0)
-	countText:SetText(#list == 1 and "1 rival" or ("%d rivals"):format(#list))
+	countText:SetText(ns.Chat.Count(#list, "rival"))
 	countText:SetShown(#list > 0)
 end
 

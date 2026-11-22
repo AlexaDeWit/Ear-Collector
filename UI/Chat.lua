@@ -93,6 +93,49 @@ function Chat.EarLink(ear)
 	return ("%s|c%s|H%s%s:%d|h[%s's Ear]|h|r"):format(icon, quality.color, LINK_PREFIX, ear.guid, ear.at, ear.name)
 end
 
+--- "1 ear", "3 ears": a count with its noun.
+---@param n integer
+---@param singular string
+---@param plural string? defaults to singular .. "s"
+function Chat.Count(n, singular, plural)
+	return ("%d %s"):format(n, n == 1 and singular or plural or singular .. "s")
+end
+
+--- "22 ears (6 assists)", or just "1 ear" without assists.
+---@param ears integer
+---@param assists integer
+function Chat.EarCount(ears, assists)
+	local text = Chat.Count(ears, "ear")
+	return assists > 0 and ("%s (%s)"):format(text, Chat.Count(assists, "assist")) or text
+end
+
+--- A date without leading zeros: "Nov 1", or with `style` "time" ("Nov 1 14:05"),
+--- "year" ("Nov 1, 2026") or "full" ("Nov 1, 2026 14:05").
+---@param t number
+---@param style ("time"|"year"|"full")?
+---@return string
+function Chat.Date(t, style)
+	local day = ("%s %d"):format(date("%b", t), tonumber(date("%d", t)))
+	if style == "time" then
+		return day .. " " .. date("%H:%M", t)
+	elseif style == "year" then
+		return day .. ", " .. date("%Y", t)
+	elseif style == "full" then
+		return day .. ", " .. date("%Y %H:%M", t)
+	end
+	return day
+end
+
+--- A class's localized name in its class colour.
+---@param class string? English token, e.g. "WARRIOR"
+---@param className string? the localized name, when known
+---@return string
+function Chat.ClassName(class, className)
+	local name = className or (class and LOCALIZED_CLASS_NAMES_MALE[class]) or class or "Unknown class"
+	local hex = Chat.ClassHex(class)
+	return hex and ("|c%s%s|r"):format(hex, name) or name
+end
+
 --- The ear an ear link points at.
 ---@param link any the link payload passed to SetItemRef, e.g. "addon:EarCollector:ear:Player-1-A:1795293660"
 ---@return string|nil guid

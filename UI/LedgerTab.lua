@@ -46,7 +46,7 @@ function LedgerTab.GradeLegend(byQuality)
 			parts[#parts + 1] = ("|c%s%s|r %d"):format(quality.color, quality.name, count)
 		end
 	end
-	return table.concat(parts, "   ")
+	return table.concat(parts, "  ")
 end
 
 local function header(parent, text, x, y)
@@ -93,6 +93,7 @@ local function build(panel)
 	w.legend:SetPoint("TOPLEFT", content, "TOPLEFT", PAD, -104)
 	w.legend:SetWidth(INNER)
 	w.legend:SetJustifyH("LEFT")
+	w.legend:SetWordWrap(false)
 
 	header(content, "By class", PAD, -124)
 	w.classes = {}
@@ -125,6 +126,21 @@ local function build(panel)
 		row.count:SetPoint("TOPRIGHT", content, "TOPRIGHT", -PAD, y)
 		row.count:SetJustifyH("RIGHT")
 		w.zones[i] = row
+	end
+
+	-- Totals, under the zones in the right-hand column.
+	local totalsTop = -140 - Ledger.TOP_ZONES * ROW - 10
+	header(content, "Totals", COLUMN_2, totalsTop)
+	w.totals = {}
+	for i, label in ipairs({ "Players", "Kills (with repeats)" }) do
+		local y = totalsTop - 16 - (i - 1) * ROW
+		local name = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		name:SetPoint("TOPLEFT", content, "TOPLEFT", COLUMN_2, y)
+		name:SetText(label)
+		local count = content:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+		count:SetPoint("TOPRIGHT", content, "TOPRIGHT", -PAD, y)
+		count:SetJustifyH("RIGHT")
+		w.totals[i] = count
 	end
 
 	w.empty = panel:CreateFontString(nil, "OVERLAY", "GameFontDisable")
@@ -188,6 +204,8 @@ local function refresh()
 		row.name:SetText(entry and entry.zone or "")
 		row.count:SetText(entry and tostring(entry.count) or "")
 	end
+	w.totals[1]:SetText(tostring(summary.players))
+	w.totals[2]:SetText(tostring(summary.kills))
 end
 
 --- The tab's widgets, for specs.

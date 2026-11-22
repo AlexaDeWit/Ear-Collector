@@ -20,19 +20,19 @@ Options.SECTIONS = {
 		checkboxes = {
 			{
 				key = "announce",
-				label = "Note it in your chat",
-				tooltip = "Print a line in your chat window when you collect an ear. Only you see it. "
-					.. "Click the ear's name in it to open the pouch on that ear.",
+				label = "Chat line for each ear and death",
+				tooltip = "Print a line in your chat window when you collect an ear or an enemy player kills you. "
+					.. "Only you see it. Click an ear's name in it to open the pouch on that ear.",
 			},
 			{
 				key = "toast",
-				label = "Show a toast",
-				tooltip = "Pop up a toast with the ear near the top of the screen. Click it to open the pouch on that ear.",
+				label = "Show a pop-up",
+				tooltip = "Show a pop-up with the ear when you collect one. Click it to open the pouch on that ear.",
 			},
 			{
 				key = "toastSound",
 				label = "Play a loot sound",
-				tooltip = "Play a loot sound with the toast. Rare and better ears play the epic loot sound.",
+				tooltip = "Play a loot sound with the pop-up. Rare and better ears play the epic loot sound.",
 			},
 		},
 	},

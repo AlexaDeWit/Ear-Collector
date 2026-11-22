@@ -142,6 +142,9 @@ describe("pouch tabs", function()
 			assert.are.equal("Hillsbrad Foothills", w.zones[1].name:GetText())
 			assert.are.equal("3", w.zones[1].count:GetText())
 			assert.are.equal("", w.zones[3].name:GetText())
+
+			assert.are.equal("3", w.totals[1]:GetText()) -- players
+			assert.are.equal("4", w.totals[2]:GetText()) -- kills with repeats
 		end)
 
 		it("says it's empty before your first ear, and fills in when one arrives", function()

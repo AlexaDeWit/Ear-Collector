@@ -166,6 +166,17 @@ describe("Ledger and Rivals logic", function()
 			assert.are.equal("Nemesis", ns.Rivals.Mark(rows[1]))
 		end)
 
+		it("puts players you owe vengeance first, whatever their count", function()
+			local rows = ns.Rivals.List({
+				ear({ guid = "B", camped = 4 }), -- five kills
+			}, {
+				{ guid = "K", name = "K", at = NOW - 30 },
+				{ guid = "K", name = "K", at = NOW - 20 },
+				{ guid = "K", name = "K", at = NOW - 10 }, -- three deaths: vengeance owed
+			})
+			assert.are.same({ "K", "B" }, { rows[1].guid, rows[2].guid })
+		end)
+
 		it("sorts by kills, then the most recent", function()
 			local rows = ns.Rivals.List({
 				ear({ guid = "A", at = NOW - 300 }),

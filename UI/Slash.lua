@@ -17,9 +17,9 @@ local function describeEar(ear)
 		Chat.EarName(ear),
 		camped,
 		level,
-		ear.class or "unknown class",
+		Chat.ClassName(ear.class, ear.className),
 		where(ear),
-		date("%b %d %H:%M", ear.at)
+		Chat.Date(ear.at, "time")
 	)
 end
 
@@ -53,23 +53,24 @@ local function toggle(db, key, args, onText, offText)
 	Chat.Print(db.settings[key] and onText or offText)
 end
 
-function commands.toast(db, args)
+function commands.popup(db, args)
 	toggle(
 		db,
 		"toast",
 		args,
-		"Toasts are on. /ears toast off to stop them.",
-		"Toasts are off. /ears toast on to bring them back."
+		"Pop-ups are on. /ears popup off to stop them.",
+		"Pop-ups are off. /ears popup on to bring them back."
 	)
 end
+commands.toast = commands.popup
 
 function commands.sound(db, args)
 	toggle(
 		db,
 		"toastSound",
 		args,
-		"Toast sounds are on. /ears sound off to mute them.",
-		"Toast sounds are off. /ears sound on to hear them."
+		"Pop-up sounds are on. /ears sound off to mute them.",
+		"Pop-up sounds are off. /ears sound on to hear them."
 	)
 end
 
@@ -81,14 +82,14 @@ function commands.stats(db)
 	end
 	local week = Ears.CountSince(db, GetServerTime() - Ears.WEEK)
 	local assists = Ears.CountAssists(db.ears)
-	Chat.Print(("%d ears collected (%d assists), %d in the last 7 days."):format(total, assists, week))
+	Chat.Print(("%s collected, %d in the last 7 days."):format(Chat.EarCount(total, assists), week))
 	Chat.Print("Latest: " .. describeEar(db.ears[total]))
 	local hidden, unnamed = db.stats.hiddenKills, db.stats.unnamedHonorKills
 	if hidden > 0 then
-		Chat.Print(("%d kill(s) the game hid from the addon (no ear)."):format(hidden))
+		Chat.Print(("%s the game hid from the addon (no ear)."):format(Chat.Count(hidden, "kill")))
 	end
 	if unnamed > 0 then
-		Chat.Print(("%d honorable kill(s) not tied to one victim (no assist ear)."):format(unnamed))
+		Chat.Print(("%s not tied to one victim (no assist ear)."):format(Chat.Count(unnamed, "honorable kill")))
 	end
 end
 
@@ -124,11 +125,13 @@ function commands.errors(db, args)
 		Chat.Print("No errors recorded.")
 		return
 	end
-	Chat.Print(("%d error(s) recorded (newest last). Please include these in bug reports:"):format(#db.errors))
+	Chat.Print(
+		("%s recorded (newest last). Please include these in bug reports:"):format(Chat.Count(#db.errors, "error"))
+	)
 	for i = math.max(1, #db.errors - 4), #db.errors do
 		local e = db.errors[i]
 		if type(e) == "table" then -- the saved log may be hand-edited
-			local when = type(e.at) == "number" and date("%b %d %H:%M", e.at) or "?"
+			local when = type(e.at) == "number" and Chat.Date(e.at, "time") or "?"
 			Chat.Print(("%s in %s (%s): %s"):format(when, tostring(e.where), tostring(e.version), tostring(e.message)))
 		end
 	end
@@ -136,14 +139,14 @@ function commands.errors(db, args)
 end
 
 function commands.help()
-	Chat.Print(("version %s"):format(ns.version))
+	Chat.Print(("Ear Collector %s. Commands:"):format(ns.version))
 	Chat.Print("/ears: open or close your Ear Pouch (also: minimap addon drawer, a key binding, your bags)")
 	Chat.Print("/ears options: open the options (also: Options > AddOns, or right-click in the minimap drawer)")
 	Chat.Print("/ears stats: totals and your latest ear")
 	Chat.Print("/ears recent [n]: your newest ears (default 5)")
 	Chat.Print("/ears debug: print and save each kill, honorable kill and death, and why it did or didn't count")
 	Chat.Print("/ears bags on|off: open the pouch with your bags")
-	Chat.Print("/ears toast on|off, /ears sound on|off: the pop-up when you collect an ear, and its sound")
+	Chat.Print("/ears popup on|off, /ears sound on|off: the pop-up when you collect an ear, and its sound")
 	Chat.Print("/ears errors: errors the addon caught (it keeps running); /ears errors clear")
 end
 
@@ -158,6 +161,9 @@ SlashCmdList.EARCOLLECTOR = Errors.Wrap("/ears", function(message)
 	command = command:lower()
 	local key = command == "" and "pouch" or command
 	local handler = commands[key]
+	if not handler then
+		Chat.Print(('Unknown command "%s".'):format(command))
+	end
 	if not handler or key == "errors" or key == "help" then
 		-- Never switched off: /ears errors is how the player reads the error log.
 		(handler or commands.help)(db, args)

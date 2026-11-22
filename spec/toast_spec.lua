@@ -34,7 +34,7 @@ describe("loot toast", function()
 		assert.is_true(toast:IsShown())
 		assert.are.equal("You collected", toast.label:GetText())
 		assert.are.equal("|cff1eff00Grimbash's Ear|r", toast.title:GetText())
-		assert.are.equal("Level 60 Orc Warrior", toast.detail:GetText())
+		assert.are.equal("Uncommon · Level 60 Orc Warrior", toast.detail:GetText())
 		assert.are.equal(ns.Art.EarTexture("Orc", GRIMBASH), toast.icon.texture)
 		assert.is_true(toast.appear:IsPlaying())
 		assert.is_true(toast.leave:IsPlaying())
@@ -57,7 +57,7 @@ describe("loot toast", function()
 
 	it("names a groupmate's killing blow, and marks assists", function()
 		wow.fireEvent("PARTY_KILL", GROUPMATE, GRIMBASH)
-		assert.are.equal("Level 60 Orc Warrior · Killing blow: Brakka", Toast.Active()[1].detail:GetText())
+		assert.are.equal("Uncommon · Level 60 Orc Warrior · Killing blow: Brakka", Toast.Active()[1].detail:GetText())
 
 		wow.fireEvent("PLAYER_ENTERING_WORLD", false, false)
 		wow.advance(30) -- a later fight, so this credit isn't the group kill's
@@ -66,7 +66,19 @@ describe("loot toast", function()
 		wow.advance(3)
 		local toast = Toast.Active()[1]
 		assert.are.equal("Assist collected", toast.label:GetText())
-		assert.matches("· Assist$", toast.detail:GetText())
+		assert.is_nil(toast.detail:GetText():find("Assist")) -- the label says it once
+	end)
+
+	it("keeps the detail line on the bottom edge, so it can't cover the name", function()
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		local detail = Toast.Active()[1].detail
+		assert.are.equal("BOTTOMLEFT", (detail:GetPoint(1)))
+		assert.are.equal("BOTTOMRIGHT", (detail:GetPoint(2)))
+	end)
+
+	it("names the assist in the detail when the label says Vengeance", function()
+		local ear = { quality = 5, by = "assist", vengeance = 3, level = 60, raceName = "Orc", className = "Warrior" }
+		assert.are.equal("Legendary · Level 60 Orc Warrior · Assist · Avenged 3 deaths", Toast.Detail(ear))
 	end)
 
 	it("doesn't pop up for a camped repeat kill", function()
