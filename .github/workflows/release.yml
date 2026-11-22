@@ -3,12 +3,12 @@ name: Release
 # Push a signed tag such as v0.1.0 (or v0.2.0-beta.1) to publish:
 #   git tag -s v0.1.0 -m "Ear Collector 0.1.0" && git push origin v0.1.0
 # A ruleset rejects unsigned tags and never lets a tag move or be deleted.
-# All checks run first. Then the packager builds EarCollector-<tag>.zip and
-# attaches it to a GitHub Release for the tag.
+# All checks run first. Then the packager builds EarCollector-<tag>-forever.zip,
+# uploads it to CurseForge (project ID in the TOC), and attaches it to a GitHub
+# Release for the tag.
 #
-# CurseForge or Wago later: create the project, add its ID to the TOC
-# (## X-Curse-Project-ID / ## X-Wago-ID), add CF_API_TOKEN / WAGO_API_TOKEN as
-# repository secrets, and pass them in the packager step's env below.
+# The CurseForge token is CURSE_PUBLICATION_SECRET in the `release`
+# environment, which only v* tags can use. Only the packager step gets it.
 
 on:
   push:
@@ -19,11 +19,13 @@ permissions:
 
 jobs:
   checks:
+    # No secrets here: the checks run repository scripts and download tools.
     uses: ./.github/workflows/ci.yml
 
   release:
     needs: [checks]
     runs-on: ubuntu-24.04
+    environment: release
     permissions:
       contents: write # create the GitHub Release
     steps:
@@ -41,3 +43,4 @@ jobs:
           pandoc: false
         env:
           GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CURSE_PUBLICATION_SECRET }}

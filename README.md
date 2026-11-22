@@ -19,7 +19,7 @@ Ear Collector is heavily AI-authored. See [How it's made](#how-its-made).
 
 ## Install
 
-1. Download `EarCollector-<version>.zip` from the
+1. Download `EarCollector-<version>-forever.zip` from the
    [releases page](https://github.com/AlexaDeWit/Ear-Collector/releases).
 2. Unzip it into the `Interface/AddOns/` folder of your WoW Forever
    installation, so that you have `Interface/AddOns/EarCollector/EarCollector.toc`.
