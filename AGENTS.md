@@ -66,11 +66,14 @@ suggestions.
   the PR where it goes, and ask the maintainer to move it.
 - The maintainer takes test builds from CI. Don't send zips.
 - A cloud session can't GPG-sign commits or sign off for the maintainer. Its
-  commits carry the `Assisted-by:` trailer, and the maintainer decides how they
-  merge.
+  commits carry the `Assisted-by:` trailer. When the maintainer squash-merges,
+  GitHub adds a `Co-authored-by:` line for the session's git identity, and
+  that's expected.
 
 ## Commit and PR
 
 Per [`CONTRIBUTING.md`](CONTRIBUTING.md): Conventional Commits, and non-trivial
 AI help disclosed with an `Assisted-by:` trailer. Agents never merge or push to
-`main`. One branch and one PR per piece of work, and the maintainer merges.
+`main`. One branch and one PR per piece of work, and the maintainer
+squash-merges it, so the PR title becomes the commit subject on `main`: write it
+as a Conventional Commit.

@@ -123,7 +123,9 @@ low-effort, unreviewed AI output ("slop").
   `Assisted-by:` git trailer that names the tool, for example
   `Assisted-by: <Agent Name> (<Vendor>)`, and mention it in the PR. The
   trailer records a tool that helped. You remain the sole author, so it is
-  **not** `Co-authored-by:`.
+  **not** `Co-authored-by:`. The exception is a commit an agent made under its
+  own git identity: the squash merge credits it with a `Co-authored-by:` line,
+  which stays.
 - **Verify before you file**. Never open an issue that an AI produced and you
   have not reproduced yourself.
 
@@ -149,8 +151,10 @@ Signed-off-by: Your Name <you@example.com>
 
 ## Pull requests
 
-Open as a draft while work or review is moving, and mark it ready when it is
-not. The body is three headings, **What** (the goal), **Why** (the
+Pull requests are squash-merged. The title becomes the commit subject on
+`main`, so write it as a Conventional Commit, and the commit messages become its
+body, so keep them worth reading. Open as a draft while work or review is
+moving, and mark it ready when it is not. The body is three headings, **What** (the goal), **Why** (the
 motivation), and **Consequences** (player-visible changes, trade-offs, one
 sentence each, and the section goes when there are none), plus a one-line
 AI-assistance disclosure. The template has them.
@@ -170,8 +174,8 @@ where an issue completes.
   `docs`, `chore`, `ci`, `refactor`, `test`, `build`, `perf`. The scope is
   optional. Keep the summary short and imperative.
 - **Commits are GPG-signed, DCO signed off, and AI-disclosed** (see above).
-- **`main` takes changes through pull requests only**, with both CI jobs passing
-  on an up-to-date branch.
+- **`main` takes changes through pull requests only**, squash-merged, with both
+  CI jobs passing on an up-to-date branch.
 - **Pin every GitHub Action to a full commit SHA**, with the version in a
   trailing comment.
 - **Keep workflows injection-free**. Never interpolate untrusted
