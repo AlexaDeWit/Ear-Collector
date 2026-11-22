@@ -221,7 +221,7 @@ describe("deaths and vengeance", function()
 			assert.are.equal("Vengeance!", toast.label:GetText())
 			assert.matches("Avenged 3 deaths$", toast.detail:GetText())
 			assert.are.equal(63971, wow.state().sounds[1].id)
-			local tooltip = ns.Pouch.TooltipLines(ear)
+			local tooltip = ns.EarsTab.TooltipLines(ear)
 			local found = false
 			for _, line in ipairs(tooltip) do
 				found = found or (line.text or ""):find("^Vengeance: they had killed you 3 times") ~= nil

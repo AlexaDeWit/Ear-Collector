@@ -101,7 +101,7 @@ EventRegistry:RegisterCallback(
 	"SetItemRef",
 	Errors.Wrap("ear link", function(_, link)
 		local guid, at = Chat.ParseEarLink(link)
-		if guid and at and not Pouch.FocusEar(guid, at) then
+		if guid and at and not ns.EarsTab.Focus(guid, at) then
 			Chat.Print("That ear is no longer in your pouch.")
 		end
 	end),

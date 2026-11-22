@@ -8,7 +8,7 @@
 -- script runs inside Errors.Wrap.
 local _, ns = ...
 
-local Art, Errors, Pouch = ns.Art, ns.Errors, ns.Pouch
+local Art, Errors = ns.Art, ns.Errors
 
 local Toast = {}
 ns.Toast = Toast
@@ -109,7 +109,7 @@ local function showTooltip(toast)
 	if not toast.ear then
 		return
 	end
-	ns.Chat.ShowTooltip(toast, "ANCHOR_BOTTOM", Pouch.TooltipLines(toast.ear))
+	ns.Chat.ShowTooltip(toast, "ANCHOR_BOTTOM", ns.EarsTab.TooltipLines(toast.ear))
 end
 
 ---@return EarCollector.Toast
@@ -205,7 +205,7 @@ local function build()
 			local ear = toast.ear
 			release(toast)
 			if button ~= "RightButton" and ear then
-				Pouch.FocusEar(ear.guid, ear.at)
+				ns.EarsTab.Focus(ear.guid, ear.at)
 			end
 		end)
 	)

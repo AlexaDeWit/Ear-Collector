@@ -45,7 +45,7 @@ local function classHex(token)
 	return Chat.ClassHex(token) or "ffffffff"
 end
 
---- The tooltip for a rival, as lines like Pouch.TooltipLines. Pure, for specs.
+--- The tooltip for a rival, as lines like EarsTab.TooltipLines. Pure, for specs.
 ---@param rival EarCollector.Rival
 ---@return table[]
 function RivalsTab.TooltipLines(rival)
@@ -155,7 +155,7 @@ local function newRow(panel, index)
 			local rival = row.rival
 			if rival and rival.ears > 0 then
 				hideTooltip(row)
-				Pouch.FocusEar(rival.latest.guid, rival.latest.at)
+				ns.EarsTab.Focus(rival.latest.guid, rival.latest.at)
 			end
 		end)
 	)

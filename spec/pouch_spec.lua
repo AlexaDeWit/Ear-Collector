@@ -46,15 +46,15 @@ describe("Ear Pouch", function()
 
 		it("says how to get the first ear when empty", function()
 			wow.slash("/ears")
-			local w = Pouch.Widgets()
-			assert.is_true(w.empty:IsShown())
-			assert.are.equal("0 ears, 0 assists", w.count:GetText())
+			local w, ears = Pouch.Widgets(), ns.EarsTab.Widgets()
+			assert.is_true(ears.empty:IsShown())
+			assert.are.equal("0 ears, 0 assists", ears.count:GetText())
 			assert.are.equal("Page 1 / 1", w.page:GetText())
 			assert.is_false(w.prev:IsEnabled())
 			assert.is_false(w.next:IsEnabled())
 			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
-			assert.is_false(w.empty:IsShown())
-			assert.are.equal("1 ears, 0 assists", w.count:GetText())
+			assert.is_false(ears.empty:IsShown())
+			assert.are.equal("1 ears, 0 assists", ears.count:GetText())
 		end)
 
 		it("shows ears newest first, with race icon, grade border and camp count", function()
@@ -62,7 +62,7 @@ describe("Ear Pouch", function()
 			ns.db.ears[1].quality = 3
 			ns.db.ears[2].camped = 2
 			wow.slash("/ears")
-			local slots = Pouch.Slots()
+			local slots = ns.EarsTab.Widgets().slots
 			assert.are.equal("Victim2", slots[1].ear.name)
 			assert.are.equal("Victim1", slots[2].ear.name)
 			assert.is_nil(slots[3].ear)
@@ -77,7 +77,7 @@ describe("Ear Pouch", function()
 			collect(1, { race = "Pandaren" })
 			ns.db.ears[1].quality = 0
 			wow.slash("/ears")
-			local slot = Pouch.Slots()[1]
+			local slot = ns.EarsTab.Widgets().slots[1]
 			assert.are.equal("Interface\\AddOns\\EarCollector\\Media\\Ears\\generic", slot.icon.texture)
 			assert.is_true(slot.icon.desaturated)
 		end)
@@ -88,8 +88,8 @@ describe("Ear Pouch", function()
 			assert.are.same({ 1, 2 }, { Pouch.GetPage() })
 			assert.is_true(Pouch.Widgets().next:IsEnabled())
 			Pouch.Widgets().next:Click()
-			assert.are.equal("Victim3", Pouch.Slots()[1].ear.name)
-			assert.is_nil(Pouch.Slots()[4].ear)
+			assert.are.equal("Victim3", ns.EarsTab.Widgets().slots[1].ear.name)
+			assert.is_nil(ns.EarsTab.Widgets().slots[4].ear)
 			Pouch.SetPage(99) -- clamped
 			assert.are.equal(2, (Pouch.GetPage()))
 			frame():Wheel(1) -- scroll up: previous page
@@ -99,7 +99,7 @@ describe("Ear Pouch", function()
 		it("adds a new ear while open", function()
 			wow.slash("/ears")
 			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
-			assert.are.equal("Grimbash", Pouch.Slots()[1].ear.name)
+			assert.are.equal("Grimbash", ns.EarsTab.Widgets().slots[1].ear.name)
 		end)
 
 		it("remembers where you dragged it", function()
@@ -126,7 +126,7 @@ describe("Ear Pouch", function()
 		it("describes the ear", function()
 			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 			local lines = {}
-			for _, line in ipairs(Pouch.TooltipLines(ns.db.ears[1])) do
+			for _, line in ipairs(ns.EarsTab.TooltipLines(ns.db.ears[1])) do
 				lines[#lines + 1] = line.text or (line.left .. " | " .. line.right)
 			end
 			assert.are.same({
@@ -148,7 +148,7 @@ describe("Ear Pouch", function()
 			ns.db.ears[1].level = nil
 			ns.db.ears[1].camped = 1
 			local text = {}
-			for _, line in ipairs(Pouch.TooltipLines(ns.db.ears[1])) do
+			for _, line in ipairs(ns.EarsTab.TooltipLines(ns.db.ears[1])) do
 				text[#text + 1] = line.text or line.left
 			end
 			text = table.concat(text, "\n")
@@ -157,7 +157,7 @@ describe("Ear Pouch", function()
 			assert.matches("Camped: 1 more kill within the window", text)
 
 			collect(1, { by = "assist", guid = "Player-1-ASSIST" })
-			local assist = Pouch.TooltipLines(ns.db.ears[#ns.db.ears])
+			local assist = ns.EarsTab.TooltipLines(ns.db.ears[#ns.db.ears])
 			local found = false
 			for _, line in ipairs(assist) do
 				found = found or (line.text or ""):find("^Assist") ~= nil
@@ -168,7 +168,7 @@ describe("Ear Pouch", function()
 		it("shows on hover and hides when the mouse leaves", function()
 			collect(1)
 			wow.slash("/ears")
-			local slot = Pouch.Slots()[1]
+			local slot = ns.EarsTab.Widgets().slots[1]
 			slot:Enter()
 			assert.is_true(_G.GameTooltip:IsShown())
 			assert.are.equal(slot, _G.GameTooltip.owner)
@@ -180,9 +180,9 @@ describe("Ear Pouch", function()
 		it("contains an error from a damaged ear", function()
 			collect(1)
 			wow.slash("/ears")
-			Pouch.Slots()[1].ear = { name = "Broken", at = "not a time" }
+			ns.EarsTab.Widgets().slots[1].ear = { name = "Broken", at = "not a time" }
 			assert.has_no.errors(function()
-				Pouch.Slots()[1]:Enter()
+				ns.EarsTab.Widgets().slots[1]:Enter()
 			end)
 			assert.are.equal("pouch tooltip", ns.db.errors[1].where)
 		end)
@@ -209,7 +209,7 @@ describe("Ear Pouch", function()
 		it("stays open when the bags close after you clicked an ear link", function()
 			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 			_G.ToggleAllBags() -- the bags open the pouch
-			Pouch.FocusEar(ns.db.ears[1].guid, ns.db.ears[1].at) -- then you click an ear link
+			ns.EarsTab.Focus(ns.db.ears[1].guid, ns.db.ears[1].at) -- then you click an ear link
 			_G.CloseAllBags()
 			assert.is_true(Pouch.IsShown())
 		end)
@@ -314,11 +314,11 @@ describe("Ear Pouch", function()
 
 		it("clears a focused ear, like the close button", function()
 			collect(1)
-			Pouch.FocusEar(ns.db.ears[1].guid, ns.db.ears[1].at)
+			ns.EarsTab.Focus(ns.db.ears[1].guid, ns.db.ears[1].at)
 			wow.pressEscape()
 			assert.is_false(_G.GameTooltip:IsShown())
 			wow.slash("/ears")
-			assert.is_false(Pouch.Slots()[1].highlightLocked)
+			assert.is_false(ns.EarsTab.Widgets().slots[1].highlightLocked)
 		end)
 
 		it("works in combat, from every way of opening the pouch", function()
@@ -338,7 +338,7 @@ describe("Ear Pouch", function()
 					_G.EarCollector_OnAddonCompartmentClick("EarCollector", "LeftButton")
 				end,
 				function()
-					Pouch.FocusEar(ns.db.ears[1].guid, ns.db.ears[1].at)
+					ns.EarsTab.Focus(ns.db.ears[1].guid, ns.db.ears[1].at)
 				end,
 			}
 			for i, open in ipairs(opens) do
@@ -394,7 +394,7 @@ describe("Ear Pouch", function()
 			wow.clickLink(("addon:EarCollector:ear:%s:%d"):format(oldest.guid, oldest.at))
 			assert.is_true(Pouch.IsShown())
 			assert.are.equal(2, (Pouch.GetPage()))
-			local slot = Pouch.Slots()[5] -- 45 ears: the oldest is 5th on page 2
+			local slot = ns.EarsTab.Widgets().slots[5] -- 45 ears: the oldest is 5th on page 2
 			assert.are.equal(oldest, slot.ear)
 			assert.is_true(slot.highlightLocked)
 			assert.are.equal(slot, _G.GameTooltip.owner)
