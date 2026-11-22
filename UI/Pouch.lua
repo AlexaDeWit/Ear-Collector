@@ -47,11 +47,14 @@ local function hideTooltip()
 	GameTooltip:Hide()
 end
 
-local function playSound(name)
+--- Play one of Blizzard's interface sounds by its SOUNDKIT name, if the client has it.
+---@param name string
+function Pouch.PlaySound(name)
 	if SOUNDKIT and SOUNDKIT[name] then
 		PlaySound(SOUNDKIT[name], "SFX")
 	end
 end
+local playSound = Pouch.PlaySound
 
 local function savePosition()
 	if frame and ns.db then

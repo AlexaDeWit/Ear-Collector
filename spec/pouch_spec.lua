@@ -106,6 +106,7 @@ describe("Ear Pouch", function()
 			wow.slash("/ears")
 			local w, ears = Pouch.Widgets(), ns.EarsTab.Widgets()
 			assert.is_true(ears.empty:IsShown())
+			assert.are.equal("No ears yet", ears.emptyHeading:GetText())
 			assert.is_true(ears.empty:GetFrameLevel() > ears.slots[1]:GetFrameLevel()) -- drawn over the slots
 			assert.are.equal("0 ears", ears.count:GetText())
 			assert.are.equal("Page 1 / 1", w.page:GetText())

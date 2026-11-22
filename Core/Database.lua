@@ -134,6 +134,13 @@ function Database.MigrateCharacter(saved)
 	if type(db.stats.unnamedHonorKills) ~= "number" then
 		db.stats.unnamedHonorKills = 0
 	end
+	-- Grades hidden from the Ears tab: true at a grade's number, nothing else.
+	db.hiddenGrades = tableOrNew(db.hiddenGrades)
+	for grade, value in pairs(db.hiddenGrades) do
+		if value ~= true or type(grade) ~= "number" or not ns.QUALITY[grade] then
+			db.hiddenGrades[grade] = nil
+		end
+	end
 	return db
 end
 
@@ -163,6 +170,7 @@ function Database.View(account, character)
 		ears = character.ears,
 		deaths = character.deaths,
 		stats = character.stats,
+		hiddenGrades = character.hiddenGrades,
 	}
 end
 

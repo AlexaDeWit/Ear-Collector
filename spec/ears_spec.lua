@@ -18,6 +18,18 @@ describe("Ears", function()
 		return k
 	end
 
+	describe("Filter", function()
+		it("leaves out hidden grades, keeping the order, and counts what it left out", function()
+			local poor, rare, grey = { quality = 0 }, { quality = 3 }, { quality = 0 }
+			local shown, hidden = Ears.Filter({ poor, rare, grey }, { [0] = true })
+			assert.are.same({ rare }, shown)
+			assert.are.equal(2, hidden)
+			shown, hidden = Ears.Filter({ poor, rare }, nil)
+			assert.are.same({ poor, rare }, shown)
+			assert.are.equal(0, hidden)
+		end)
+	end)
+
 	describe("Grade", function()
 		it("follows the game's level colours", function()
 			assert.are.equal(4, Ears.Grade(65, 60, 12)) -- 5 above: red, Epic

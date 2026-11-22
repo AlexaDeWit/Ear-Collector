@@ -185,7 +185,10 @@ addons such as Details read them instead of a combat log.
 - **Sounds.** `PlaySound(SOUNDKIT.<NAME>, "SFX")`, with names from Forever's
   `SoundKitConstants`, such as `UI_RAID_LOOT_TOAST_LESSER_ITEM_WON`,
   `UI_EPICLOOT_TOAST`, `UI_LEGENDARY_LOOT_TOAST`, `IG_CHARACTER_INFO_TAB`,
-  `IG_BACKPACK_OPEN`, `IG_BACKPACK_CLOSE` and `IG_ABILITY_PAGE_TURN`.
+  `IG_BACKPACK_OPEN`, `IG_BACKPACK_CLOSE` and `IG_ABILITY_PAGE_TURN`. The code
+  plays a sound only if its name is in `SOUNDKIT`. *Needs the game:* whether
+  Forever has `IG_MAINMENU_OPTION_CHECKBOX_ON` and `_OFF`, the grade buttons'
+  clicks.
 
 ## The Settings screen
 

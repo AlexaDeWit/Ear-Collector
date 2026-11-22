@@ -23,6 +23,7 @@ to the game stays thin.
 | `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), your deaths (`Death`), and what they share (`Shared`) |
 | `UI/Pouch.lua` | The Ear Pouch window, its tab strip and paging |
 | `UI/EarsTab.lua`, `UI/LedgerTab.lua`, `UI/RivalsTab.lua` | The pouch's three tabs |
+| `UI/GradeFilter.lua` | The Ears tab's grade buttons, which hide or show each grade |
 | `UI/Toast.lua` | The pop-up when you collect an ear |
 | `UI/Options.lua` | The page in Options > AddOns |
 | `UI/Access.lua` | Ways to open the pouch: drawer, key binding, bags, chat links |
@@ -136,7 +137,7 @@ The Rivals tab marks each player with at most one of these, in this order:
 | Global | Saved for | Holds |
 |---|---|---|
 | `EarCollectorDB` | The account | `settings`, `ui` (pouch position), `errors`, `debugLog` |
-| `EarCollectorCharDB` | Each character | `ears`, `deaths`, `stats` |
+| `EarCollectorCharDB` | Each character | `ears`, `deaths`, `stats`, `hiddenGrades` (grades the Ears tab hides) |
 
 - `Database.MigrateAccount` and `Database.MigrateCharacter` repair whatever is
   on disk at `ADDON_LOADED`: missing tables, wrong types, damaged records.
@@ -187,6 +188,9 @@ every API return, and repair of saved data on load.
   `BasicFrameTemplateWithInset`. Tabs register with
   `Pouch.AddTab{ title, build, refresh, pages?, setPage? }` while the addon
   loads, and the page buttons page whichever tab is showing.
+- The Ears tab leaves out the grades in `hiddenGrades` (`Ears.Filter`), and its
+  count line says how many it hid. Hidden ears still count everywhere else.
+  Opening an ear from chat or a pop-up shows its grade again.
 - `UI/Access.lua` connects the ways to open it:
   - The minimap drawer: left-click toggles the pouch, right-click opens the
     options.

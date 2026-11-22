@@ -7,6 +7,21 @@ ns.Ears = Ears
 
 Ears.WEEK = 7 * 24 * 60 * 60 -- "the last 7 days", in seconds
 
+--- The ears to show, in their order, leaving out the grades the player hid.
+---@param ears table[]
+---@param hidden table<integer, true>? grades to leave out
+---@return table[] shown
+---@return integer hiddenCount
+function Ears.Filter(ears, hidden)
+	local shown = {}
+	for _, ear in ipairs(ears) do
+		if not (hidden and hidden[ear.quality]) then
+			shown[#shown + 1] = ear
+		end
+	end
+	return shown, #ears - #shown
+end
+
 --- How many of `ears` are assists.
 ---@param ears table[]
 ---@return integer

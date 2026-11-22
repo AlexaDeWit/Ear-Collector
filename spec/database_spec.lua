@@ -52,7 +52,16 @@ describe("Database", function()
 			assert.are.same({}, db.deaths)
 			assert.are.equal(0, db.stats.hiddenKills)
 			assert.are.equal(0, db.stats.unnamedHonorKills)
+			assert.are.same({}, db.hiddenGrades)
 			assert.is_nil(db.settings)
+		end)
+
+		it("keeps only real grades in the hidden-grade list", function()
+			local db = Database.MigrateCharacter({
+				hiddenGrades = { [0] = true, [2] = "yes", [3] = false, [9] = true, poor = true },
+			})
+			assert.are.same({ [0] = true }, db.hiddenGrades)
+			assert.are.same({}, Database.MigrateCharacter({ hiddenGrades = "junk" }).hiddenGrades)
 		end)
 
 		it("repairs damaged ears and stats instead of failing later", function()
