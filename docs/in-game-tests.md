@@ -167,16 +167,26 @@ This needs "Your deaths" to work.
 
 ## The pop-up
 
-1. Collect an ear. A pop-up appears near the top of the screen with the ear,
-   the name in its grade colour, and one line under it with the grade, level,
-   race and class (and who landed the blow) that doesn't overlap the name. An
-   assist says "Assist collected" at the top. A loot sound plays, and a Rare or
-   better ear plays the epic loot sound.
-2. It fades after about 4 seconds. Hovering keeps it up and shows the ear's
-   tooltip.
-3. Left-click opens the pouch on that ear. Right-click dismisses it.
-4. Several ears at once stack, up to three.
-5. `/ears sound off` mutes it, and `/ears popup off` stops it.
+1. Collect an ear. A pop-up appears at the bottom of the screen, above your
+   action bars, in Blizzard's loot style with your faction's background. It
+   shows the ear framed in its grade colour, the name in that colour, and one
+   line under it with the grade, level, race and class (and who landed the
+   blow). It glows briefly as it appears. An assist says "Assist collected" at
+   the top.
+2. A loot sound plays, and a Rare or better ear plays the epic loot sound. A
+   Poor ear is silent. Several ears in quick succession play one sound, unless a
+   grander one follows.
+3. It fades after about 4 seconds. Hovering keeps it up and shows the ear's
+   tooltip, which ends with what clicking does.
+4. Left-click opens the pouch on that ear. Right-click dismisses it.
+5. Several ears at once stack upward, up to three.
+6. A Vengeance ear's pop-up uses Blizzard's legendary style.
+7. Die to an enemy player: a red pop-up says "<name> took your ear", and says
+   "Vengeance owed" on the third death. Clicking it opens the Rivals tab.
+8. `/ears popup move` (or "Move pop-up" in the options) shows a blue stand-in.
+   Drag it somewhere, right-click it, and collect an ear: the pop-up appears
+   there, and still does after `/reload`.
+9. `/ears sound off` mutes it, and `/ears popup off` stops it.
 
 ## Escape
 
@@ -215,19 +225,21 @@ log). This test checks that closing the pouch with Escape never shows up there.
 1. Open Options > AddOns. "Ear Collector" is listed with three sections: "When
    you collect an ear", "Ear Pouch" and "What counts". Each control shows a
    tooltip when you hover over it.
-2. `/ears options` opens the same page, and so does right-clicking Ear Collector
+2. Set "Pop-up for" to "Rare and better" and collect an Uncommon ear: no pop-up,
+   though the ear is collected. Set it back to "Every ear".
+3. `/ears options` opens the same page, and so does right-clicking Ear Collector
    in the minimap addon drawer. Left-clicking it still opens the pouch.
-3. Untick "Show a pop-up" and collect an ear: no pop-up, but the ear is
+4. Untick "Show a pop-up" and collect an ear: no pop-up, but the ear is
    collected. Tick it again.
-4. Type `/ears bags off`, then reopen the page: "Open with your bags" is
+5. Type `/ears bags off`, then reopen the page: "Open with your bags" is
    unticked.
-5. Set "Repeat kill window" to 0, `/reload`, and reopen the page: it still says
+6. Set "Repeat kill window" to 0, `/reload`, and reopen the page: it still says
    0 min. Kill the same player twice and you get two ears. Set it back to 10.
-6. Click the page's "Defaults" button. Everything returns to its default, and
+7. Click the page's "Defaults" button. Everything returns to its default, and
    the repeat kill window to 10 min.
-7. During a fight, type `/ears options`. Chat says the options can't open during
+8. During a fight, type `/ears options`. Chat says the options can't open during
    combat, and no "action blocked" message appears. After the fight it opens.
-8. With the taint log on (see "Escape"), change a few options, log out, and
+9. With the taint log on (see "Escape"), change a few options, log out, and
    search `Logs/taint.log` for `EarCollector`. Nothing should mention it except
    the `UISpecialFrames` line.
 

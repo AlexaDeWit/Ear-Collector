@@ -105,10 +105,88 @@ describe("loot toast", function()
 		assert.are.equal(Toast.MAX, #active)
 		assert.matches("Victim4", active[1].title:GetText())
 		assert.matches("Victim2", active[3].title:GetText())
-		local _, _, _, _, firstY = active[1]:GetPoint(1)
+		local point, _, _, _, firstY = active[1]:GetPoint(1)
 		local _, _, _, _, secondY = active[2]:GetPoint(1)
-		assert.are.equal(Toast.TOP, firstY)
-		assert.are.equal(Toast.TOP - Toast.HEIGHT - Toast.GAP, secondY)
+		assert.are.equal("BOTTOM", point) -- above the action bars, clear of the error text
+		assert.are.equal(Toast.ANCHOR.y, firstY)
+		assert.are.equal(Toast.ANCHOR.y + Toast.HEIGHT + Toast.GAP, secondY) -- stacking upward
+	end)
+
+	it("moves where you drag the stand-in, and stays there", function()
+		wow.slash("/ears popup move")
+		local mover = Toast.Mover()
+		assert.is_true(mover:IsShown())
+		mover:Drag()
+		assert.are.same({ point = "CENTER", relativePoint = "CENTER", x = 100, y = -50 }, ns.db.ui.toast)
+		mover:Click("RightButton")
+		assert.is_false(mover:IsShown())
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		local point, _, _, x, y = Toast.Active()[1]:GetPoint(1)
+		assert.are.same({ "CENTER", 100, -50 }, { point, x, y })
+	end)
+
+	it("shows only the grades the options ask for, and Vengeance always", function()
+		ns.db.settings.toastMinQuality = 3
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH) -- Uncommon
+		assert.are.equal(0, #Toast.Active())
+		wow.state().playerLevel = 59
+		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- Rare
+		assert.are.equal(1, #Toast.Active())
+		Toast.Show({ guid = "Player-1-V", name = "Owed", quality = 5, vengeance = 3, at = 1 })
+		assert.are.equal(2, #Toast.Active())
+	end)
+
+	it("plays one sound per burst unless a grander one comes, and none for Poor", function()
+		local function sounds()
+			return #wow.state().sounds
+		end
+		Toast.Show({ guid = "Player-1-P", name = "Lowbie", quality = 0, at = 1 })
+		assert.are.equal(0, sounds())
+		Toast.Show({ guid = "Player-1-A", name = "A", quality = 2, at = 1 })
+		Toast.Show({ guid = "Player-1-B", name = "B", quality = 2, at = 1 })
+		assert.are.equal(1, sounds())
+		Toast.Show({ guid = "Player-1-C", name = "C", quality = 3, at = 1 }) -- grander: plays
+		assert.are.equal(2, sounds())
+		wow.advance(Toast.SOUND_GAP)
+		Toast.Show({ guid = "Player-1-D", name = "D", quality = 2, at = 1 })
+		assert.are.equal(3, sounds())
+	end)
+
+	it("uses Blizzard's loot-toast art, and plain colours when the client lacks it", function()
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		local toast = Toast.Active()[1]
+		assert.are.equal("loottoast-bg-alliance", toast.bg.atlas)
+		assert.are.equal("loottoast-itemborder-green", toast.iconBorder.atlas)
+		Toast.Show({ guid = "Player-1-V", name = "Owed", quality = 5, vengeance = 3, at = 1 })
+		assert.are.equal("LegendaryToast-background", Toast.Active()[1].bg.atlas)
+		wow.state().atlases = {}
+		wow.fireEvent("PARTY_KILL", ME, GROUPMATE)
+		Toast.Show({ guid = "Player-1-W", name = "Plain", quality = 3, at = 1 })
+		assert.is_nil(Toast.Active()[1].bg.atlas)
+		assert.is_truthy(Toast.Active()[1].bg.color)
+		assert.are.same({}, ns.db.errors)
+	end)
+
+	it("pops up a lost ear when an enemy player kills you", function()
+		for debt = 1, ns.Deaths.VENGEANCE do
+			ns.RecordDeath(ns.db, { guid = GRIMBASH, name = "Grimbash", class = "WARRIOR", race = "Orc", level = 60 })
+			local toast = Toast.Active()[1]
+			assert.matches("Ear lost", toast.label:GetText())
+			assert.matches("Grimbash|r took your ear", toast.title:GetText())
+			if debt == ns.Deaths.VENGEANCE then
+				assert.matches("Vengeance owed", toast.detail:GetText())
+			end
+		end
+		Toast.Active()[1]:Click("LeftButton")
+		assert.is_true(ns.Pouch.IsShown())
+		assert.are.equal("Rivals", ns.Pouch.ActiveTab())
+	end)
+
+	it("says what clicking does at the end of its tooltip", function()
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		Toast.Active()[1]:Enter()
+		local lines = _G.GameTooltip.lines
+		assert.are.equal("Click to open in your pouch. Right-click to dismiss.", lines[#lines])
 	end)
 
 	it("pauses and shows the ear's tooltip while hovered", function()

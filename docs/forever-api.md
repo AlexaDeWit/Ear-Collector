@@ -176,6 +176,12 @@ addons such as Details read them instead of a combat log.
   `.CloseButton`. `PanelTabButtonTemplate` adds each tab to its parent's `Tabs`
   array, and `PanelTemplates_SetNumTabs` and `PanelTemplates_SetTab` drive them
   (`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.lua`).
+- **Loot-toast art** (`Blizzard_FrameXML/Mainline/AlertFrameSystems`):
+  `loottoast-bg-horde` and `loottoast-bg-alliance` (PvP rewards),
+  `loottoast-glow`, `loottoast-itemborder-<white|green|blue|purple|orange>`, and
+  `LegendaryToast-background` for legendary items. The bags' new-item glow is
+  `bags-glow-white`, and an item button's frame is
+  `Interface\Common\WhiteIconFrame` (`Blizzard_ItemButton`).
 - **Sounds.** `PlaySound(SOUNDKIT.<NAME>, "SFX")`, with names from Forever's
   `SoundKitConstants`, such as `UI_RAID_LOOT_TOAST_LESSER_ITEM_WON`,
   `UI_EPICLOOT_TOAST`, `UI_LEGENDARY_LOOT_TOAST` and `IG_CHARACTER_INFO_TAB`.
@@ -195,6 +201,10 @@ addons such as Details read them instead of a combat log.
 - Registration passes through Blizzard's secure attribute delegate
   (`Blizzard_SettingsInbound.lua`), which wraps function arguments to keep their
   taint.
+- `Settings.CreateDropdown(category, setting, options, tooltip)` takes a function
+  returning `Settings.CreateControlTextContainer()`'s data, and
+  `CreateSettingsButtonInitializer(name, buttonText, onClick, tooltip, addSearchTags)`
+  makes a row with a button, added with `layout:AddInitializer`.
 - `Settings.OpenToCategory(id)` calls `C_SettingsUtil.OpenSettingsPanel`, which
   has restrictions. `InCombatLockdown()` and the `Combat` addon restriction tell
   you when it would fail.

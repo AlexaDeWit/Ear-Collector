@@ -115,6 +115,17 @@ function Settings.CreateSliderOptions(minValue, maxValue, rate) end
 ---@return table initializer
 function Settings.CreateSlider(category, setting, options, tooltip) end
 
+--- A list of { value, label } options for a dropdown. Blizzard_Settings_Shared/Blizzard_Settings.lua.
+---@return { Add: fun(self, value: any, label: string, tooltip: string?), GetData: fun(self): table }
+function Settings.CreateControlTextContainer() end
+
+---@param category SettingsCategory
+---@param setting SettingsSetting
+---@param options fun(): table the container's GetData()
+---@param tooltip string?
+---@return table initializer
+function Settings.CreateDropdown(category, setting, options, tooltip) end
+
 --- Opens the Settings screen (C_SettingsUtil.OpenSettingsPanel, which has restrictions).
 ---@param categoryID integer?
 ---@param scrollToElementName string?
@@ -125,6 +136,15 @@ function Settings.OpenToCategory(categoryID, scrollToElementName) end
 ---@param newTagID any?
 ---@return table initializer
 function CreateSettingsListSectionHeaderInitializer(name, tooltip, newTagID) end
+
+--- A row with a button. Blizzard_Settings_Shared/Blizzard_SettingControls.lua.
+---@param name string
+---@param buttonText string
+---@param buttonClick fun()
+---@param tooltip string?
+---@param addSearchTags boolean
+---@return table initializer
+function CreateSettingsButtonInitializer(name, buttonText, buttonClick, tooltip, addSearchTags) end
 
 MinimalSliderWithSteppersMixin = {
 	---@enum MinimalSliderLabel

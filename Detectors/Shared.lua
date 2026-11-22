@@ -138,6 +138,9 @@ function ns.RecordDeath(db, killer, spell)
 	if ns.Pouch then
 		Errors.Call("pouch refresh", ns.Pouch.Refresh)
 	end
+	if ns.Toast then
+		Errors.Call("toast", ns.Toast.ShowDeath, death, debt)
+	end
 	return death, debt
 end
 
