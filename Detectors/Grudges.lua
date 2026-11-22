@@ -1,8 +1,8 @@
 -- Grudges: players who took your ear since you last took theirs, noticed when
 -- the game shows them to you (their nameplate, your target, your mouseover).
--- Seeing one you last fought on an earlier day reminds you, once that day:
--- Core/Deaths.lua decides (Deaths.Reminder). Hovering one always shows the
--- grudge on their tooltip.
+-- Seeing one you last fought on an earlier day reminds you, once that day and
+-- only out of combat: Core/Deaths.lua decides (Deaths.Reminder). Hovering one
+-- always shows the grudge on their tooltip.
 local _, ns = ...
 
 local Context, Deaths, Errors = ns.Context, ns.Deaths, ns.Errors
@@ -43,6 +43,12 @@ local function remind(unit)
 	end
 	local now = GetServerTime()
 	local debt = Deaths.Reminder(db, guid, now, reminded[guid])
+	if debt > 0 and Context.InCombat() then
+		-- No reminder mid-fight, nor after it: you've met them today.
+		reminded[guid] = now
+		ns.TraceRoutine(db, "GRUDGE", nil, guid, "no reminder: in combat", guid)
+		return
+	end
 	local who = debt > 0 and ns.VictimDetails(guid)
 	if not who then
 		if db.settings.debug and Deaths.Debt(db, guid) > 0 then
