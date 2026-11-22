@@ -51,7 +51,7 @@ describe("grudges", function()
 	end
 
 	local function reminders()
-		return wow.printed("an unsettled grudge")
+		return wow.printed("You owe .* one%.")
 	end
 
 	it("reminds you of a Vengeance grudge from an earlier day with a pop-up, a chat line and a raid warning", function()
@@ -66,7 +66,7 @@ describe("grudges", function()
 		assert.are.equal(
 			1,
 			wow.printed(
-				("Grimbash|r: an unsettled grudge%%. They took your ear three times in a row, last on %s%%. "):format(
+				("You owe .*Grimbash|r one%%. They took your ear three times in a row, last on %s%%. "):format(
 					ns.Chat.Date(last)
 				) .. "Their next ear is Legendary%.$"
 			)
@@ -194,7 +194,7 @@ describe("grudges", function()
 		it("shows the grudge whenever you hover them, even the same day", function()
 			killedBy(3)
 			assert.are.same({
-				"An unsettled grudge: their next ear is Legendary",
+				"You owe them one: their next ear is Legendary",
 				("Took your ear three times in a row, last on %s"):format(
 					ns.Chat.Date(ns.Deaths.LastFought(ns.db, GRIMBASH))
 				),

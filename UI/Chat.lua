@@ -220,7 +220,7 @@ Chat.REVENGE_OWED = "Revenge owed: their next ear is worth more."
 
 -- Grudges (Detectors/Grudges.lua): a player who took your ear since you last
 -- took theirs, remembered like an entry in a book of grudges.
-Chat.GRUDGE = "An unsettled grudge"
+Chat.GRUDGE = "You owe them one"
 
 local function grudgeOwed(debt)
 	return debt >= ns.Deaths.VENGEANCE and "their next ear is Legendary" or "their next ear is worth more"
@@ -237,20 +237,15 @@ local function grudgeHistory(debt, lastAt)
 	return ("%s%s %s"):format(times, debt == 1 and " on" or ", last on", Chat.Date(lastAt))
 end
 
---- "Cedric Vale: an unsettled grudge. They took your ear three times in a row,
---- last on Nov 18. Their next ear is Legendary."
+--- "You owe Cedric Vale one. They took your ear three times in a row, last on
+--- Nov 18. Their next ear is Legendary."
 ---@param who table the player's details (ns.VictimDetails)
 ---@param debt integer deaths you owe them
 ---@param lastAt number? when you last fought them
 function Chat.AnnounceGrudge(who, debt, lastAt)
 	local name = Chat.RaceIcon(who.race, who.sex) .. Chat.InClassColour(who.name, who.class)
 	Chat.Print(
-		("%s: %s. They %s. %s."):format(
-			name,
-			Chat.GRUDGE:lower(),
-			grudgeHistory(debt, lastAt),
-			ns.Reasons.Capital(grudgeOwed(debt))
-		)
+		("You owe %s one. They %s. %s."):format(name, grudgeHistory(debt, lastAt), ns.Reasons.Capital(grudgeOwed(debt)))
 	)
 end
 
