@@ -42,9 +42,16 @@ describe("loot toast", function()
 	end)
 
 	it("plays the epic loot sound for a Rare ear", function()
-		wow.state().playerLevel = 58
-		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- 5 levels above you: Rare
+		wow.state().playerLevel = 59
+		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- 4 levels above you: orange, Rare
 		assert.are.equal(3, ns.db.ears[1].quality)
+		assert.are.equal(31578, wow.state().sounds[1].id)
+	end)
+
+	it("plays the epic loot sound for an Epic ear too", function()
+		wow.state().playerLevel = 58
+		wow.fireEvent("PARTY_KILL", ME, VELARIA) -- 5 levels above you: red, Epic
+		assert.are.equal(4, ns.db.ears[1].quality)
 		assert.are.equal(31578, wow.state().sounds[1].id)
 	end)
 

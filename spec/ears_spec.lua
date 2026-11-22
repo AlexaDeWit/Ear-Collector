@@ -19,15 +19,26 @@ describe("Ears", function()
 	end
 
 	describe("Grade", function()
-		it("grades by the level gap", function()
-			assert.are.equal(0, Ears.Grade(44, 60)) -- 16 below: Poor
-			assert.are.equal(0, Ears.Grade(50, 60)) -- 10 below: Poor
-			assert.are.equal(1, Ears.Grade(51, 60)) -- 9 below: Common
-			assert.are.equal(1, Ears.Grade(55, 60)) -- 5 below: Common
-			assert.are.equal(2, Ears.Grade(56, 60)) -- 4 below: Uncommon
-			assert.are.equal(2, Ears.Grade(60, 60)) -- even: Uncommon
-			assert.are.equal(2, Ears.Grade(59, 57)) -- 2 above: Uncommon
-			assert.are.equal(3, Ears.Grade(60, 57)) -- 3 above: Rare
+		it("follows the game's level colours", function()
+			assert.are.equal(4, Ears.Grade(65, 60, 12)) -- 5 above: red, Epic
+			assert.are.equal(3, Ears.Grade(64, 60, 12)) -- 4 above: orange, Rare
+			assert.are.equal(3, Ears.Grade(60, 57, 12)) -- 3 above: orange, Rare
+			assert.are.equal(2, Ears.Grade(59, 57, 12)) -- 2 above: yellow, Uncommon
+			assert.are.equal(2, Ears.Grade(60, 60, 12)) -- even: yellow, Uncommon
+			assert.are.equal(2, Ears.Grade(56, 60, 12)) -- 4 below: yellow, Uncommon
+			assert.are.equal(1, Ears.Grade(55, 60, 12)) -- 5 below: green, Common
+			assert.are.equal(1, Ears.Grade(48, 60, 12)) -- 12 below, at the game's range: green, Common
+			assert.are.equal(0, Ears.Grade(47, 60, 12)) -- 13 below: grey, Poor
+		end)
+
+		it("takes the green range from the game, which varies with your level", function()
+			assert.are.equal(1, Ears.Grade(12, 20, 8)) -- 8 below a level 20: green
+			assert.are.equal(0, Ears.Grade(11, 20, 8)) -- 9 below: grey
+		end)
+
+		it("uses a fixed green range when the game doesn't give one", function()
+			assert.are.equal(1, Ears.Grade(60 - Ears.TRIVIAL_FALLBACK, 60))
+			assert.are.equal(0, Ears.Grade(59 - Ears.TRIVIAL_FALLBACK, 60))
 		end)
 
 		it("treats unknown levels as an even fight", function()

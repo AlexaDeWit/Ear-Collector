@@ -102,6 +102,7 @@ function ns.VictimDetails(guid)
 	local regionalNames = RegionalUniqueNamesEnabled()
 	local usesSurnames = Readable(regionalNames) and regionalNames
 	local yourLevel = UnitLevel("player")
+	local trivialRange = UnitQuestTrivialLevelRange("player")
 	local location = Context.Location()
 	return {
 		guid = guid,
@@ -115,6 +116,7 @@ function ns.VictimDetails(guid)
 		sex = Readable(sex) and sex or nil,
 		level = Readable(level) and level > 0 and level or nil,
 		yourLevel = Readable(yourLevel) and yourLevel > 0 and yourLevel or nil,
+		trivialRange = Readable(trivialRange) and type(trivialRange) == "number" and trivialRange or nil,
 		mapID = location.mapID,
 		zone = location.zone,
 		subzone = location.subzone,

@@ -6,7 +6,7 @@
 -- death. Credits and the deaths within WINDOW of them form groups, resolved
 -- together. Rules, in order, for each group:
 --   1. Credits next to kills your group already collected are used up by them
---      (no double ear).
+--      (no double ear). A grey victim gave no credit, so its kill uses none.
 --   2. If enough credits remain for every other death, each is an assist.
 --   3. If more players died than credits remain, name nobody: the credits are
 --      counted as unnamed rather than guessed.
@@ -29,7 +29,7 @@ Assists.RECENT = 60 -- seconds after your fight ends that a death still counts a
 
 ---@class EarCollector.AssistTracker
 ---@field deaths { guid: string, t: number, kill: EarCollector.Kill, used: boolean? }[]
----@field groupKills { guid: string, t: number, used: boolean? }[]
+---@field groupKills { guid: string, t: number, honorless: boolean?, used: boolean? }[]
 ---@field credits { n: integer, t: number }[]
 
 ---@return EarCollector.AssistTracker
@@ -64,9 +64,10 @@ end
 ---@param tracker EarCollector.AssistTracker
 ---@param guid string
 ---@param t number GetTime()
-function Assists.NoteGroupKill(tracker, guid, t)
+---@param honorless boolean? the victim was grey to you, so the kill gave no credit to use up
+function Assists.NoteGroupKill(tracker, guid, t, honorless)
 	tracker.groupKills = prune(tracker.groupKills, t)
-	tracker.groupKills[#tracker.groupKills + 1] = { guid = guid, t = t }
+	tracker.groupKills[#tracker.groupKills + 1] = { guid = guid, t = t, honorless = honorless }
 end
 
 --- Your honorable-kill count went up by `n` at time `t`.
@@ -167,13 +168,16 @@ function Assists.Resolve(tracker, now)
 			for _, credit in ipairs(group.credits) do
 				remaining = remaining + credit.n
 			end
-			-- Rule 1: kills your group collected use up their credits.
+			-- Rule 1: kills your group collected use up their credits, except
+			-- kills of grey victims, which gave none.
 			local ours = {}
 			for _, g in ipairs(group.groupKills) do
 				g.used = true
 				if not ours[g.guid] then
 					ours[g.guid] = true
-					remaining = remaining - 1
+					if not g.honorless then
+						remaining = remaining - 1
+					end
 				end
 			end
 			remaining = math.max(remaining, 0)

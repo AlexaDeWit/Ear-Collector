@@ -66,6 +66,12 @@ confirm are marked, and `docs/in-game-tests.md` tests them.
   both as the name, `"Brennus Themenace"`, with the realm empty (seen in game).
   *Needs the game:* whether `UnitName` and the death recap's `sourceName` give
   the full name too. Players are keyed by GUID, never by "Name-Realm".
+- **Level colours.** The game colours a level by its gap to yours
+  (`GetRelativeDifficultyColor`, `Blizzard_FrameXMLUtil/Mainline/DifficultyUtil.lua`,
+  which Forever loads): red at 5 or more above, orange at 3 or 4, yellow from
+  4 below to 2 above, then green as far below as
+  `UnitQuestTrivialLevelRange("player")` reaches, and grey beyond. A grey
+  victim gives no honor.
 - **Where you are:** `IsInInstance()` returns `inInstance, instanceType`
   (`"none"`, `"pvp"`, `"arena"`, `"party"`, `"raid"`, `"scenario"`).
   `C_PvP.GetZonePVPInfo()` returns `"combat"` for a zone-wide battle and
@@ -90,9 +96,12 @@ confirm are marked, and `docs/in-game-tests.md` tests them.
 - Blizzard's recap window loads only on Retail (`[AllowLoadGameType mainline]`),
   although `C_DeathRecap` is documented for every client. *Needs the game:*
   whether Forever fills the recap.
-- Units you can see: `target`, `focus`, `mouseover` and `nameplate1` to
-  `nameplate40`, with `UnitExists`, `UnitIsPlayer`, `UnitCanAttack`, `UnitGUID`
-  and `UnitName`.
+- Units you can see: `target`, `focus`, `mouseover` and the nameplates on
+  screen, with `UnitExists`, `UnitIsPlayer`, `UnitCanAttack`, `UnitGUID` and
+  `UnitName`. `C_NamePlate.GetNamePlates()` returns the nameplate frames, and
+  each has Blizzard's `NamePlateBaseMixin:GetUnit()`, which returns its unit
+  token (`Blizzard_NamePlates/Blizzard_NamePlateBase.lua`). The tokens are
+  `nameplateN`, and N can pass 40.
 
 ## The damage meter
 

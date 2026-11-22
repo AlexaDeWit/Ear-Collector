@@ -45,13 +45,16 @@ The options are in Options > AddOns > Ear Collector.
 
 ### Grades
 
-| Grade | The victim was |
-|---|---|
-| Poor | 10 or more levels below you |
-| Common | 5 to 9 levels below you |
-| Uncommon | From 4 levels below you to 2 above |
-| Rare | 3 or more levels above you |
-| Legendary | Owed vengeance: they had killed you 3 times since you last killed them |
+An ear's grade follows the colour the game shows for the victim's level.
+
+| Grade | Their level showed | Which means |
+|---|---|---|
+| Poor | Grey | Far enough below you to give no honor |
+| Common | Green | Below you, but still worth honor |
+| Uncommon | Yellow | From 4 levels below you to 2 above |
+| Rare | Orange | 3 or 4 levels above you |
+| Epic | Red | 5 or more levels above you |
+| Legendary | | Owed vengeance: they had killed you 3 times since you last killed them |
 
 Killing the same player again within 10 minutes adds to that ear instead of
 dropping a new one. The options set the window.

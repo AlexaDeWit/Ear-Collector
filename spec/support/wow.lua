@@ -436,6 +436,9 @@ function wow.reset(overrides)
 	state = {
 		playerGUID = "Player-4395-0000000A",
 		playerLevel = 60,
+		trivialRange = 12, -- how far below you the game shows levels green
+		faction = "Alliance", -- yours; other players are Horde unless their info says
+		freeForAll = false, -- in a free-for-all area anyone can be attacked
 		inInstance = false,
 		instanceType = "none",
 		pvpType = "contested",
@@ -446,7 +449,7 @@ function wow.reset(overrides)
 		clock = 5000, -- GetTime(), seconds since the client started
 		timers = {}, -- pending C_Timer.After callbacks
 		lifetimeHonorableKills = 120,
-		players = {}, -- guid -> { name, realm, class, race, sex, level }; Forever's name is "First Surname"
+		players = {}, -- guid -> { name, realm, class, race, sex, level, faction }; Forever's name is "First Surname"
 		group = {}, -- guid -> true for players in your party/raid
 		units = {}, -- extra unit tokens -> guid, e.g. pet = "Pet-...", partypet1 = "Pet-..."
 		atlases = { -- atlases the client has; Skyborne is left out to exercise the fallback
@@ -611,10 +614,32 @@ function wow.reset(overrides)
 		local guid = _G.UnitGUID(unit)
 		return type(guid) == "string" and guid:find("^Player%-") ~= nil
 	end
+	-- Players of the other faction, or anyone outside your group in a free-for-all area.
 	_G.UnitCanAttack = function(_, target)
 		local guid = _G.UnitGUID(target)
-		return guid ~= nil and guid ~= state.playerGUID and not state.group[guid]
+		if guid == nil or guid == state.playerGUID or state.group[guid] then
+			return false
+		end
+		local p = state.players[guid]
+		return state.freeForAll or not p or (p.faction or "Horde") ~= state.faction
 	end
+	-- The nameplates on screen: a frame for each `nameplateN` in state.units,
+	-- with Blizzard's NamePlateBaseMixin:GetUnit().
+	_G.C_NamePlate = {
+		GetNamePlates = function()
+			local plates = {}
+			for token in pairs(state.units) do
+				if token:find("^nameplate%d+$") then
+					plates[#plates + 1] = {
+						GetUnit = function()
+							return token
+						end,
+					}
+				end
+			end
+			return plates
+		end,
+	}
 	_G.UnitName = function(unit)
 		local guid = _G.UnitGUID(unit)
 		local p = guid ~= nil and state.players[guid]
@@ -715,6 +740,9 @@ function wow.reset(overrides)
 			return state.playerLevel
 		end
 		return 0
+	end
+	_G.UnitQuestTrivialLevelRange = function()
+		return state.trivialRange
 	end
 	_G.IsInInstance = function()
 		return state.inInstance, state.instanceType

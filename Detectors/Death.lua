@@ -25,7 +25,7 @@ local DeathWatch = {}
 ns.DeathWatch = DeathWatch
 
 DeathWatch.RECAP_DELAY = 1 -- seconds after death before reading the recap
-DeathWatch.NAMEPLATES = 40 -- nameplate1 .. nameplateN
+DeathWatch.NAMEPLATES = 40 -- nameplate1 .. nameplateN, when C_NamePlate.GetNamePlates is missing
 
 local function isTrue(value)
 	return Readable(value) and value == true
@@ -44,6 +44,30 @@ local function see(seen, unit)
 	end
 end
 
+--- The unit tokens of the nameplates on screen. Each frame from
+--- C_NamePlate.GetNamePlates() carries NamePlateBaseMixin:GetUnit()
+--- (Blizzard_NamePlates/Blizzard_NamePlateBase.lua). Without the API, every
+--- numbered token up to NAMEPLATES.
+---@return string[]
+function DeathWatch.NameplateUnits()
+	local units = {}
+	local plates = C_NamePlate and C_NamePlate.GetNamePlates and C_NamePlate.GetNamePlates()
+	if not Readable(plates) or type(plates) ~= "table" then
+		for i = 1, DeathWatch.NAMEPLATES do
+			units[i] = "nameplate" .. i
+		end
+		return units
+	end
+	for _, plate in ipairs(plates) do
+		local getUnit = Readable(plate) and type(plate) == "table" and plate.GetUnit
+		local unit = type(getUnit) == "function" and getUnit(plate)
+		if Readable(unit) and type(unit) == "string" then
+			units[#units + 1] = unit
+		end
+	end
+	return units
+end
+
 --- Enemy players you can see right now, by name.
 ---@return table<string, string|false>
 function DeathWatch.EnemiesInView()
@@ -51,8 +75,8 @@ function DeathWatch.EnemiesInView()
 	for _, unit in ipairs({ "target", "focus", "mouseover" }) do
 		see(seen, unit)
 	end
-	for i = 1, DeathWatch.NAMEPLATES do
-		see(seen, "nameplate" .. i)
+	for _, unit in ipairs(DeathWatch.NameplateUnits()) do
+		see(seen, unit)
 	end
 	return seen
 end

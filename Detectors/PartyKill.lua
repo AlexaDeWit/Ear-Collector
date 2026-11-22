@@ -94,7 +94,7 @@ function ns.OnPartyKill(attackerGUID, targetGUID)
 		return
 	end
 	kill.by, kill.killer = by, killerName
-	Assists.NoteGroupKill(ns.assistTracker, targetGUID, GetTime())
+	Assists.NoteGroupKill(ns.assistTracker, targetGUID, GetTime(), ns.Ears.IsTrivial(kill))
 	local _, isNew = ns.Collect(db, kill)
 	trace((isNew and "new ear" or "camped") .. " (" .. by .. ")")
 end

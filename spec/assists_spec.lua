@@ -239,9 +239,9 @@ describe("Assists", function()
 			assert.are.equal("assist", ear.by)
 			assert.are.equal("Tobble Sparkwhistle", ear.name)
 			assert.is_nil(ear.surname)
-			assert.are.equal(3, ear.quality) -- 6 levels above you: Rare
+			assert.are.equal(4, ear.quality) -- 6 levels above you: red, Epic
 			assert.are.equal("Dalson's Tears", ear.subzone)
-			assert.matches("Tobble Sparkwhistle's Ear.*%(Rare%)%. Assist%.", wow.state().printed[1])
+			assert.matches("Tobble Sparkwhistle's Ear.*%(Epic%)%. Assist%.", wow.state().printed[1])
 		end)
 
 		it("collects an assist when PARTY_KILL names a killer outside the group", function()
@@ -250,6 +250,19 @@ describe("Assists", function()
 			wow.advance(3)
 			assert.are.equal(1, #ns.db.ears)
 			assert.are.equal("assist", ns.db.ears[1].by)
+		end)
+
+		it("keeps the credit for an ally's kill when your group's kill was grey", function()
+			local LOWBIE = "Player-4395-00000040"
+			wow.addPlayer(LOWBIE, { name = "Lowbie", class = "Mage", race = "Undead", level = 40 })
+			wow.fireEvent("PARTY_KILL", GROUPMATE, LOWBIE) -- grey to you: no honor
+			wow.fireEvent("UNIT_DIED", GRIMBASH) -- an ally finishes someone you fought
+			wow.honorableKill()
+			wow.advance(3)
+			assert.are.equal(2, #ns.db.ears)
+			assert.are.equal("group", ns.db.ears[1].by)
+			assert.are.equal("assist", ns.db.ears[2].by)
+			assert.are.equal("Grimbash", ns.db.ears[2].name)
 		end)
 
 		it("doesn't add an assist on top of your group's own kill", function()
