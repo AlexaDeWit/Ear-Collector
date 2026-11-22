@@ -1,7 +1,5 @@
--- Rivals: everyone you have taken ears from or died to, for the pouch's Rivals
--- tab. Pure: it takes the ear and death lists, so specs call it directly.
--- Players are keyed by GUID, never by name (Forever names aren't unique without
--- the surname).
+-- Rivals: everyone you have taken ears from or died to, keyed by GUID, for the
+-- pouch's Rivals tab. Pure logic over the ear and death lists.
 local _, ns = ...
 
 local Rivals = {}

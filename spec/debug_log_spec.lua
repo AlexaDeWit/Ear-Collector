@@ -17,13 +17,7 @@ describe("the debug log", function()
 		wow.slash("/ears debug")
 	end)
 
-	local function decisions()
-		local list = {}
-		for _, entry in ipairs(ns.db.debugLog) do
-			list[#list + 1] = entry.event .. ": " .. entry.decision
-		end
-		return list
-	end
+	local decisions = wow.decisions
 
 	it("logs only the first few NPC kills, so questing can't push PvP lines out", function()
 		for _ = 1, ns.ROUTINE_TRACES + 5 do

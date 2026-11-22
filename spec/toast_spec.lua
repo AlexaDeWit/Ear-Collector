@@ -116,7 +116,7 @@ describe("loot toast", function()
 		Toast.Active()[1]:Click("LeftButton")
 		assert.are.equal(0, #Toast.Active())
 		assert.is_true(ns.Pouch.IsShown())
-		assert.is_true(ns.Pouch.Slots()[1].highlightLocked)
+		assert.is_true(ns.EarsTab.Widgets().slots[1].highlightLocked)
 
 		ns.Pouch.Hide()
 		wow.fireEvent("PARTY_KILL", ME, VELARIA)
@@ -152,7 +152,7 @@ describe("loot toast", function()
 
 	it("contains an error from a click", function()
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
-		ns.Pouch.FocusEar = function()
+		ns.EarsTab.Focus = function()
 			error("boom")
 		end
 		assert.has_no.errors(function()

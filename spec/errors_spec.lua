@@ -83,16 +83,6 @@ describe("error containment", function()
 		assert.is_false(ok)
 	end)
 
-	local function printedMatching(pattern)
-		local n = 0
-		for _, line in ipairs(wow.state().printed) do
-			if line:find(pattern) then
-				n = n + 1
-			end
-		end
-		return n
-	end
-
 	it("keeps a handler's error inside the addon and records it", function()
 		ns.On("PARTY_KILL", function()
 			error("boom")
@@ -105,7 +95,7 @@ describe("error containment", function()
 		assert.are.equal("PARTY_KILL handler 2", entry.where)
 		assert.matches("boom", entry.message)
 		assert.are.equal("dev", entry.version)
-		assert.are.equal(1, printedMatching("Hit an error and kept going"))
+		assert.are.equal(1, wow.printed("Hit an error and kept going"))
 	end)
 
 	it("still runs the other handlers for the same event", function()
@@ -128,8 +118,8 @@ describe("error containment", function()
 		assert.are.equal(3, calls) -- MAX_PER_HANDLER, then it is no longer called
 		assert.is_true(ns.Errors.IsDisabled("PARTY_KILL handler 2"))
 		assert.are.equal(3, #ns.db.errors)
-		assert.are.equal(1, printedMatching("Hit an error and kept going"))
-		assert.are.equal(1, printedMatching("Turned off PARTY_KILL handler 2 after repeated errors"))
+		assert.are.equal(1, wow.printed("Hit an error and kept going"))
+		assert.are.equal(1, wow.printed("Turned off PARTY_KILL handler 2 after repeated errors"))
 	end)
 
 	it("keeps the error log bounded", function()
@@ -163,7 +153,7 @@ describe("error containment", function()
 	it("lists caught errors with /ears errors and clears them", function()
 		ns.Errors.Report("PARTY_KILL handler 1", { message = "attempt to index a nil value" })
 		wow.slash("/ears errors")
-		assert.are.equal(1, printedMatching("in PARTY_KILL handler 1 %(dev%): attempt to index a nil value"))
+		assert.are.equal(1, wow.printed("in PARTY_KILL handler 1 %(dev%): attempt to index a nil value"))
 		wow.slash("/ears errors clear")
 		assert.are.equal(0, #ns.db.errors)
 	end)

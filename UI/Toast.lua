@@ -1,14 +1,10 @@
--- Loot toast: a small pop-up when you collect an ear, with the ear art, the
--- victim's name in its grade colour, who landed the blow, and a loot sound.
--- Left-click opens the pouch on that ear; right-click dismisses; hovering pauses
--- it and shows the ear's tooltip.
---
--- Our own frames, anchored to UIParent: Blizzard's alert system isn't touched,
--- so nothing is tainted. Fading uses animation groups (no OnUpdate), and every
--- script runs inside Errors.Wrap.
+-- The loot pop-up when you collect an ear: art, name in its grade colour, who
+-- landed the blow, and a loot sound. Left-click opens the pouch on the ear,
+-- right-click dismisses, hovering pauses it. Own frames and animation groups, so
+-- nothing is tainted and nothing runs every frame.
 local _, ns = ...
 
-local Art, Errors, Pouch = ns.Art, ns.Errors, ns.Pouch
+local Art, Errors = ns.Art, ns.Errors
 
 local Toast = {}
 ns.Toast = Toast
@@ -109,7 +105,7 @@ local function showTooltip(toast)
 	if not toast.ear then
 		return
 	end
-	ns.Chat.ShowTooltip(toast, "ANCHOR_BOTTOM", Pouch.TooltipLines(toast.ear))
+	ns.Chat.ShowTooltip(toast, "ANCHOR_BOTTOM", ns.EarsTab.TooltipLines(toast.ear))
 end
 
 ---@return EarCollector.Toast
@@ -205,7 +201,7 @@ local function build()
 			local ear = toast.ear
 			release(toast)
 			if button ~= "RightButton" and ear then
-				Pouch.FocusEar(ear.guid, ear.at)
+				ns.EarsTab.Focus(ear.guid, ear.at)
 			end
 		end)
 	)

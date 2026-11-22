@@ -1,8 +1,5 @@
--- Assist detection: an enemy player whose killing blow came from outside your
--- group. Feeds Core/Assists.lua with
---   * UNIT_DIED for enemy players in the open world (death candidates), and
---   * PLAYER_PVP_KILLS_CHANGED steps in the lifetime honorable-kill count,
--- then matches them once late events have had time to arrive. Deaths no honor
+-- Assist evidence: enemy players' deaths (UNIT_DIED) and steps in your lifetime
+-- honorable-kill count, matched once late events have arrived. Deaths no honor
 -- named go to the damage meter (Detectors/DamageMeter.lua).
 local _, ns = ...
 

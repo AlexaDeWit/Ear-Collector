@@ -104,15 +104,11 @@ describe("deaths and vengeance", function()
 			die({ target = GRIMBASH }, recap("Grimbash", { hideCaster = true }))
 			die({ target = GRIMBASH }, recap("Defias Bandit"))
 			assert.are.equal(0, #ns.db.deaths)
-			local decisions = {}
-			for i, entry in ipairs(ns.db.debugLog) do
-				decisions[i] = entry.decision
-			end
 			assert.are.same({
 				"no death recap",
 				"recap names no killer",
 				"killer isn't an enemy player you saw or damaged (names: Grimbash, Grimbash Ironhide, Grimbash-Ironhide)",
-			}, decisions)
+			}, wow.decisions("PLAYER_DEAD"))
 		end)
 
 		it("reads every nameplate on screen, however it's numbered", function()
@@ -221,7 +217,7 @@ describe("deaths and vengeance", function()
 			assert.are.equal("Vengeance!", toast.label:GetText())
 			assert.matches("Avenged 3 deaths$", toast.detail:GetText())
 			assert.are.equal(63971, wow.state().sounds[1].id)
-			local tooltip = ns.Pouch.TooltipLines(ear)
+			local tooltip = ns.EarsTab.TooltipLines(ear)
 			local found = false
 			for _, line in ipairs(tooltip) do
 				found = found or (line.text or ""):find("^Vengeance: they had killed you 3 times") ~= nil
@@ -253,13 +249,7 @@ describe("deaths and vengeance", function()
 	end)
 
 	describe("in the pouch", function()
-		local function tab(title)
-			for _, t in ipairs(_G.EarCollectorPouch.Tabs) do
-				if t:GetText() == title then
-					return t
-				end
-			end
-		end
+		local tab = wow.tab
 
 		it("lists killers on the Rivals tab, with deaths and marks", function()
 			die({ target = VELARIA }, recap("Velaria"))

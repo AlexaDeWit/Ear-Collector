@@ -29,6 +29,7 @@ Detectors\PartyKill.lua
 Detectors\HonorKill.lua
 Detectors\Death.lua
 UI\Pouch.lua
+UI\EarsTab.lua
 UI\LedgerTab.lua
 UI\RivalsTab.lua
 UI\Toast.lua

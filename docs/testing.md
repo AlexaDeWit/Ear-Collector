@@ -37,8 +37,15 @@ to assert an error stays contained.
 
 ## The fake client
 
-`spec/support/wow.lua` stands in for the Forever client. Its stubs return values
-in the order Blizzard's docs give.
+`spec/support/wow.lua` stands in for the Forever client. Its pieces:
+
+| File | Holds |
+|---|---|
+| `spec/support/wow.lua` | The state, loading the addon, events, the clock, and the helpers below |
+| `spec/support/api.lua` | The game API stubs, returning values in the order Blizzard's docs give |
+| `spec/support/widgets.lua` | Frames, textures, font strings, the tooltip, animation groups |
+| `spec/support/settings.lua` | Blizzard's Settings screen |
+| `spec/support/secrets.lua` | Secret values and tables |
 
 **Loading and events**
 
@@ -96,6 +103,8 @@ in the order Blizzard's docs give.
   meter, newest last, with the enemies you or your group damaged. Its data is
   secret while `inCombat` is true, and `wow.state().damageMeter.available`
   turns the meter off.
+- `wow.decisions(event?)` lists what `/ears debug` logged, `wow.printed(pattern)`
+  counts matching chat lines, and `wow.tab(title)` finds a pouch tab button.
 - `wow.clickLink(link)` clicks a chat link, `wow.pressBinding("EARCOLLECTOR_TOGGLE")`
   runs a key binding, and `wow.pressEscape()` follows Forever's Escape chain.
 - `wow.settingsCategory(name)` returns a registered options page with its
@@ -103,8 +112,9 @@ in the order Blizzard's docs give.
   would. Proxy getters and setters run in a `securecall` stand-in, where an error
   lands in `wow.state().gameErrors`, which specs expect to stay empty.
 
-A new WoW global needs an entry in `read_globals` in `.luacheckrc`, a stub here,
-and, if the annotations lack it, a declaration in `types/wow-forever.lua`.
+A new WoW global needs an entry in `read_globals` in `.luacheckrc`, a stub in
+`spec/support/api.lua`, and, if the annotations lack it, a declaration in
+`types/wow-forever.lua`.
 
 ## Fixtures from the game
 

@@ -67,6 +67,50 @@ These bind everyone, human or agent. The mechanisms behind them are in
 - Write `---@type Frame` above `CreateFrame` results, and pass event names as
   string literals (`ns.On("PARTY_KILL", fn)`) so the `names` check sees them.
 
+## Keeping the code small
+
+Someone should be able to fork this and find their way in an afternoon.
+
+- **One concern per file.** A file nearing 300 lines usually holds two things:
+  split it. A new pouch tab is its own file and registers with `Pouch.AddTab`,
+  like the others. Nothing gets special-cased into the window.
+- **Decisions in `Core/`, the game in `Detectors/` and `UI/`.** A rule that
+  decides something is a plain function a spec can call. The code that reads
+  the game or draws a frame stays thin around it.
+- **Short comments that say why.** A file opens with a few lines on what it is
+  and anything a reader must not miss. Comment the reason behind non-obvious
+  code, never what the next line does, and never the history of how it got
+  there.
+- **One home for each fact.** Design rationale lives in
+  [`docs/architecture.md`](docs/architecture.md), and game behaviour in
+  [`docs/forever-api.md`](docs/forever-api.md), naming the Blizzard file it
+  comes from. Code links there instead of restating it.
+- **Game facts are checked, not assumed.** Confirm an API's arguments, returns
+  and restrictions in Blizzard's Forever source before relying on them, and mark
+  what only play can confirm as *Needs the game* until it has been seen.
+- **One event, one result.** The game often reports one thing twice (a death
+  fires `UNIT_DIED` and `PARTY_KILL`). Decide which signal owns it, and give the
+  spec both signals.
+- **Every decision is traced.** A choice that makes or withholds an ear or a
+  death record goes through `ns.Trace` (or `ns.TraceRoutine` for things that
+  never count), so `/ears debug` explains it in play.
+
+## Tests
+
+[`docs/testing.md`](docs/testing.md) has the details.
+
+- **A rule's spec fails without the rule.** After adding one, break it on
+  purpose (flip a comparison, drop a guard) and check a spec goes red. If none
+  does, the spec isn't testing the rule.
+- **Assert only what the rule promises.** Compare sets when order isn't part of
+  it, and check every effect: a duplicate can hide in a repeat count while the
+  number of ears looks right.
+- **Shared helpers live in `spec/support/`.** If a second spec file needs the
+  same helper, move it there instead of copying it.
+- **The fake client follows the game.** A stub returns what Blizzard's docs
+  say, in their order. When play shows the fake was wrong, fix the fake first,
+  then the code.
+
 ## AI-assisted contributions
 
 AI-assisted work is welcome, but the bar does not change. **You are the

@@ -38,14 +38,7 @@ describe("pouch tabs", function()
 		end
 	end
 
-	local function tab(title)
-		for _, t in ipairs(_G.EarCollectorPouch.Tabs) do
-			if t:GetText() == title then
-				return t
-			end
-		end
-		error("no tab " .. title)
-	end
+	local tab = wow.tab
 
 	describe("the tab strip", function()
 		it("has Ears, Ledger and Rivals, as Blizzard tabs under the window", function()
@@ -63,10 +56,10 @@ describe("pouch tabs", function()
 			tab("Ledger"):Click()
 			assert.are.equal("Ledger", Pouch.ActiveTab())
 			assert.are.equal(2, _G.EarCollectorPouch.selectedTab)
-			assert.is_false(Pouch.Slots()[1]:IsShown() and Pouch.Slots()[1].parent:IsShown())
+			assert.is_false(ns.EarsTab.Widgets().slots[1]:IsShown() and ns.EarsTab.Widgets().slots[1].parent:IsShown())
 			assert.are.same({ id = 841, channel = "SFX" }, wow.state().sounds[1])
 			tab("Ears"):Click()
-			assert.is_true(Pouch.Slots()[1].parent:IsShown())
+			assert.is_true(ns.EarsTab.Widgets().slots[1].parent:IsShown())
 		end)
 
 		it("keeps the chosen tab when the pouch reopens", function()
@@ -81,9 +74,9 @@ describe("pouch tabs", function()
 			collect({ {} })
 			wow.slash("/ears")
 			tab("Ledger"):Click()
-			Pouch.FocusEar(ns.db.ears[1].guid, ns.db.ears[1].at)
+			ns.EarsTab.Focus(ns.db.ears[1].guid, ns.db.ears[1].at)
 			assert.are.equal("Ears", Pouch.ActiveTab())
-			assert.is_true(Pouch.Slots()[1].highlightLocked)
+			assert.is_true(ns.EarsTab.Widgets().slots[1].highlightLocked)
 		end)
 
 		it("hides the page buttons on the Ledger, which has one page", function()
@@ -231,8 +224,8 @@ describe("pouch tabs", function()
 			assert.are.equal("Click to see their latest ear.", lines[#lines])
 			row:Click()
 			assert.are.equal("Ears", Pouch.ActiveTab())
-			assert.are.equal(ns.db.ears[2], Pouch.Slots()[1].ear)
-			assert.is_true(Pouch.Slots()[1].highlightLocked)
+			assert.are.equal(ns.db.ears[2], ns.EarsTab.Widgets().slots[1].ear)
+			assert.is_true(ns.EarsTab.Widgets().slots[1].highlightLocked)
 		end)
 
 		it("says so when there are no rivals", function()
@@ -266,7 +259,7 @@ describe("pouch tabs", function()
 			assert.is_false(refreshed)
 			assert.are.equal(1, #ns.db.errors)
 			tab("Ears"):Click()
-			assert.are.equal("Victim1", Pouch.Slots()[1].ear.name)
+			assert.are.equal("Victim1", ns.EarsTab.Widgets().slots[1].ear.name)
 		end)
 
 		it("keep a failing tab from breaking the pouch", function()
@@ -280,7 +273,7 @@ describe("pouch tabs", function()
 			end)
 			assert.are.equal("pouch Ledger", ns.db.errors[1].where)
 			tab("Ears"):Click()
-			assert.are.equal("Victim1", Pouch.Slots()[1].ear.name)
+			assert.are.equal("Victim1", ns.EarsTab.Widgets().slots[1].ear.name)
 		end)
 	end)
 end)

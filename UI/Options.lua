@@ -1,20 +1,7 @@
--- Options in Blizzard's Settings screen (Options > AddOns > Ear Collector), also
--- opened with /ears options or by right-clicking Ear Collector in the minimap
--- addon drawer.
---
--- Built with Blizzard's Settings API for addons (Blizzard_Settings_Shared), so
--- nothing is tainted:
---   * Registration goes through Blizzard's secure attribute delegate
---     (Blizzard_SettingsInbound.lua), which wraps function arguments so their
---     taint is kept when Blizzard calls them.
---   * A checkbox is an AddOnSetting: Blizzard reads and writes our saved settings
---     table itself, through securecall.
---   * The camping window is a proxy setting, because the slider shows minutes and
---     the saved value is seconds. Blizzard calls our getter and setter inside
---     securecall, where an error would go to the game's error handler, so both
---     run inside Errors.Call and fall back to a valid value.
--- Every other part of the addon reads EarCollectorDB.settings when it needs a
--- value, so a change applies at once with no callback.
+-- Options > AddOns > Ear Collector, built with Blizzard's Settings API so nothing
+-- is tainted. Checkboxes bind straight to db.settings; the repeat-kill slider is
+-- a proxy setting whose getter and setter Blizzard calls inside securecall, so
+-- they run in Errors.Call. Nothing caches settings, so changes apply at once.
 local addonName, ns = ...
 
 local Chat, Database, Errors = ns.Chat, ns.Database, ns.Errors
@@ -172,8 +159,6 @@ local function register(db)
 	category = new
 end
 
--- Blizzard's own gate for addon actions in combat (Blizzard_GamepadSmartNavigation/
--- SecureHelper.lua) is the Combat addon restriction; check it as well as lockdown.
 --- Open the Settings screen on Ear Collector's options.
 --- Blizzard restricts opening it from addon code in combat, so that waits.
 ---@return boolean opened

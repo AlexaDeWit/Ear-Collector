@@ -12,10 +12,6 @@ describe("/ears", function()
 		ns = wow.loadAddon("EarCollector.toc")
 	end)
 
-	local function printed()
-		return table.concat(wow.state().printed, "\n")
-	end
-
 	it("switches off only a failing command, and /ears errors always works", function()
 		ns.Pouch.Toggle = function()
 			error("pouch bug")
@@ -51,7 +47,7 @@ describe("/ears", function()
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 		ns.db.stats.hiddenKills, ns.db.stats.unnamedHonorKills = 2, 3
 		wow.slash("/ears stats")
-		assert.matches("2 kill%(s%) the game hid", printed())
-		assert.matches("3 honorable kill%(s%) not tied", printed())
+		assert.are.equal(1, wow.printed("2 kill%(s%) the game hid"))
+		assert.are.equal(1, wow.printed("3 honorable kill%(s%) not tied"))
 	end)
 end)
