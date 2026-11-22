@@ -107,9 +107,27 @@ describe("loot toast", function()
 		assert.matches("Victim2", active[3].title:GetText())
 		local point, _, _, _, firstY = active[1]:GetPoint(1)
 		local _, _, _, _, secondY = active[2]:GetPoint(1)
-		assert.are.equal("BOTTOM", point) -- above the action bars, clear of the error text
+		assert.are.equal("TOP", point) -- near the top of the screen
 		assert.are.equal(Toast.ANCHOR.y, firstY)
-		assert.are.equal(Toast.ANCHOR.y + Toast.HEIGHT + Toast.GAP, secondY) -- stacking upward
+		assert.are.equal(Toast.ANCHOR.y - Toast.HEIGHT - Toast.GAP, secondY) -- stacking downward
+	end)
+
+	it("stacks upward when moved to the bottom of the screen", function()
+		Toast.SetAnchor("BOTTOM", "BOTTOM", 0, 200)
+		kills(2)
+		local _, _, _, _, firstY = Toast.Active()[1]:GetPoint(1)
+		local _, _, _, _, secondY = Toast.Active()[2]:GetPoint(1)
+		assert.are.same({ 200, 200 + Toast.HEIGHT + Toast.GAP }, { firstY, secondY })
+	end)
+
+	it("goes back near the top with /ears popup reset", function()
+		Toast.SetAnchor("BOTTOM", "BOTTOM", 0, 200)
+		wow.slash("/ears popup reset")
+		assert.is_nil(ns.db.ui.toast)
+		assert.matches("near the top", wow.state().printed[#wow.state().printed])
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		local point, _, _, _, y = Toast.Active()[1]:GetPoint(1)
+		assert.are.same({ "TOP", Toast.ANCHOR.y }, { point, y })
 	end)
 
 	it("moves where you drag the stand-in, and stays there", function()

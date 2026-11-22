@@ -1,7 +1,7 @@
 -- The pop-up when you collect an ear (or lose one): a dark panel with the ear
 -- framed in its grade colour, its name in that colour, a detail line, and a loot
--- sound. Pop-ups stack upward from bottom centre, or wherever you move them
--- (UI/ToastMover.lua). Left-click opens the pouch, right-click dismisses,
+-- sound. Pop-ups stack downward from near the top of the screen, or from
+-- wherever you move them (UI/ToastMover.lua). Left-click opens the pouch, right-click dismisses,
 -- hovering pauses. Own frames and animation groups, so nothing is tainted and
 -- nothing runs every frame.
 local _, ns = ...
@@ -14,8 +14,8 @@ ns.Toast = Toast
 Toast.MAX = 3 -- on screen at once; the oldest makes way for a new one
 Toast.HOLD = 4 -- seconds on screen before fading
 Toast.FADE = 0.6
-Toast.WIDTH, Toast.HEIGHT, Toast.GAP = 300, 58, 6
-Toast.ANCHOR = { point = "BOTTOM", relativePoint = "BOTTOM", x = 0, y = 260 } -- above the action bars
+Toast.WIDTH, Toast.HEIGHT, Toast.GAP = 300, 54, 6
+Toast.ANCHOR = { point = "TOP", relativePoint = "TOP", x = 0, y = -150 }
 Toast.SOUND_GAP = 2 -- seconds; within it only a grander sound plays
 
 -- Blizzard's loot-toast sounds (SoundKitConstants) and how grand each is.
@@ -49,7 +49,7 @@ local pool = {} ---@type EarCollector.Toast[]
 local active = {} ---@type EarCollector.Toast[] newest first
 local lastSound = { at = -math.huge, tier = 0 }
 
---- Where the first pop-up sits: where you moved them, or above the action bars.
+--- Where the first pop-up sits: where you moved them, or near the top of the screen.
 ---@return { point: string, relativePoint: string, x: number, y: number }
 function Toast.Anchor()
 	local saved = ns.db and ns.db.ui.toast
@@ -67,9 +67,11 @@ end
 
 local function layout()
 	local a = Toast.Anchor()
+	-- Pop-ups grow away from the screen edge they're anchored to.
+	local step = (Toast.HEIGHT + Toast.GAP) * (a.point:find("BOTTOM") and 1 or -1)
 	for i, toast in ipairs(active) do
 		toast:ClearAllPoints()
-		toast:SetPoint(a.point, UIParent, a.relativePoint, a.x, a.y + (i - 1) * (Toast.HEIGHT + Toast.GAP))
+		toast:SetPoint(a.point, UIParent, a.relativePoint, a.x, a.y + (i - 1) * step)
 	end
 end
 
@@ -157,7 +159,7 @@ local function build()
 	-- The ear on black, inside a 2-pixel frame.
 	toast.iconBorder = toast:CreateTexture(nil, "BORDER")
 	toast.iconBorder:SetSize(44, 44)
-	toast.iconBorder:SetPoint("LEFT", 6, 0)
+	toast.iconBorder:SetPoint("LEFT", 5, 0)
 	local iconBg = toast:CreateTexture(nil, "ARTWORK")
 	iconBg:SetPoint("TOPLEFT", toast.iconBorder, "TOPLEFT", 2, -2)
 	iconBg:SetPoint("BOTTOMRIGHT", toast.iconBorder, "BOTTOMRIGHT", -2, 2)
@@ -322,6 +324,14 @@ end
 function Toast.SetAnchor(point, relativePoint, x, y)
 	if ns.db then
 		ns.db.ui.toast = { point = point, relativePoint = relativePoint, x = x, y = y }
+	end
+	layout()
+end
+
+--- Put pop-ups back in their default place.
+function Toast.ResetAnchor()
+	if ns.db then
+		ns.db.ui.toast = nil
 	end
 	layout()
 end
