@@ -155,7 +155,8 @@ This needs "Your deaths" to work, and enemy nameplates on (press V).
 2. On a later day (at least 6 hours after you last fought them), let them come
    into view again. Chat says `You owe <name> one. They took your ear on
    <date>. Their next ear is worth more.` Seeing them again that day says
-   nothing more.
+   nothing more. If you're already fighting when they first show up, no
+   reminder comes that day.
 3. For someone who took your ear three times in a row, step 2 also shows a red
    pop-up framed in orange: "You owe them one", their name, and "Their next ear
    is Legendary". It plays the raid warning sound. If there's no sound, say so.

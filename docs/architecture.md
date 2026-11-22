@@ -189,7 +189,8 @@ The Rivals tab marks each player with at most one of these, in this order:
 place where kills count. A sighting reminds you only of an old grudge
 (`Deaths.Reminder`): you last fought them on an earlier day and at least
 `Deaths.GRUDGE_AGE` (6 hours) ago, and you haven't been reminded of them today.
-So a day of back and forth stays quiet. A reminder is a chat line, plus for
+So a day of back and forth stays quiet. A reminder comes only out of combat:
+seeing them first in combat counts as meeting them, so none comes that day. A reminder is a chat line, plus for
 Vengeance a red pop-up and the raid warning sound (`grudgeSound`). Hovering a
 player you owe always adds the grudge to their tooltip, through
 `TooltipDataProcessor`. The reminders of the day are kept only until you log
