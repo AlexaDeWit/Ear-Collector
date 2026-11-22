@@ -217,8 +217,10 @@ function widgetMethods.CreateAnimationGroup(owner)
 	animationGroups[#animationGroups + 1] = group
 	return group
 end
-function widgetMethods:CreateTexture(name)
-	return newWidget("Texture", name, self)
+function widgetMethods:CreateTexture(name, layer, _, sublevel)
+	local texture = newWidget("Texture", name, self)
+	texture.layer, texture.sublevel = layer, sublevel or 0
+	return texture
 end
 function widgetMethods:CreateFontString(name)
 	return newWidget("FontString", name, self)

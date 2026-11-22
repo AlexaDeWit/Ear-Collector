@@ -92,11 +92,6 @@ return function(state, frames)
 		assert(addSearchTags ~= nil)
 		return { control = "button", name = name, buttonText = buttonText, click = buttonClick, tooltip = tooltip }
 	end
-	_G.UnitFactionGroup = function(unit)
-		if unit == "player" then
-			return state.faction, state.faction
-		end
-	end
 	-- Tabs (SharedUIPanelTemplates.lua). UpdateTabs indexes frame.Tabs[1..numTabs],
 	-- so a missing tab errors there as it would in the client.
 	_G.PanelTemplates_SetNumTabs = function(frame, numTabs)

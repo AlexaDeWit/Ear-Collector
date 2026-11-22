@@ -49,7 +49,6 @@ read_globals = {
 	"C_DamageMeter",
 	"C_NamePlate",
 	"InCombatLockdown",
-	"UnitFactionGroup",
 	"UnitAffectingCombat",
 	"IsAnyBagOpen",
 	"IsInInstance",
