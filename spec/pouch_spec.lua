@@ -44,6 +44,56 @@ describe("Ear Pouch", function()
 			assert.is_false(Pouch.IsShown())
 		end)
 
+		it("shows an ear's tooltip while you hover its link in chat", function()
+			collect(1)
+			local ear = ns.db.ears[1]
+			wow.hoverLink(("addon:EarCollector:ear:%s:%d"):format(ear.guid, ear.at))
+			assert.is_true(_G.GameTooltip:IsShown())
+			assert.are.equal("Victim1's Ear", _G.GameTooltip.lines[1])
+			wow.hoverLink(nil)
+			assert.is_false(_G.GameTooltip:IsShown())
+		end)
+
+		it("leaves other links' tooltips alone", function()
+			_G.GameTooltip:Show() -- Blizzard's tooltip for an item link
+			wow.hoverLink("item:12345")
+			wow.hoverLink(nil)
+			assert.is_true(_G.GameTooltip:IsShown())
+		end)
+
+		it("says once per account how to open the pouch", function()
+			wow.fireEvent("PLAYER_LOGIN")
+			assert.are.equal(1, wow.printed("Your Ear Pouch opens with your bags"))
+			wow.fireEvent("PLAYER_LOGIN")
+			assert.are.equal(1, wow.printed("Your Ear Pouch opens with your bags"))
+		end)
+
+		it("sounds like a bag opening and closing, and turns pages like the spellbook", function()
+			local function ids()
+				local list = {}
+				for i, sound in ipairs(wow.state().sounds) do
+					list[i] = sound.id
+				end
+				return list
+			end
+			collect(Pouch.PER_PAGE + 1)
+			wow.slash("/ears")
+			Pouch.Widgets().next:Click()
+			wow.slash("/ears")
+			assert.are.same({ 862, 836, 863 }, ids())
+		end)
+
+		it("stays quiet when your bags open and close it, since they have their own sound", function()
+			_G.ToggleAllBags()
+			_G.ToggleAllBags()
+			assert.are.same({}, wow.state().sounds)
+		end)
+
+		it("sits at the layer of Blizzard's panels", function()
+			wow.slash("/ears")
+			assert.are.equal("MEDIUM", frame().strata)
+		end)
+
 		it("starts the grid below the count line", function()
 			wow.slash("/ears")
 			local _, _, _, _, y = ns.EarsTab.Widgets().slots[1]:GetPoint(1)

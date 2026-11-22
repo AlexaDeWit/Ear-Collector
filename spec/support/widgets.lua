@@ -189,6 +189,9 @@ end
 function widgetMethods:GetFrameLevel()
 	return self.frameLevel or (self.parent and self.parent.GetFrameLevel and self.parent:GetFrameLevel() + 1) or 0
 end
+function widgetMethods:SetFrameStrata(strata)
+	self.strata = strata
+end
 function widgetMethods:SetAlpha(alpha)
 	self.alpha = alpha
 end

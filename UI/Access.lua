@@ -91,7 +91,42 @@ if type(_G["OpenAllBags"]) == "function" then
 	)
 end
 
--- Ear links in chat.
+-- Ear links in chat: hovering shows the ear's tooltip (ChatFrameMixin fires these
+-- through EventRegistry), and clicking opens the pouch on it.
+local showingLink = false -- so leaving another addon's or Blizzard's link leaves its tooltip alone
+
+local function findEar(guid, at)
+	for _, ear in ipairs(ns.db and ns.db.ears or {}) do
+		if ear.guid == guid and ear.at == at then
+			return ear
+		end
+	end
+end
+
+EventRegistry:RegisterCallback(
+	"ChatFrame.OnHyperlinkEnter",
+	Errors.Wrap("ear link", function(_, chatFrame, link)
+		local guid, at = Chat.ParseEarLink(link)
+		local ear = guid and at and findEar(guid, at)
+		if ear then
+			Chat.ShowTooltip(chatFrame, "ANCHOR_CURSOR", ns.EarsTab.TooltipLines(ear))
+			showingLink = true
+		end
+	end),
+	addonName
+)
+
+EventRegistry:RegisterCallback(
+	"ChatFrame.OnHyperlinkLeave",
+	Errors.Wrap("ear link", function()
+		if showingLink then
+			showingLink = false
+			GameTooltip:Hide()
+		end
+	end),
+	addonName
+)
+
 EventRegistry:RegisterCallback(
 	"SetItemRef",
 	Errors.Wrap("ear link", function(_, link)
@@ -102,3 +137,15 @@ EventRegistry:RegisterCallback(
 	end),
 	addonName
 )
+
+-- One line, once per account, on the first login with the addon.
+ns.On("PLAYER_LOGIN", function()
+	local db = ns.db
+	if db and not db.ui.welcomed then
+		db.ui.welcomed = true
+		Chat.Print(
+			db.settings.openWithBags and "Your Ear Pouch opens with your bags. Type /ears for commands."
+				or "Type /ears to open your Ear Pouch, and /ears help for commands."
+		)
+	end
+end)

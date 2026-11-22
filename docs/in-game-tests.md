@@ -138,31 +138,37 @@ This needs "Your deaths" to work.
 
 ## The pouch
 
-1. `/ears` opens the pouch. Its close button and `/ears` close it.
-2. The minimap addon drawer lists "Ear Collector" with an ear icon. Hovering it
+1. `/ears` opens the pouch with a bag-opening sound, and its close button and
+   `/ears` close it with a bag-closing sound. The page buttons make the
+   spellbook's page-turn sound. Opening your character sheet or spellbook
+   while the pouch is open, then clicking the pouch, brings the pouch in front.
+2. On a character's first login with the addon, chat says once how to open
+   the pouch. It doesn't say it again after `/reload` or on other characters.
+3. The minimap addon drawer lists "Ear Collector" with an ear icon. Hovering it
    shows your totals, and clicking it opens or closes the pouch.
-3. In Key Bindings > AddOns, bind a key to "Toggle Ear Pouch" and try it.
-4. Press B: the pouch opens with your bags and closes with them, including when
+4. In Key Bindings > AddOns, bind a key to "Toggle Ear Pouch" and try it.
+5. Press B: the pouch opens with your bags and closes with them, including when
    you close the last bag with its own X. If you opened the pouch with `/ears`
    first, it stays open when the bags close. At a merchant, bank or mailbox your
    bags open but the pouch doesn't. `/ears bags off` stops it opening with your
    bags.
-5. Repeat step 4 during a fight. No "action blocked" or "interface action
+6. Repeat step 4 during a fight. No "action blocked" or "interface action
    failed" message appears.
-6. Click an ear's name in a `You collected` chat line. The pouch opens on that
-   ear's page, highlights it and shows its tooltip.
-7. Drag the pouch somewhere else, `/reload`, and open it again. It's where you
+7. Hover an ear's name in a `You collected` chat line: its tooltip shows, and
+   goes when you move away. Click it: the pouch opens on that ear's page,
+   highlights it and shows its tooltip.
+8. Drag the pouch somewhere else, `/reload`, and open it again. It's where you
    left it.
-8. Each slot shows the victim's race as an ear (orc, troll, tauren, undead,
+9. Each slot shows the victim's race as an ear (orc, troll, tauren, undead,
    Skyborne and so on) filling the slot, in one of four skin tones, and the
    same player always gets the same tone. Uncommon and better ears have a frame
    in their grade colour, like items in your bags; Common and Poor have none.
    Poor ears are grey and dimmed. A small dot in the corner shows the victim's
    class colour. If a slot shows a plain green square, the picture didn't load:
    note which race.
-9. Collect an ear, then open the pouch: its slot glows. Hovering it stops the
+10. Collect an ear, then open the pouch: its slot glows. Hovering it stops the
    glow, and so does closing and reopening the pouch.
-10. With no ears yet (a new character), the pouch shows "No ears yet" over the
+11. With no ears yet (a new character), the pouch shows "No ears yet" over the
    empty grid, easy to read.
 
 ## The pop-up

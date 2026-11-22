@@ -122,6 +122,19 @@ function wow.clickLink(link, button)
 	end
 end
 
+--- Hover a chat hyperlink, or leave it with `link` nil, as ChatFrameMixin does:
+--- EventRegistry "ChatFrame.OnHyperlinkEnter" (chatFrame, link, text) and
+--- "ChatFrame.OnHyperlinkLeave" (chatFrame).
+function wow.hoverLink(link)
+	local chatFrame = _G.ChatFrame1 or _G.CreateFrame("Frame", "ChatFrame1")
+	local event = link and "ChatFrame.OnHyperlinkEnter" or "ChatFrame.OnHyperlinkLeave"
+	for _, cb in ipairs(_G.EventRegistry.callbacks) do
+		if cb.event == event then
+			cb.func(cb.owner, chatFrame, link, "[link]")
+		end
+	end
+end
+
 --- Run a key binding's body, as the client does when the key is pressed.
 function wow.pressBinding(name)
 	local file = assert(io.open("Bindings.xml"))
