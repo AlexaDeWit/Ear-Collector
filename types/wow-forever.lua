@@ -171,3 +171,21 @@ UISpecialFrames = {}
 --- Blizzard_NamePlates/Blizzard_NamePlateBase.lua: GetUnit returns the unit token it shows.
 ---@class NamePlateBaseMixin
 ---@field GetUnit fun(self: NamePlateBaseMixin): string?
+
+--- Hooks run around the tooltip data system, by Enum.TooltipDataType.
+--- Blizzard_SharedXMLGame/Tooltip/TooltipDataHandler.lua.
+TooltipDataProcessor = {}
+
+---@param tooltipType number|string an Enum.TooltipDataType value, or TooltipDataProcessor.AllTypes
+---@param func fun(tooltip: table, tooltipData: table)
+function TooltipDataProcessor.AddTooltipPostCall(tooltipType, func) end
+
+--- Tooltip helpers. Blizzard_SharedXMLGame/Tooltip/TooltipUtil.lua.
+TooltipUtil = {}
+
+--- The unit a tooltip shows: name, unit token and GUID, or nothing.
+---@param tooltip table
+---@return string? name
+---@return string? unit
+---@return string? guid
+function TooltipUtil.GetDisplayedUnit(tooltip) end

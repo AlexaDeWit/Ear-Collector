@@ -102,6 +102,17 @@ confirm are marked, and `docs/in-game-tests.md` tests them.
   each has Blizzard's `NamePlateBaseMixin:GetUnit()`, which returns its unit
   token (`Blizzard_NamePlates/Blizzard_NamePlateBase.lua`). The tokens are
   `nameplateN`, and N can pass 40.
+- `NAME_PLATE_UNIT_ADDED(unit)` fires as a nameplate appears, `PLAYER_TARGET_CHANGED`
+  as your target changes, and `UPDATE_MOUSEOVER_UNIT` as your mouse moves onto a
+  unit in the world.
+- `TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, fn)` runs
+  `fn(tooltip, data)` after a unit's tooltip is filled
+  (`Blizzard_SharedXMLGame/Tooltip/TooltipDataHandler.lua`), and
+  `TooltipUtil.GetDisplayedUnit(tooltip)` returns its name, unit token and GUID
+  (`Blizzard_SharedXMLGame/Tooltip/TooltipUtil.lua`). Tooltips have no
+  `GetUnit` method on Forever.
+  *Needs the game:* whether an enemy player's GUID is readable from these in
+  open-world PvP, out of combat and in it.
 
 ## The damage meter
 
@@ -198,6 +209,7 @@ addons such as Details read them instead of a combat log.
   `UI_EPICLOOT_TOAST`, `UI_LEGENDARY_LOOT_TOAST`, `IG_CHARACTER_INFO_TAB`,
   `IG_BACKPACK_OPEN`, `IG_BACKPACK_CLOSE` and `IG_ABILITY_PAGE_TURN`. The code
   plays a sound only if its name is in `SOUNDKIT`. *Needs the game:* whether
+  Forever has `RAID_WARNING`, for grudges, and whether
   Forever has `IG_MAINMENU_OPTION_CHECKBOX_ON` and `_OFF`, the grade buttons'
   clicks.
 

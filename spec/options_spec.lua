@@ -49,6 +49,8 @@ describe("options page", function()
 				"Play a loot sound",
 				"Pop-up for",
 				"Pop-up position",
+				"Grudges",
+				"Raid warning for an old grudge",
 				"Ear Pouch",
 				"Open with your bags",
 				"What counts",

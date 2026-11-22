@@ -23,6 +23,7 @@ Database.DEFAULT_SETTINGS = {
 	toast = true, -- show a pop-up when you collect an ear
 	toastSound = true, -- and play a loot sound with it
 	toastMinQuality = 0, -- the lowest grade that gets a pop-up
+	grudgeSound = true, -- the raid warning sound when an old grudge shows up (Detectors/Grudges.lua)
 }
 
 Database.DEBUG_LOG_SIZE = 300

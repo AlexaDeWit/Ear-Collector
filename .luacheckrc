@@ -58,6 +58,8 @@ read_globals = {
 	"PanelTemplates_SetTab",
 	"PlaySound",
 	"SOUNDKIT",
+	"TooltipDataProcessor",
+	"TooltipUtil",
 	"Settings",
 	"RegionalUniqueNamesEnabled",
 	"UIParent",

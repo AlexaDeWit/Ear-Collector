@@ -328,6 +328,26 @@ function Toast.ShowDeath(death, debt)
 	present(toast)
 end
 
+--- The reminder of an old grudge: the red of a lost ear, framed in Legendary.
+---@param who table the player's details (ns.VictimDetails)
+---@param debt integer deaths you owe them
+function Toast.ShowGrudge(who, debt)
+	local db = ns.db
+	if not db or not db.settings.toast then
+		return
+	end
+	local toast = table.remove(pool) or build()
+	toast.ear, toast.death = nil, who -- clicks open Rivals, as a death's do
+	local legendary = ns.QUALITY[5]
+	colour(toast, DEATH_PANEL, { legendary.r, legendary.g, legendary.b })
+	toast.icon:SetTexture(Art.EarTexture(who.race, who.guid))
+	toast.icon:SetDesaturated(false)
+	toast.label:SetText(("|c%s%s|r"):format(legendary.color, Chat.GRUDGE))
+	toast.title:SetText(Chat.InClassColour(who.name, who.class))
+	toast.detail:SetText(Chat.GrudgeDetail(debt))
+	present(toast)
+end
+
 --- Save where pop-ups appear, for the account, and move any on screen.
 function Toast.SetAnchor(point, relativePoint, x, y)
 	if ns.db then

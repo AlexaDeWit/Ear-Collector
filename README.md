@@ -96,6 +96,12 @@ more (Legendary after three times). **Nemesis** means they've killed you more
 often than you've killed them, and **Prey** means you've killed them three times
 or more and they've never killed you.
 
+Ear Collector keeps your grudges. When someone you owe shows up again on a
+later day, chat reminds you, and for Vengeance a pop-up and the raid warning
+sound do too. Someone who killed you an hour ago won't set it off, and neither
+will the same player again that day. Hovering anyone you owe shows the grudge
+on their tooltip.
+
 ### What it can't see
 
 WoW Forever doesn't give addons the combat log, so Ear Collector works from the

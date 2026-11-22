@@ -34,6 +34,7 @@ Detectors\FightFacts.lua
 Detectors\PartyKill.lua
 Detectors\HonorKill.lua
 Detectors\Death.lua
+Detectors\Grudges.lua
 UI\Pouch.lua
 UI\GradeFilter.lua
 UI\EarsTab.lua
