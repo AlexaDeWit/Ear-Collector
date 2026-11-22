@@ -4,6 +4,16 @@
 -- releases"). Not a spec: its name keeps it out of the suite.
 local wow = require("spec.support.wow")
 
+-- Lua's reserved words can't be bare keys: a band named "repeat" needs brackets.
+local KEYWORDS = {}
+for word in
+	("and break do else elseif end false for function if in local nil not or repeat return then true until while"):gmatch(
+		"%a+"
+	)
+do
+	KEYWORDS[word] = true
+end
+
 local function serialize(value, indent)
 	indent = indent or ""
 	local t = type(value)
@@ -32,7 +42,8 @@ local function serialize(value, indent)
 		return a < b
 	end)
 	for _, k in ipairs(keys) do
-		local key = type(k) == "string" and k:match("^[%a_][%w_]*$") and k or ("[" .. serialize(k) .. "]")
+		local bare = type(k) == "string" and k:match("^[%a_][%w_]*$") and not KEYWORDS[k]
+		local key = bare and k or ("[" .. serialize(k) .. "]")
 		out[#out + 1] = ("%s%s = %s,"):format(inner, key, serialize(value[k], inner))
 	end
 	if #out == 0 then

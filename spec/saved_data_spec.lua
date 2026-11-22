@@ -3,7 +3,7 @@
 -- The fixtures and how to record one: docs/testing.md, "Saved files from past releases".
 local wow = require("spec.support.wow")
 
-local RELEASES = { "v1.0.0", "v1.4.0", "v2.0.0-test-build" }
+local RELEASES = { "v1.0.0", "v1.4.0", "v2.0.0-test-build", "v2.0.0" }
 
 local function fixture(name)
 	return dofile(("spec/fixtures/saved/%s.lua"):format(name))
