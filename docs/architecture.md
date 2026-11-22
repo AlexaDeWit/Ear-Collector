@@ -202,7 +202,13 @@ every API return, and repair of saved data on load.
   keyboard propagation is restricted in combat, and a post-hook on
   `ToggleGameMenu` can't stop the game menu opening
   ([details](forever-api.md#interface-hooks)).
-- **The pop-up** (`UI/Toast.lua`) is the addon's own frames on `UIParent`, not Blizzard's alert
+- **The pop-up** (`UI/Toast.lua`) stacks upward from bottom centre, above the
+  action bars and clear of Blizzard's error and zone text, or from wherever you
+  drag the stand-in (`UI/ToastMover.lua`, saved in `db.ui.toast`). It uses
+  Blizzard's loot-toast atlases, checked with `C_Texture.GetAtlasInfo`, and plain
+  colours without them. A Vengeance ear gets the legendary style, a death a red
+  "Ear lost" pop-up. One loot sound plays per burst unless a grander one follows,
+  and Poor ears are silent. It is the addon's own frames on `UIParent`, not Blizzard's alert
   system, which could spread taint. Animation groups fade it, with no
   `OnUpdate`. Up to `Toast.MAX` (3) stack. Only new ears get one.
 - **The options page** uses the Settings API. Checkboxes bind straight to

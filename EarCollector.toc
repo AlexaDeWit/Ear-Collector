@@ -33,6 +33,7 @@ UI\EarsTab.lua
 UI\LedgerTab.lua
 UI\RivalsTab.lua
 UI\Toast.lua
+UI\ToastMover.lua
 UI\Options.lua
 UI\Access.lua
 UI\Slash.lua

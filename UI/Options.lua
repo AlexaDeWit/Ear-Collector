@@ -17,6 +17,7 @@ Options.CAMP_MIN, Options.CAMP_MAX = 0, 60 -- minutes
 Options.SECTIONS = {
 	{
 		title = "When you collect an ear",
+		popup = true, -- the pop-up grade filter and the move button follow the checkboxes
 		checkboxes = {
 			{
 				key = "announce",
@@ -63,6 +64,14 @@ Options.SECTIONS = {
 		camp = true, -- the camping-window slider goes at the end of this section
 	},
 }
+
+Options.POPUP_FOR = {
+	{ 0, "Every ear" },
+	{ 2, "Uncommon and better" },
+	{ 3, "Rare and better" },
+}
+Options.POPUP_FOR_TOOLTIP = "Which ears get a pop-up. A Vengeance ear always does."
+Options.MOVE_TOOLTIP = "Shows a pop-up you can drag. Right-click it when you're done. Close this screen to see it."
 
 Options.CAMP_LABEL = "Repeat kill window"
 Options.CAMP_TOOLTIP = "Killing the same player again within this many minutes adds to that ear's count "
@@ -111,6 +120,18 @@ local function campSetter(minutes)
 	Errors.Call("options", Options.SetCampMinutes, minutes)
 end
 
+-- Blizzard calls this when it builds the dropdown, where an error would reach the player.
+local function popupForOptions()
+	local ok, data = Errors.Call("options", function()
+		local container = Settings.CreateControlTextContainer()
+		for _, option in ipairs(Options.POPUP_FOR) do
+			container:Add(option[1], option[2])
+		end
+		return container:GetData()
+	end)
+	return ok and data or {}
+end
+
 local function minutesLabel(value)
 	if type(value) ~= "number" then
 		return ""
@@ -139,6 +160,29 @@ local function register(db)
 				default
 			)
 			Settings.CreateCheckbox(new, setting, box.tooltip)
+		end
+		if section.popup then
+			local setting = Settings.RegisterAddOnSetting(
+				new,
+				addonName .. "_toastMinQuality",
+				"toastMinQuality",
+				db.settings,
+				"number",
+				"Pop-up for",
+				Database.DEFAULT_SETTINGS.toastMinQuality
+			)
+			Settings.CreateDropdown(new, setting, popupForOptions, Options.POPUP_FOR_TOOLTIP)
+			layout:AddInitializer(
+				CreateSettingsButtonInitializer(
+					"Pop-up position",
+					"Move pop-up",
+					Errors.Wrap("options", function()
+						ns.Toast.Move()
+					end),
+					Options.MOVE_TOOLTIP,
+					true
+				)
+			)
 		end
 		if section.camp then
 			local setting = Settings.RegisterProxySetting(

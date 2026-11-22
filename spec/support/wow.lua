@@ -47,6 +47,15 @@ function wow.reset(overrides)
 			["raceicon-troll-male"] = true,
 			["raceicon-tauren-male"] = true,
 			["bags-glow-white"] = true,
+			["loottoast-glow"] = true,
+			["loottoast-bg-alliance"] = true,
+			["loottoast-bg-horde"] = true,
+			["loottoast-itemborder-white"] = true,
+			["loottoast-itemborder-green"] = true,
+			["loottoast-itemborder-blue"] = true,
+			["loottoast-itemborder-purple"] = true,
+			["loottoast-itemborder-orange"] = true,
+			["LegendaryToast-background"] = true,
 		},
 		regionalNames = true, -- Forever: first name + surname instead of realms
 		restrictions = {}, -- Enum.AddOnRestrictionType name -> true while active

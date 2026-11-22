@@ -1,61 +1,101 @@
--- The loot pop-up when you collect an ear: art, name in its grade colour, who
--- landed the blow, and a loot sound. Left-click opens the pouch on the ear,
--- right-click dismisses, hovering pauses it. Own frames and animation groups, so
--- nothing is tainted and nothing runs every frame.
+-- The pop-up when you collect an ear (or lose one), in Blizzard's loot-toast
+-- art: the ear, its name in the grade colour, a detail line, and a loot sound.
+-- Pop-ups stack upward from bottom centre, or wherever you move them
+-- (UI/ToastMover.lua). Left-click
+-- opens the pouch, right-click dismisses, hovering pauses. Own frames and
+-- animation groups, so nothing is tainted and nothing runs every frame.
 local _, ns = ...
 
-local Art, Errors = ns.Art, ns.Errors
+local Art, Chat, Errors = ns.Art, ns.Chat, ns.Errors
 
 local Toast = {}
 ns.Toast = Toast
 
-Toast.MAX = 3 -- toasts on screen at once; the oldest makes way for a new one
+Toast.MAX = 3 -- on screen at once; the oldest makes way for a new one
 Toast.HOLD = 4 -- seconds on screen before fading
 Toast.FADE = 0.6
-Toast.WIDTH, Toast.HEIGHT, Toast.GAP = 300, 54, 6
-Toast.TOP = -150 -- offset of the first toast from the top of the screen
+Toast.WIDTH, Toast.HEIGHT, Toast.GAP = 300, 58, 6
+Toast.ANCHOR = { point = "BOTTOM", relativePoint = "BOTTOM", x = 0, y = 260 } -- above the action bars
+Toast.SOUND_GAP = 2 -- seconds; within it only a grander sound plays
 
--- Blizzard's loot-toast sounds (SoundKitConstants), by ear grade.
-local SOUND_BY_QUALITY = {
-	[0] = "UI_RAID_LOOT_TOAST_LESSER_ITEM_WON",
-	[1] = "UI_RAID_LOOT_TOAST_LESSER_ITEM_WON",
-	[2] = "UI_RAID_LOOT_TOAST_LESSER_ITEM_WON",
-	[3] = "UI_EPICLOOT_TOAST",
-	[4] = "UI_EPICLOOT_TOAST",
-	[5] = "UI_LEGENDARY_LOOT_TOAST",
+-- Blizzard's loot-toast sounds (SoundKitConstants) and how grand each is.
+local SOUNDS = {
+	[1] = { name = "UI_RAID_LOOT_TOAST_LESSER_ITEM_WON", tier = 1 },
+	[2] = { name = "UI_RAID_LOOT_TOAST_LESSER_ITEM_WON", tier = 1 },
+	[3] = { name = "UI_EPICLOOT_TOAST", tier = 2 },
+	[4] = { name = "UI_EPICLOOT_TOAST", tier = 2 },
+	[5] = { name = "UI_LEGENDARY_LOOT_TOAST", tier = 3 },
 }
+-- Blizzard's loot-toast art (Blizzard_FrameXML/Mainline/AlertFrameSystems).
+local ICON_BORDER = { [2] = "green", [3] = "blue", [4] = "purple", [5] = "orange" }
+local DEATH_RED = { 0.75, 0.12, 0.1 }
+local HINT_EAR = "Click to open in your pouch. Right-click to dismiss."
+local HINT_DEATH = "Click to see your rivals. Right-click to dismiss."
 
 ---@class EarCollector.Toast : Button
+---@field bg Texture
+---@field glow Texture
+---@field iconBorder Texture
 ---@field icon Texture
----@field edges Texture[]
 ---@field label FontString
 ---@field title FontString
 ---@field detail FontString
 ---@field appear AnimationGroup
 ---@field leave AnimationGroup
 ---@field fadeOut Alpha
----@field ear table?
+---@field ear table? the ear it shows
+---@field death table? or the death
 
 local pool = {} ---@type EarCollector.Toast[]
 local active = {} ---@type EarCollector.Toast[] newest first
+local lastSound = { at = -math.huge, tier = 0 }
 
-local function layout()
-	for i, toast in ipairs(active) do
-		toast:ClearAllPoints()
-		toast:SetPoint("TOP", UIParent, "TOP", 0, Toast.TOP - (i - 1) * (Toast.HEIGHT + Toast.GAP))
+local function hasAtlas(atlas)
+	return C_Texture.GetAtlasInfo(atlas) ~= nil
+end
+
+-- An atlas if the client has it, else a flat colour.
+local function paint(texture, atlas, r, g, b, a)
+	if atlas and hasAtlas(atlas) then
+		texture:SetAtlas(atlas)
+		texture:SetVertexColor(1, 1, 1)
+	else
+		texture:SetColorTexture(r, g, b, a)
 	end
 end
 
---- Take a toast off the screen and back to the pool. Safe to call twice: a
---- hovered toast that is clicked gets OnLeave as it hides, and the fade that
---- replays would release it again, putting it in the pool twice.
+--- Where the first pop-up sits: where you moved them, or above the action bars.
+---@return { point: string, relativePoint: string, x: number, y: number }
+function Toast.Anchor()
+	local saved = ns.db and ns.db.ui.toast
+	if
+		type(saved) == "table"
+		and type(saved.point) == "string"
+		and type(saved.relativePoint) == "string"
+		and type(saved.x) == "number"
+		and type(saved.y) == "number"
+	then
+		return saved
+	end
+	return Toast.ANCHOR
+end
+
+local function layout()
+	local a = Toast.Anchor()
+	for i, toast in ipairs(active) do
+		toast:ClearAllPoints()
+		toast:SetPoint(a.point, UIParent, a.relativePoint, a.x, a.y + (i - 1) * (Toast.HEIGHT + Toast.GAP))
+	end
+end
+
+--- Take a pop-up off the screen and back to the pool. Safe to call twice: a
+--- hovered pop-up that's clicked gets OnLeave as it hides.
 ---@param toast EarCollector.Toast
 local function release(toast)
 	local index
 	for i, t in ipairs(active) do
 		if t == toast then
 			index = i
-			break
 		end
 	end
 	if not index then
@@ -68,7 +108,7 @@ local function release(toast)
 	if GameTooltip:IsOwned(toast) then
 		GameTooltip:Hide()
 	end
-	toast.ear = nil
+	toast.ear, toast.death = nil, nil
 	pool[#pool + 1] = toast
 	layout()
 end
@@ -103,10 +143,16 @@ function Toast.Detail(ear)
 end
 
 local function showTooltip(toast)
-	if not toast.ear then
-		return
+	local lines
+	if toast.ear then
+		lines = ns.EarsTab.TooltipLines(toast.ear)
+		lines[#lines + 1] = { text = HINT_EAR, r = 0.62, g = 0.62, b = 0.62 }
+	elseif toast.death then
+		lines = { { text = HINT_DEATH, r = 0.62, g = 0.62, b = 0.62 } }
 	end
-	ns.Chat.ShowTooltip(toast, "ANCHOR_BOTTOM", ns.EarsTab.TooltipLines(toast.ear))
+	if lines then
+		Chat.ShowTooltip(toast, "ANCHOR_TOP", lines)
+	end
 end
 
 ---@return EarCollector.Toast
@@ -116,53 +162,45 @@ local function build()
 	toast:SetFrameStrata("HIGH")
 	toast:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
-	local bg = toast:CreateTexture(nil, "BACKGROUND")
-	bg:SetAllPoints()
-	bg:SetColorTexture(0.06, 0.05, 0.04, 0.9)
-	local border = toast:CreateTexture(nil, "BORDER")
-	border:SetPoint("TOPLEFT", -1, 1)
-	border:SetPoint("BOTTOMRIGHT", 1, -1)
-	border:SetColorTexture(0.6, 0.48, 0.27, 0.9)
+	toast.bg = toast:CreateTexture(nil, "BACKGROUND")
+	toast.bg:SetAllPoints()
+	toast.glow = toast:CreateTexture(nil, "BORDER")
+	toast.glow:SetAllPoints()
+	toast.glow:SetBlendMode("ADD")
+	paint(toast.glow, "loottoast-glow", 1, 0.82, 0.3, 0.2)
 
-	local iconBg = toast:CreateTexture(nil, "ARTWORK")
-	iconBg:SetSize(44, 44)
-	iconBg:SetPoint("LEFT", 5, 0)
-	iconBg:SetColorTexture(0, 0, 0, 0.7)
-	toast.icon = toast:CreateTexture(nil, "OVERLAY")
-	toast.icon:SetPoint("TOPLEFT", iconBg, "TOPLEFT", 2, -2)
-	toast.icon:SetPoint("BOTTOMRIGHT", iconBg, "BOTTOMRIGHT", -2, 2)
-	toast.edges = {}
-	for _, side in ipairs({ "TOP", "BOTTOM", "LEFT", "RIGHT" }) do
-		local edge = toast:CreateTexture(nil, "OVERLAY")
-		if side == "TOP" or side == "BOTTOM" then
-			edge:SetPoint(side .. "LEFT", iconBg, side .. "LEFT")
-			edge:SetPoint(side .. "RIGHT", iconBg, side .. "RIGHT")
-			edge:SetHeight(2)
-		else
-			edge:SetPoint("TOP" .. side, iconBg, "TOP" .. side)
-			edge:SetPoint("BOTTOM" .. side, iconBg, "BOTTOM" .. side)
-			edge:SetWidth(2)
-		end
-		toast.edges[#toast.edges + 1] = edge
-	end
+	toast.iconBorder = toast:CreateTexture(nil, "ARTWORK")
+	toast.iconBorder:SetSize(46, 46)
+	toast.iconBorder:SetPoint("LEFT", 6, 0)
+	toast.icon = toast:CreateTexture(nil, "ARTWORK", nil, -1)
+	toast.icon:SetPoint("TOPLEFT", toast.iconBorder, "TOPLEFT", 3, -3)
+	toast.icon:SetPoint("BOTTOMRIGHT", toast.iconBorder, "BOTTOMRIGHT", -3, 3)
 
 	toast.label = toast:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-	toast.label:SetPoint("TOPLEFT", iconBg, "TOPRIGHT", 9, -1)
+	toast.label:SetPoint("TOPLEFT", toast.iconBorder, "TOPRIGHT", 9, -1)
 	toast.title = toast:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-	toast.title:SetPoint("LEFT", iconBg, "RIGHT", 9, 0)
+	toast.title:SetPoint("LEFT", toast.iconBorder, "RIGHT", 9, 0)
 	toast.title:SetPoint("RIGHT", toast, "RIGHT", -8, 0)
 	toast.title:SetJustifyH("LEFT")
+	toast.title:SetWordWrap(false)
 	toast.detail = toast:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	toast.detail:SetPoint("BOTTOMLEFT", iconBg, "BOTTOMRIGHT", 9, 1)
+	toast.detail:SetPoint("BOTTOMLEFT", toast.iconBorder, "BOTTOMRIGHT", 9, 1)
 	toast.detail:SetPoint("BOTTOMRIGHT", toast, "BOTTOMRIGHT", -8, 7)
 	toast.detail:SetJustifyH("LEFT")
 	toast.detail:SetWordWrap(false)
 
+	-- The pop-up and its glow fade in; the glow then fades away; the pop-up leaves later.
 	toast.appear = toast:CreateAnimationGroup()
 	local fadeIn = toast.appear:CreateAnimation("Alpha") --[[@as Alpha]]
 	fadeIn:SetFromAlpha(0)
 	fadeIn:SetToAlpha(1)
 	fadeIn:SetDuration(0.2)
+	local glowOut = toast.appear:CreateAnimation("Alpha") --[[@as Alpha]]
+	glowOut:SetTarget(toast.glow)
+	glowOut:SetFromAlpha(1)
+	glowOut:SetToAlpha(0)
+	glowOut:SetStartDelay(0.2)
+	glowOut:SetDuration(0.5)
 
 	toast.leave = toast:CreateAnimationGroup()
 	toast.fadeOut = toast.leave:CreateAnimation("Alpha") --[[@as Alpha]]
@@ -190,7 +228,7 @@ local function build()
 			if GameTooltip:IsOwned(toast) then
 				GameTooltip:Hide()
 			end
-			if not toast.ear then
+			if not toast.ear and not toast.death then
 				return -- already released (OnLeave as it hides after a click)
 			end
 			toast.fadeOut:SetStartDelay(1.5)
@@ -200,55 +238,115 @@ local function build()
 	toast:SetScript(
 		"OnClick",
 		Errors.Wrap("toast", function(_, button)
-			local ear = toast.ear
+			local ear, death = toast.ear, toast.death
 			release(toast)
-			if button ~= "RightButton" and ear then
+			if button == "RightButton" then
+				return
+			elseif ear then
 				ns.EarsTab.Focus(ear.guid, ear.at)
+			elseif death then
+				ns.Pouch.Open("Rivals")
 			end
 		end)
 	)
 	return toast
 end
 
---- Pop up a toast for a newly collected ear.
----@param ear table
-function Toast.Show(ear)
-	local db = ns.db
-	if not db or not db.settings.toast then
-		return
+local function playSound(db, quality)
+	local sound = SOUNDS[quality]
+	if not db.settings.toastSound or not sound or not SOUNDKIT or not SOUNDKIT[sound.name] then
+		return -- Poor ears are silent
 	end
+	local now = GetTime()
+	if now - lastSound.at < Toast.SOUND_GAP and sound.tier <= lastSound.tier then
+		return -- one sound per burst, unless this one is grander
+	end
+	lastSound = { at = now, tier = sound.tier }
+	PlaySound(SOUNDKIT[sound.name], "SFX")
+end
+
+local function present(toast)
 	if #active >= Toast.MAX then
 		release(active[#active])
 	end
-	local toast = table.remove(pool) or build()
-	toast.ear = ear
-
-	local quality = ns.Quality(ear.quality)
-	toast.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
-	toast.icon:SetDesaturated(ear.quality == 0)
-	for _, edge in ipairs(toast.edges) do
-		edge:SetColorTexture(quality.r, quality.g, quality.b, 1)
-	end
-	local label = ear.by == "assist" and "Assist collected" or "You collected"
-	toast.label:SetText(ear.vengeance and "Vengeance!" or label)
-	toast.title:SetText(("|c%s%s's Ear|r"):format(quality.color, ear.name))
-	toast.detail:SetText(Toast.Detail(ear))
-
 	table.insert(active, 1, toast)
 	layout()
 	toast:SetAlpha(1)
+	toast.glow:SetAlpha(1)
 	toast:Show()
 	toast.appear:Play()
 	toast.fadeOut:SetStartDelay(Toast.HOLD)
 	toast.leave:Play()
-
-	local sound = SOUND_BY_QUALITY[ear.quality] or SOUND_BY_QUALITY[2]
-	if db.settings.toastSound and SOUNDKIT and SOUNDKIT[sound] then
-		PlaySound(SOUNDKIT[sound], "SFX")
-	end
 end
 
---- Toasts on screen, newest first (for specs).
+--- Pop up a newly collected ear, unless pop-ups are off or it's below the
+--- grade the options ask for (a Vengeance ear is Legendary, so it always shows).
+---@param ear table
+function Toast.Show(ear)
+	local db = ns.db
+	if not db or not db.settings.toast or (ear.quality or 2) < db.settings.toastMinQuality then
+		return
+	end
+	local toast = table.remove(pool) or build()
+	toast.ear, toast.death = ear, nil
+	local quality = ns.Quality(ear.quality)
+	if ear.vengeance then
+		paint(toast.bg, "LegendaryToast-background", 0.16, 0.09, 0.02, 0.95)
+	else
+		local faction = UnitFactionGroup("player")
+		local bg = (faction == "Horde" or faction == "Alliance") and "loottoast-bg-" .. faction:lower()
+		paint(toast.bg, bg, 0.06, 0.05, 0.04, 0.92)
+	end
+	local border = ICON_BORDER[ear.quality] or "white"
+	paint(toast.iconBorder, "loottoast-itemborder-" .. border, quality.r, quality.g, quality.b, 1)
+	toast.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
+	toast.icon:SetDesaturated(ear.quality == 0)
+	local label = ear.by == "assist" and "Assist collected" or "You collected"
+	toast.label:SetText(ear.vengeance and "Vengeance!" or label)
+	toast.title:SetText(("|c%s%s's Ear|r"):format(quality.color, ear.name))
+	toast.detail:SetText(Toast.Detail(ear))
+	present(toast)
+	playSound(db, ear.quality)
+end
+
+--- Pop up a death to an enemy player: "Grimbash took your ear", in red.
+---@param death table
+---@param debt integer deaths to them since you last killed them, this one included
+function Toast.ShowDeath(death, debt)
+	local db = ns.db
+	if not db or not db.settings.toast then
+		return
+	end
+	local toast = table.remove(pool) or build()
+	toast.ear, toast.death = nil, death
+	toast.bg:SetColorTexture(0.18, 0.03, 0.02, 0.92)
+	toast.iconBorder:SetColorTexture(DEATH_RED[1], DEATH_RED[2], DEATH_RED[3], 1)
+	toast.icon:SetTexture(Art.EarTexture(death.race, death.guid))
+	toast.icon:SetDesaturated(true)
+	toast.label:SetText("|cffff4a3aEar lost|r")
+	local hex = Chat.ClassHex(death.class) or "ffffffff"
+	toast.title:SetText(("|c%s%s|r took your ear"):format(hex, death.name))
+	if debt >= ns.Deaths.VENGEANCE then
+		toast.detail:SetText(("|c%sVengeance owed:|r their next ear is Legendary"):format(ns.QUALITY[5].color))
+	elseif debt > 1 then
+		toast.detail:SetText(("Killed you %d times since you last killed them"):format(debt))
+	else
+		toast.detail:SetText(
+			Chat.ClassName(death.class) .. (death.level and (" · Level %d"):format(death.level) or "")
+		)
+	end
+	present(toast)
+end
+
+--- Save where pop-ups appear, for the account, and move any on screen.
+function Toast.SetAnchor(point, relativePoint, x, y)
+	if ns.db then
+		ns.db.ui.toast = { point = point, relativePoint = relativePoint, x = x, y = y }
+	end
+	layout()
+end
+
+--- Pop-ups on screen, newest first (for specs).
 ---@return EarCollector.Toast[]
 function Toast.Active()
 	return active

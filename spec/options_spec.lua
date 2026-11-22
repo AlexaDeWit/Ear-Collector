@@ -40,13 +40,15 @@ describe("options page", function()
 			assert.is_true(Options.IsRegistered())
 			local shown = {}
 			for _, init in ipairs(category().layout.initializers) do
-				shown[#shown + 1] = init.header or init.setting.name
+				shown[#shown + 1] = init.header or (init.setting and init.setting.name) or init.name
 			end
 			assert.are.same({
 				"When you collect an ear",
 				"Chat line for each ear and death",
 				"Show a pop-up",
 				"Play a loot sound",
+				"Pop-up for",
+				"Pop-up position",
 				"Ear Pouch",
 				"Open with your bags",
 				"What counts",
@@ -71,7 +73,7 @@ describe("options page", function()
 		it("covers every setting except debug, with Blizzard's defaults matching the addon's", function()
 			local covered = { campWindow = true, debug = true }
 			for _, init in ipairs(category().layout.initializers) do
-				if init.control == "checkbox" then
+				if init.control == "checkbox" or init.control == "dropdown" then
 					local key = init.setting.variable:gsub("^EarCollector_", "")
 					covered[key] = true
 					assert.are.equal(ns.Database.DEFAULT_SETTINGS[key], init.setting.default, key)
@@ -80,6 +82,35 @@ describe("options page", function()
 			for key in pairs(ns.Database.DEFAULT_SETTINGS) do
 				assert.is_true(covered[key], key .. " has no control")
 			end
+		end)
+	end)
+
+	describe("pop-ups", function()
+		it("offer every ear, Uncommon and better, or Rare and better", function()
+			load()
+			local dropdown
+			for _, init in ipairs(category().layout.initializers) do
+				if init.control == "dropdown" then
+					dropdown = init
+				end
+			end
+			assert.are.same({ 0, 2, 3 }, {
+				dropdown.options[1].value,
+				dropdown.options[2].value,
+				dropdown.options[3].value,
+			})
+			dropdown.setting:SetValue(3)
+			assert.are.equal(3, ns.db.settings.toastMinQuality)
+		end)
+
+		it("have a button that lets you move them", function()
+			load()
+			for _, init in ipairs(category().layout.initializers) do
+				if init.control == "button" then
+					init.click()
+				end
+			end
+			assert.is_true(ns.Toast.Mover():IsShown())
 		end)
 	end)
 

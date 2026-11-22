@@ -92,6 +92,22 @@ return function(state)
 				{ control = "slider", setting = setting, options = options, tooltip = tooltip }
 			)
 		end,
+		CreateControlTextContainer = function()
+			local container = { data = {} }
+			function container.Add(self, value, label, tooltip)
+				self.data[#self.data + 1] = { value = value, label = label, tooltip = tooltip }
+			end
+			function container.GetData(self)
+				return self.data
+			end
+			return container
+		end,
+		CreateDropdown = function(category, setting, options, tooltip)
+			return addInitializer(
+				category,
+				{ control = "dropdown", setting = setting, options = options(), tooltip = tooltip }
+			)
+		end,
 		-- C_SettingsUtil.OpenSettingsPanel has restrictions: blocked for addons in combat.
 		OpenToCategory = function(categoryID)
 			if state.inCombat then
