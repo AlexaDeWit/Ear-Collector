@@ -50,7 +50,23 @@ local function pageCount(total)
 	return math.max(1, math.ceil(total / Pouch.PER_PAGE))
 end
 
---- An ear's tooltip, as lines: { text, r, g, b } or { left, right, r, g, b }.
+local GOLD = { 1, 0.82, 0 }
+local KINDS = { up = { 0.1, 1, 0.1 }, down = { 1, 0.1, 0.1 }, context = GREY, note = GREY }
+local EMPTY = { 0.29, 0.3, 0.33 }
+
+-- One to three tinted squares, right-aligned beside a reason: how much it counted.
+local function squares(n, colour)
+	local out = {}
+	for i = 1, 3 do
+		local c = i <= n and colour or EMPTY
+		local r, g, b = math.floor(c[1] * 255 + 0.5), math.floor(c[2] * 255 + 0.5), math.floor(c[3] * 255 + 0.5)
+		out[i] = ("|TInterface\\Buttons\\WHITE8X8:7:7:0:0:8:8:0:8:0:8:%d:%d:%d|t"):format(r, g, b)
+	end
+	return table.concat(out, " ")
+end
+
+--- An ear's tooltip, as lines: { text, r, g, b } or { left, right, r, g, b, lr?, lg?, lb? }.
+--- Under who they were, "Why it's <grade>" lists what counted; the story closes it.
 ---@param ear table
 ---@return table[]
 function EarsTab.TooltipLines(ear)
@@ -67,6 +83,22 @@ function EarsTab.TooltipLines(ear)
 	end
 	local race = Chat.RaceIcon(ear.race, ear.sex) .. (ear.raceName or ear.race or "")
 	add((("Level %s %s %s"):format(ear.level or "??", race, Chat.ClassName(ear.class, ear.className)):gsub("  ", " ")))
+	local why = ns.FightSummary.Lines(ear)
+	if #why > 0 then
+		add(" ")
+		add(("Why it's |c%s%s|r"):format(quality.color, quality.name), GOLD)
+		for _, line in ipairs(why) do
+			if line.strength then
+				local c = KINDS[line.kind]
+				local sign = line.kind == "up" and "+ " or "- "
+				lines[#lines + 1] =
+					{ left = sign .. line.text, right = squares(line.strength, c), lr = c[1], lg = c[2], lb = c[3] }
+			else
+				local legendary = ns.QUALITY[5]
+				add(line.text, KINDS[line.kind] or { legendary.r, legendary.g, legendary.b })
+			end
+		end
+	end
 	add(" ")
 	if ear.subzone then
 		add(("Taken at %s"):format(ear.subzone))
@@ -79,21 +111,9 @@ function EarsTab.TooltipLines(ear)
 	if ear.by == "group" then
 		add(("Killing blow: %s (your group)"):format(ear.killer or "a groupmate"))
 	elseif ear.by == "assist" then
-		add("Assist: killing blow from outside your group", { 0.17, 0.85, 0.17 })
+		add("Assist: killing blow from outside your group")
 	else
 		add("Killing blow: you")
-	end
-	if ear.vengeance then
-		local legendary = ns.QUALITY[5]
-		add(
-			("Vengeance: they had killed you %d times since you last took their ear"):format(ear.vengeance),
-			{ legendary.r, legendary.g, legendary.b }
-		)
-	end
-	if ear.pending then
-		add("Appraising the fight...", GREY)
-	elseif type(ear.fight) == "table" then
-		add(ns.FightSummary.Summary(ear.fight, 4), ear.fight.read and { 1, 1, 1 } or GREY)
 	end
 	if ear.yourLevel then
 		add(("You were level %d"):format(ear.yourLevel), GREY)
@@ -105,6 +125,10 @@ function EarsTab.TooltipLines(ear)
 		add(("Camped: %d more %s within %s"):format(ear.camped, kills, within), GREY)
 	end
 	add(Chat.Date(ear.at, "full"), GREY)
+	local story = ns.FightSummary.Story(ear)
+	if story then
+		add(('"%s"'):format(story), GOLD)
+	end
 	return lines
 end
 

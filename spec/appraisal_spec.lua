@@ -193,6 +193,9 @@ describe("Appraisal", function()
 			assert.is_nil(healer.points.assist)
 			local fighter = Appraisal.Appraise({ level = YELLOW, assist = true }, fight({ taken = 0.6 }))
 			assert.is_nil(fighter.points.assist)
+			-- With no damage figure, "took little damage" would be a guess.
+			local unknown = Appraisal.Appraise({ level = YELLOW, assist = true }, fight({ taken = false }))
+			assert.is_nil(unknown.points.assist)
 		end)
 	end)
 
@@ -202,40 +205,5 @@ describe("Appraisal", function()
 			points[#points + 1] = Appraisal.Appraise({ level = YELLOW, earlier = earlier }).points["repeat"] or 0
 		end
 		assert.are.same({ 0, -4, -8, -8 }, points)
-	end)
-
-	describe("phrases", function()
-		it("sum up the fight, strongest bands first", function()
-			local facts = fight({ enemies = 3, allies = 1, secs = 35, taken = 1.6, sideTaken = 1600 })
-			local result = Appraisal.Appraise({ level = YELLOW, debt = 2 }, facts)
-			local saved = facts
-			saved.why, saved.fightScore, saved.debt = result.why, result.fightScore, 2
-			assert.are.equal(
-				"Hard-fought: alone against 3, revenge for 2 deaths, you took 1.6 times your health",
-				ns.FightSummary.Summary(saved, 3)
-			)
-		end)
-
-		it("say when a fight was one-sided, and when there was no record", function()
-			assert.are.equal(
-				"One-sided: 5 of you against 1, they never fought back",
-				ns.FightSummary.Summary({
-					read = true,
-					enemies = 1,
-					allies = 5,
-					sideTaken = 0,
-					fightScore = -18,
-					why = { "mob", "oneSided" },
-				})
-			)
-			assert.are.equal(
-				"No fight record: your 2nd ear from them today",
-				ns.FightSummary.Summary({ read = false, earlier = 1, why = { "repeat" } })
-			)
-		end)
-
-		it("leave out a phrase whose facts a damaged save lost", function()
-			assert.are.equal("Fair fight", ns.FightSummary.Summary({ read = true, why = { "longFight", "nonsense" } }))
-		end)
 	end)
 end)

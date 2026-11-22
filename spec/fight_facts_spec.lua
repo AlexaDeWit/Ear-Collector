@@ -46,7 +46,7 @@ describe("grading an ear from its fight", function()
 			for _, line in ipairs(ns.EarsTab.TooltipLines(ear)) do
 				text[#text + 1] = line.text or line.left
 			end
-			assert.matches("\nAppraising the fight%.%.%.\n", table.concat(text, "\n"))
+			assert.matches("\nAppraised when you leave combat\n", table.concat(text, "\n"))
 		end)
 
 		it("is graded from the meter when the fight ends, with one chat line and one pop-up", function()
@@ -67,7 +67,7 @@ describe("grading an ear from its fight", function()
 			assert.are.equal(
 				1,
 				wow.printed(
-					"Appraised .*Grimbash's Ear.*: Rare%. Hard%-fought: you took 1%.2 times your health, 40 seconds%."
+					"Appraised .*Grimbash's Ear.*: Rare%. You took more than a full health bar and were in combat for 40 seconds%.$"
 				)
 			)
 			assert.are.equal(1, #ns.Toast.Active())
@@ -90,7 +90,7 @@ describe("grading an ear from its fight", function()
 			assert.is_nil(ear.pending)
 			assert.are.equal(2, ear.quality)
 			assert.is_false(ear.fight.read)
-			assert.are.equal(1, wow.printed("Appraised .*: Uncommon%.$"))
+			assert.are.equal(1, wow.printed("Appraised .*: Uncommon%. No record of the fight%.$"))
 		end)
 	end)
 
@@ -113,7 +113,7 @@ describe("grading an ear from its fight", function()
 		assert.is_nil(ear.pending)
 		assert.are.equal(1, #ns.Toast.Active())
 		assert.are.equal(0, wow.printed("Appraising"))
-		assert.are.equal(1, wow.printed("You collected .*Grimbash's Ear.* %(Uncommon%)%.$"))
+		assert.are.equal(1, wow.printed("You collected .*Grimbash's Ear.* %(Uncommon%)%. No record of the fight%.$"))
 	end)
 
 	describe("matches a kill to its own fight", function()

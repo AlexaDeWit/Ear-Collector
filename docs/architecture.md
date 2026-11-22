@@ -29,7 +29,8 @@ to the game stays thin.
 | `UI/Options.lua` | The page in Options > AddOns |
 | `UI/Access.lua` | Ways to open the pouch: drawer, key binding, bags, chat links |
 | `UI/Chat.lua`, `UI/Slash.lua` | Chat lines, ear links, and the `/ears` commands |
-| `UI/FightSummary.lua` | The words for an ear's fight, for chat lines and tooltips |
+| `UI/Reasons.lua` | Each reason for a grade in words: its tooltip line and story clause |
+| `UI/FightSummary.lua` | The words for an ear's grade: the reason lines, the story, the pop-up's reason |
 | `UI/Art.lua` | Race to ear-texture mapping |
 | `Bindings.xml` | The "Toggle Ear Pouch" key binding |
 | `Media/Ears/` | Ear textures, painted by `art/paint_ears.py` ([art.md](art.md)) |
@@ -75,10 +76,10 @@ victims give no honor (`Ears.IsTrivial`).
 - Each signal falls into a named band worth some points (`Appraisal.SIGNALS`):
   the odds, your damage taken in health bars, the victim's health against
   yours, the fight's length, a one-sided fight against a smaller, lower foe,
-  the victim's toughness, your healing and absorbs, interrupts and
-  dispels, allies who fell, your own death, the level colour, revenge (deaths
-  owed), earlier ears from the player that day, and an assist where you did
-  little.
+  the victim's toughness, your healing and absorbs, interrupts and dispels,
+  group members who fell, your own death, the level colour, revenge (deaths
+  owed), earlier ears from the player that day, and an assist where the meter
+  shows you took little damage and healed little.
 - Being outnumbered and the fight's length count only when you took a quarter of
   your health or more (`Appraisal.CONTESTED`). A signal the game didn't give is
   worth nothing, so without a fight record the grade is the level colour's.
@@ -99,6 +100,22 @@ as `fight` (`Appraisal.Record`): the bands that counted, each one's points, and
 the rule (`vengeance` or `grey`) when one set the grade instead of the score.
 Once the fight is read, its facts join them. `/ears debug` logs the arithmetic.
 Camped repeats are never graded.
+
+**Wording.** `FightSummary` builds the words from that saved record, with each
+reason's own words from `Reasons`. Under
+"Why it's <grade>", each reason gets a line with + or - and one to three
+squares for how much it counted. A story of one or two sentences closes the
+tooltip and follows the grade in chat. The pop-up names the strongest reason.
+A new band needs its line and story clause in `Reasons`, in this voice:
+
+- Use a player's units: health bars, "1v3", levels, time in combat.
+- Claim only what the band's test proves. Round amounts down and say "over" or
+  "nearly", never "nearly died" for damage taken, and "your side" for a count
+  that includes your group.
+- No list line starts with a digit, since after a sign it reads as a stat.
+- "Group member", never "ally", which reads as an Alliance player. "They" for
+  the victim.
+- No jabs, verdicts or slogans: the facts carry the drama.
 
 **Repeat kills.** Killing the same player again within `campWindow` (10 minutes
 by default) adds to that ear's count and restarts the window, instead of

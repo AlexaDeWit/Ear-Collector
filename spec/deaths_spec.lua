@@ -215,17 +215,20 @@ describe("deaths and vengeance", function()
 			local ear = killGrimbash()
 			assert.are.equal(5, ear.quality)
 			assert.are.equal(3, ear.vengeance)
-			assert.matches("|r Vengeance! You collected", wow.state().printed[#wow.state().printed])
+			assert.matches(
+				"|r Vengeance! You collected .*%(Legendary%)%. "
+					.. "They had taken your ear three times in a row%. You finally have theirs%.$",
+				wow.state().printed[#wow.state().printed]
+			)
 			local toast = ns.Toast.Active()[1]
 			assert.are.equal("Vengeance!", toast.label:GetText())
-			assert.matches("Avenged 3 deaths$", toast.detail:GetText())
+			assert.are.equal("Legendary · Avenged 3 deaths", toast.detail:GetText())
 			assert.are.equal(63971, wow.state().sounds[1].id)
-			local tooltip = ns.EarsTab.TooltipLines(ear)
-			local found = false
-			for _, line in ipairs(tooltip) do
-				found = found or (line.text or ""):find("^Vengeance: they had killed you 3 times") ~= nil
+			local text = {}
+			for _, line in ipairs(ns.EarsTab.TooltipLines(ear)) do
+				text[#text + 1] = line.text or line.left
 			end
-			assert.is_true(found)
+			assert.matches("\nVengeance for 3 deaths\n", table.concat(text, "\n"))
 		end)
 
 		it("clears the debt once taken", function()

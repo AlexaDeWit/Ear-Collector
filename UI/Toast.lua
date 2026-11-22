@@ -105,11 +105,16 @@ local function release(toast)
 	layout()
 end
 
---- One line under the name: the grade, level, race and class, then who landed
---- the blow. The label already says "Assist", except on a Vengeance ear.
+--- One line under the name: the grade and its strongest reason. Without one, the
+--- grade, level, race and class, then who landed the blow (the label already
+--- says "Assist", except on a Vengeance ear).
 ---@param ear table
 ---@return string
 function Toast.Detail(ear)
+	local reason = ns.FightSummary.Short(ear)
+	if reason then
+		return ("%s · %s"):format(ns.Quality(ear.quality).name, reason)
+	end
 	local parts, who = { ns.Quality(ear.quality).name }, {}
 	for _, part in ipairs({
 		ear.level and ("Level %d"):format(ear.level) or false,
