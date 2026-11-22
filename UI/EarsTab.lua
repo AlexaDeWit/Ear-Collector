@@ -1,7 +1,8 @@
--- The pouch's Ears tab: a grid of your ears, newest first, with a tooltip for each.
+-- The pouch's Ears tab: a grid of your ears, newest first, with a tooltip for
+-- each, less any grades hidden with the grade buttons (UI/GradeFilter.lua).
 local _, ns = ...
 
-local Art, Chat, Errors, Pouch = ns.Art, ns.Chat, ns.Errors, ns.Pouch
+local Art, Chat, Errors, GradeFilter, Pouch = ns.Art, ns.Chat, ns.Errors, ns.GradeFilter, ns.Pouch
 
 local EarsTab = {}
 ns.EarsTab = EarsTab
@@ -23,6 +24,7 @@ local NEW_GLOW = "bags-glow-white"
 local slots = {} ---@type EarCollector.Slot[]
 local countText ---@type FontString
 local emptyFrame ---@type Frame
+local emptyHeading, emptyLine ---@type FontString, FontString
 local page = 1
 local focused ---@type table?
 local newSince = GetServerTime() -- ears after this glow until hovered
@@ -38,6 +40,10 @@ local function newestFirst()
 		list[#list + 1] = ears[i]
 	end
 	return list
+end
+
+local function shownEars()
+	return ns.Ears.Filter(newestFirst(), ns.db and ns.db.hiddenGrades)
 end
 
 local function pageCount(total)
@@ -188,6 +194,7 @@ local function build(panel)
 	countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	countText:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -Pouch.PAD, -30)
 	countText:SetJustifyH("RIGHT")
+	GradeFilter.Build(panel, Pouch.PAD, -27)
 	for i = 1, Pouch.PER_PAGE do
 		slots[i] = newSlot(panel, i)
 	end
@@ -195,24 +202,32 @@ local function build(panel)
 	emptyFrame = CreateFrame("Frame", nil, panel)
 	emptyFrame:SetAllPoints()
 	emptyFrame:SetFrameLevel(slots[1]:GetFrameLevel() + 5)
-	local heading = emptyFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	heading:SetPoint("CENTER", emptyFrame, "CENTER", 0, 10)
-	heading:SetText("No ears yet")
-	local line = emptyFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-	line:SetPoint("TOP", heading, "BOTTOM", 0, -6)
-	line:SetWidth(Pouch.WIDTH - 2 * Pouch.PAD - 40)
-	line:SetText("Kill an enemy player in the open world, with your group or on your own.")
+	emptyHeading = emptyFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	emptyHeading:SetPoint("CENTER", emptyFrame, "CENTER", 0, 10)
+	emptyLine = emptyFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	emptyLine:SetPoint("TOP", emptyHeading, "BOTTOM", 0, -6)
+	emptyLine:SetWidth(Pouch.WIDTH - 2 * Pouch.PAD - 40)
 end
 
 local function refresh()
-	local ears = newestFirst()
+	local all = newestFirst()
+	local ears, hidden = ns.Ears.Filter(all, ns.db and ns.db.hiddenGrades)
 	page = math.min(math.max(page, 1), pageCount(#ears))
 	local first = (page - 1) * Pouch.PER_PAGE
 	for i, slot in ipairs(slots) do
 		fillSlot(slot, ears[first + i])
 	end
-	countText:SetText(Chat.EarCount(#ears, ns.Ears.CountAssists(ears)))
+	local count = Chat.EarCount(#ears, ns.Ears.CountAssists(ears))
+	countText:SetText(hidden > 0 and ("%s, %d hidden"):format(count, hidden) or count)
+	GradeFilter.Update(all)
 	emptyFrame:SetShown(#ears == 0)
+	if #all == 0 then
+		emptyHeading:SetText("No ears yet")
+		emptyLine:SetText("Kill an enemy player in the open world, with your group or on your own.")
+	else
+		emptyHeading:SetText("Every ear is hidden")
+		emptyLine:SetText("Click a grade button above to show its ears.")
+	end
 end
 
 Pouch.AddTab({
@@ -220,7 +235,7 @@ Pouch.AddTab({
 	build = build,
 	refresh = refresh,
 	pages = function()
-		return page, pageCount(ns.db and #ns.db.ears or 0)
+		return page, pageCount(#(shownEars()))
 	end,
 	setPage = function(n)
 		page = n
@@ -232,12 +247,17 @@ Pouch.AddTab({
 })
 
 --- Open the pouch on one ear: this tab, turned to its page, with the ear
---- highlighted and its tooltip showing.
+--- highlighted and its tooltip showing. A hidden grade is shown again.
 ---@param guid string
 ---@param at number
 ---@return boolean found
 function EarsTab.Focus(guid, at)
-	for index, ear in ipairs(newestFirst()) do
+	for _, ear in ipairs(ns.db and ns.db.ears or {}) do
+		if ear.guid == guid and ear.at == at then
+			ns.db.hiddenGrades[ear.quality] = nil
+		end
+	end
+	for index, ear in ipairs((shownEars())) do
 		if ear.guid == guid and ear.at == at then
 			Pouch.Open("Ears")
 			focused = ear
@@ -255,5 +275,5 @@ end
 
 --- The slots and labels, for specs.
 function EarsTab.Widgets()
-	return { slots = slots, count = countText, empty = emptyFrame }
+	return { slots = slots, count = countText, empty = emptyFrame, emptyHeading = emptyHeading }
 end

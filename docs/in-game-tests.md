@@ -170,6 +170,14 @@ This needs "Your deaths" to work.
    glow, and so does closing and reopening the pouch.
 11. With no ears yet (a new character), the pouch shows "No ears yet" over the
    empty grid, easy to read.
+12. Six small coloured squares sit at the top left of the Ears tab, grey to
+   orange. Hover the grey one: it says how many Poor ears you have and that
+   clicking hides them. Click it, with a checkbox click sound: the square dims
+   and gets a red line through it, your Poor ears leave the grid, and the count
+   at the top right ends with "N hidden". Close and reopen the pouch, then
+   `/reload`: they're still hidden. Click it again to bring them back.
+13. Hide Poor, then click a Poor ear's name in chat: the pouch opens on it and
+   the grey square is lit again. On another character, nothing is hidden.
 
 ## The pop-up
 

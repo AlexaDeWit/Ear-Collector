@@ -37,6 +37,10 @@ Open the pouch with `/ears`, your bags, the minimap addon drawer, a key binding
 (Key Bindings > AddOns), or by clicking an ear's name in chat. Escape closes it.
 The options are in Options > AddOns > Ear Collector.
 
+The small coloured buttons at the top left of the Ears tab hide or show each
+grade. Click the grey one to put away your Poor ears; they stay saved and still
+count in the Ledger and Rivals.
+
 | Command | What it does |
 |---|---|
 | `/ears` | Open or close the pouch |

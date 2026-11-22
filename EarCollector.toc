@@ -31,6 +31,7 @@ Detectors\PartyKill.lua
 Detectors\HonorKill.lua
 Detectors\Death.lua
 UI\Pouch.lua
+UI\GradeFilter.lua
 UI\EarsTab.lua
 UI\LedgerTab.lua
 UI\RivalsTab.lua
