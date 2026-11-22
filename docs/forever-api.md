@@ -179,12 +179,9 @@ addons such as Details read them instead of a combat log.
   `.CloseButton`. `PanelTabButtonTemplate` adds each tab to its parent's `Tabs`
   array, and `PanelTemplates_SetNumTabs` and `PanelTemplates_SetTab` drive them
   (`Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.lua`).
-- **Loot-toast art** (`Blizzard_FrameXML/Mainline/AlertFrameSystems`):
-  `loottoast-bg-horde` and `loottoast-bg-alliance` (PvP rewards),
-  `loottoast-glow`, `loottoast-itemborder-<white|green|blue|purple|orange>`, and
-  `LegendaryToast-background` for legendary items. The bags' new-item glow is
-  `bags-glow-white`, and an item button's frame is
-  `Interface\Common\WhiteIconFrame` (`Blizzard_ItemButton`).
+- **Bag art.** The bags' new-item glow is the atlas `bags-glow-white`, and an
+  item button's frame is `Interface\Common\WhiteIconFrame`
+  (`Blizzard_ItemButton`).
 - **Sounds.** `PlaySound(SOUNDKIT.<NAME>, "SFX")`, with names from Forever's
   `SoundKitConstants`, such as `UI_RAID_LOOT_TOAST_LESSER_ITEM_WON`,
   `UI_EPICLOOT_TOAST`, `UI_LEGENDARY_LOOT_TOAST`, `IG_CHARACTER_INFO_TAB`,

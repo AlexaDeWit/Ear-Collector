@@ -152,19 +152,20 @@ describe("loot toast", function()
 		assert.are.equal(3, sounds())
 	end)
 
-	it("uses Blizzard's loot-toast art, and plain colours when the client lacks it", function()
+	it("frames the ear in its grade colour, on a dark panel with a bronze edge", function()
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 		local toast = Toast.Active()[1]
-		assert.are.equal("loottoast-bg-alliance", toast.bg.atlas)
-		assert.are.equal("loottoast-itemborder-green", toast.iconBorder.atlas)
+		local uncommon, legendary = ns.QUALITY[2], ns.QUALITY[5]
+		assert.are.same({ uncommon.r, uncommon.g, uncommon.b, 1 }, toast.iconBorder.color)
+		assert.are.same({ 0.6, 0.48, 0.27, 0.9 }, toast.edge.color)
+		assert.is_true(toast.bg.color[1] < 0.1) -- dark
+		-- The edge is behind the panel, so only its rim shows.
+		assert.are.equal("BACKGROUND", toast.edge.layer)
+		assert.are.equal("BACKGROUND", toast.bg.layer)
+		assert.is_true(toast.edge.sublevel < toast.bg.sublevel)
+
 		Toast.Show({ guid = "Player-1-V", name = "Owed", quality = 5, vengeance = 3, at = 1 })
-		assert.are.equal("LegendaryToast-background", Toast.Active()[1].bg.atlas)
-		wow.state().atlases = {}
-		wow.fireEvent("PARTY_KILL", ME, GROUPMATE)
-		Toast.Show({ guid = "Player-1-W", name = "Plain", quality = 3, at = 1 })
-		assert.is_nil(Toast.Active()[1].bg.atlas)
-		assert.is_truthy(Toast.Active()[1].bg.color)
-		assert.are.same({}, ns.db.errors)
+		assert.are.same({ legendary.r, legendary.g, legendary.b, 0.9 }, Toast.Active()[1].edge.color)
 	end)
 
 	it("pops up a lost ear when an enemy player kills you", function()
@@ -173,6 +174,7 @@ describe("loot toast", function()
 			local toast = Toast.Active()[1]
 			assert.matches("Ear lost", toast.label:GetText())
 			assert.matches("Grimbash|r took your ear", toast.title:GetText())
+			assert.are.same({ 0.75, 0.12, 0.1, 0.9 }, toast.edge.color)
 			if debt == ns.Deaths.VENGEANCE then
 				assert.matches("Vengeance owed", toast.detail:GetText())
 			end

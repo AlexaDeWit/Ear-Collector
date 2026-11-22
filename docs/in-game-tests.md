@@ -173,12 +173,11 @@ This needs "Your deaths" to work.
 
 ## The pop-up
 
-1. Collect an ear. A pop-up appears at the bottom of the screen, above your
-   action bars, in Blizzard's loot style with your faction's background. It
-   shows the ear framed in its grade colour, the name in that colour, and one
-   line under it with the grade, level, race and class (and who landed the
-   blow). It glows briefly as it appears. It says "Ear collected" at the top,
-   or "Assist collected" for an assist.
+1. Collect an ear. A pop-up fades in at the bottom of the screen, above your
+   action bars: a dark panel with a thin bronze edge. It shows the ear framed
+   in its grade colour, the name in that colour, and one line under it with the
+   grade, level, race and class (and who landed the blow). It says "Ear
+   collected" at the top, or "Assist collected" for an assist.
 2. A loot sound plays, and a Rare or better ear plays the epic loot sound. A
    Poor ear is silent. Several ears in quick succession play one sound, unless a
    grander one follows.
@@ -186,7 +185,7 @@ This needs "Your deaths" to work.
    tooltip, which ends with what clicking does.
 4. Left-click opens the pouch on that ear. Right-click dismisses it.
 5. Several ears at once stack upward, up to three.
-6. A Vengeance ear's pop-up uses Blizzard's legendary style.
+6. A Vengeance ear's pop-up says "Vengeance!" and has an orange edge.
 7. Die to an enemy player: a red pop-up says "<name> took your ear", and says
    "Vengeance owed" on the third death. Clicking it opens the Rivals tab.
 8. `/ears popup move` (or "Move pop-up" in the options) shows a blue stand-in.
