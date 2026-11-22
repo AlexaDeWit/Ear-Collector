@@ -13,7 +13,8 @@ CONTRIBUTING.md -> "Pull requests" has the rules for this body.
 ## Consequences
 
 <!-- Player-visible changes, trade-offs, steps from docs/in-game-tests.md that
-     apply. One sentence each. Delete the section when there are none. -->
+     apply, and any change to what's saved (its schema step and saved-file
+     fixture). One sentence each. Delete the section when there are none. -->
 
 <!-- AI assistance: see CONTRIBUTING.md -> "AI-assisted contributions".
      Name the tool, or delete the line. -->

@@ -171,7 +171,8 @@ local function appraise(db, entry)
 	local result = Appraisal.Appraise(kill.appraise, facts)
 	local before = ear.quality
 	ear.quality, ear.pending = result.quality, nil
-	ear.fight = {
+	ear.fight = Appraisal.Record(kill.appraise, result)
+	for key, value in pairs({
 		read = facts.read,
 		enemies = facts.enemies,
 		allies = facts.allies,
@@ -184,12 +185,9 @@ local function appraise(db, entry)
 		disrupts = facts.disrupts,
 		allyDeaths = facts.allyDeaths,
 		died = facts.died,
-		debt = kill.appraise.debt,
-		earlier = kill.appraise.earlier,
-		score = result.score,
-		fightScore = result.fightScore,
-		why = result.why,
-	}
+	}) do
+		ear.fight[key] = value
+	end
 	ns.Trace(
 		db,
 		"APPRAISAL",

@@ -38,6 +38,8 @@ describe("grading an ear from its fight", function()
 		it("waits for the fight to end, saying so in chat, with no pop-up yet", function()
 			local ear = ns.db.ears[1]
 			assert.is_true(ear.pending)
+			-- Graded by the kill alone, so far.
+			assert.are.same({ false, 0, {} }, { ear.fight.read, ear.fight.score, ear.fight.why })
 			assert.are.equal(1, wow.printed("You collected .*Grimbash's Ear.*%. Appraising the fight%.%.%.$"))
 			assert.are.equal(0, #ns.Toast.Active())
 			local text = {}
@@ -54,6 +56,7 @@ describe("grading an ear from its fight", function()
 			assert.is_nil(ear.pending)
 			assert.are.equal(3, ear.quality) -- near death and a long fight: Rare
 			assert.are.same({ "nearDeath", "longFight" }, ear.fight.why)
+			assert.are.same({ nearDeath = 8, longFight = 2 }, ear.fight.points)
 			assert.are.same({ true, 1, 1, 40, 1.2 }, {
 				ear.fight.read,
 				ear.fight.enemies,
@@ -142,7 +145,19 @@ describe("grading an ear from its fight", function()
 		local ear = ns.db.ears[1]
 		assert.are.equal(1, ear.fight.debt)
 		assert.are.equal(3, ear.quality) -- Uncommon raised by one death owed
+		assert.are.same({ revenge = 9 }, ear.fight.points)
 		assert.are.equal("Revenge!", ns.Toast.Active()[1].label:GetText())
+	end)
+
+	it("notes when Vengeance or a grey victim set the grade instead of the fight", function()
+		for _ = 1, 3 do
+			ns.RecordDeath(ns.db, { guid = GRIMBASH, name = "Grimbash", class = "WARRIOR", race = "Orc", level = 60 })
+		end
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		wow.state().players[KORGA].level = 30
+		wow.fireEvent("PARTY_KILL", ME, KORGA)
+		assert.are.same({ 5, "vengeance" }, { ns.db.ears[1].quality, ns.db.ears[1].fight.rule })
+		assert.are.same({ 0, "grey" }, { ns.db.ears[2].quality, ns.db.ears[2].fight.rule })
 	end)
 
 	it("lowers a second ear from the same player that day", function()
@@ -175,6 +190,7 @@ describe("grading an ear from its fight", function()
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 		assert.are.equal(1, #ns.db.ears)
 		assert.are.equal(2, ns.db.ears[1].quality)
+		assert.is_false(ns.db.ears[1].fight.read) -- its grade from the kill alone, and why
 		assert.are.equal(1, wow.printed("You collected .*Grimbash's Ear"))
 		assert.are.equal(1, #ns.Toast.Active())
 		assert.are.equal("appraisal", ns.db.errors[1].where)

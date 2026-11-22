@@ -58,6 +58,7 @@ end
 --- enough for a Vengeance ear (set by ns.Collect from Deaths.Debt)
 ---@field appraise table? the kill's terms for Appraisal.Appraise (set by ns.Collect)
 ---@field quality integer? the grade before the fight is read (set by ns.Collect)
+---@field fight table? how that grade was reached, saved on the ear (set by ns.Collect)
 
 -- Grades follow the colour the game gives the victim's level
 -- (GetRelativeDifficultyColor in Blizzard_FrameXMLUtil/Mainline/DifficultyUtil.lua):
@@ -163,6 +164,7 @@ function Ears.Record(db, kill, now)
 		camped = 0,
 		quality = kill.quality or kill.vengeance and 5 or Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange),
 		vengeance = kill.vengeance,
+		fight = kill.fight,
 	}
 	db.ears[#db.ears + 1] = ear
 	return ear, true

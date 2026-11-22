@@ -18,6 +18,7 @@ suggestions.
 | Work | Read next |
 |---|---|
 | Change detection, grading or saved data | [`docs/architecture.md`](docs/architecture.md), then [`docs/forever-api.md`](docs/forever-api.md) |
+| Change what's saved, or how it loads | [`docs/architecture.md`](docs/architecture.md#changing-whats-saved), then [`docs/testing.md`](docs/testing.md#saved-files-from-past-releases) |
 | Call a game API or hook the interface | [`docs/forever-api.md`](docs/forever-api.md) |
 | Add or change specs, or turn a debug log into a fixture | [`docs/testing.md`](docs/testing.md) |
 | Change the ear art | [`docs/art.md`](docs/art.md) |
