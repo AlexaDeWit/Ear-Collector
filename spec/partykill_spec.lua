@@ -141,7 +141,7 @@ describe("PARTY_KILL detection", function()
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 		assert.are.equal(1, #ns.db.ears)
 		assert.are.equal(1, ns.db.ears[1].camped)
-		assert.matches("Camped Grimbash again %(kill 2%)", wow.state().printed[2])
+		assert.matches("Camped |cffc69b6dGrimbash|r again %(kill 2%)", wow.state().printed[2])
 	end)
 
 	it("stays quiet when announcements are off", function()

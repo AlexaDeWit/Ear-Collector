@@ -59,6 +59,15 @@ function Chat.ClassHex(token)
 	return nil
 end
 
+--- `text` in a class's colour, or plain for an unknown class.
+---@param text string
+---@param class any English class token, e.g. "WARRIOR"
+---@return string
+function Chat.InClassColour(text, class)
+	local hex = Chat.ClassHex(class)
+	return hex and ("|c%s%s|r"):format(hex, text) or text
+end
+
 --- Show tooltip lines ({ text, r, g, b } or { left, right, r, g, b }) on `owner`.
 ---@param owner Frame
 ---@param anchor string e.g. "ANCHOR_RIGHT"
@@ -139,8 +148,7 @@ end
 ---@return string
 function Chat.ClassName(class, className)
 	local name = className or (class and LOCALIZED_CLASS_NAMES_MALE[class]) or class or "Unknown class"
-	local hex = Chat.ClassHex(class)
-	return hex and ("|c%s%s|r"):format(hex, name) or name
+	return Chat.InClassColour(name, class)
 end
 
 --- The ear an ear link points at.
@@ -179,7 +187,8 @@ function Chat.Announce(ear, isNew)
 		end
 		Chat.Print(("You collected %s (%s).%s"):format(Chat.EarLink(ear), quality.name, by))
 	else
-		Chat.Print(("Camped %s again (kill %d). No new ear."):format(ear.name, ear.camped + 1))
+		local name = Chat.InClassColour(ear.name, ear.class)
+		Chat.Print(("Camped %s again (kill %d). No new ear."):format(name, ear.camped + 1))
 	end
 end
 
@@ -187,8 +196,7 @@ end
 ---@param death table
 ---@param debt integer deaths to them since you last killed them, this one included
 function Chat.AnnounceDeath(death, debt)
-	local hex = Chat.ClassHex(death.class) or "ffffffff"
-	local who = ("%s|c%s%s|r"):format(Chat.RaceIcon(death.race, death.sex), hex, death.name)
+	local who = Chat.RaceIcon(death.race, death.sex) .. Chat.InClassColour(death.name, death.class)
 	if debt >= ns.Deaths.VENGEANCE then
 		local legendary = ns.QUALITY[5]
 		Chat.Print(
