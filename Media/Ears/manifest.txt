@@ -1,5 +1,5 @@
 size 128
-source 324eddf93c27528bc53925d2c905d5cdb16a3cc7f111429c36aea10356a43c83 art/paint_ears.py
+source c9126f261366082b778d149a2614438cf7f72222b3709b35b326b76512f717a7 art/paint_ears.py
 texture dwarf-1
 texture dwarf-2
 texture dwarf-3

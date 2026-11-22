@@ -709,18 +709,40 @@ RACES = {
 }
 
 
-FRAMING = {  # (degrees clockwise, scale, dx, dy) applied before the shadow
-    "human": (16, 1.0, 14, -18),
-    "dwarf": (10, 0.98, 4, -10),
-    "gnome": (14, 0.98, 10, -16),
-    "undead": (16, 1.0, 14, -18),
-    "generic": (16, 1.0, 14, -18),
-    "orc": (10, 0.98, 4, -12),
-    "nightelf": (0, 0.98, 0, -4),
-    "skyborne": (0, 0.98, 10, -4),
-    "troll": (-6, 0.98, -6, 0),
-    "tauren": (10, 1.0, -14, 4),
+TILT = {  # degrees clockwise, applied before the ear is fitted to the canvas
+    "human": 16,
+    "dwarf": 10,
+    "gnome": 14,
+    "undead": 16,
+    "generic": 16,
+    "orc": 10,
+    "nightelf": 0,
+    "skyborne": 0,
+    "troll": -6,
+    "tauren": 10,
 }
+MARGIN = 0.06  # of the canvas, left clear around the fitted ear for the shadow
+
+
+def fit(rgb, alpha):
+    """Scale and move the ear so its bounding box fills the canvas, centred."""
+    ys, xs = np.nonzero(alpha > 0.05)
+    left, right, top, bottom = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    room = S * (1 - 2 * MARGIN)
+    scale = min(room / (right - left), room / (bottom - top))
+    # Output (x, y) samples input (x / scale + c, y / scale + f), putting the box centre at the canvas centre.
+    c = (left + right) / 2 - (S / 2) / scale
+    f = (top + bottom) / 2 - (S / 2) / scale
+    rgba = np.dstack([rgb * alpha[..., None], alpha]).astype(np.float32)
+    coeffs = (1 / scale, 0, c, 0, 1 / scale, f)
+    channels = []
+    for i in range(4):
+        ch = Image.fromarray(rgba[..., i], mode="F")
+        channels.append(np.asarray(ch.transform((S, S), Image.AFFINE, coeffs, resample=Image.BICUBIC)))
+    out = np.dstack(channels)
+    alpha2 = np.clip(out[..., 3], 0, 1)
+    rgb2 = out[..., :3] / np.maximum(alpha2[..., None], 1e-6)
+    return np.clip(rgb2, 0, None), alpha2
 
 
 def frame(rgb, alpha, angle, scale, dx, dy):
@@ -745,8 +767,9 @@ def frame(rgb, alpha, angle, scale, dx, dy):
 
 def render(name, palette):
     rgb, alpha = over(RACES[name](palette))
-    rgb, alpha = frame(rgb, alpha, *FRAMING[name])
-    shadow = blur(shift(alpha, 9, 11), 8) * 0.6
+    rgb, alpha = frame(rgb, alpha, TILT[name], 1, 0, 0)
+    rgb, alpha = fit(rgb, alpha)
+    shadow = blur(shift(alpha, 3, 4), 3) * 0.6
     out_alpha = alpha + shadow * (1 - alpha)
     out_rgb = rgb * alpha[..., None] / np.maximum(out_alpha[..., None], 1e-6)
     srgb = linear_to_srgb(out_rgb)

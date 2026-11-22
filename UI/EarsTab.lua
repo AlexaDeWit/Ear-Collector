@@ -7,18 +7,30 @@ local EarsTab = {}
 ns.EarsTab = EarsTab
 
 local GREY = { 0.62, 0.62, 0.62 }
+-- Blizzard's own bag-slot art (Blizzard_ItemButton, ContainerFrame.lua).
+local BORDER = "Interface\\Common\\WhiteIconFrame"
+local HIGHLIGHT = "Interface\\Buttons\\ButtonHilight-Square"
+local NEW_GLOW = "bags-glow-white"
 
 ---@class EarCollector.Slot : Button
 ---@field icon Texture
----@field edges Texture[]
+---@field border Texture tinted by grade, shown from Uncommon up, as bags show it
+---@field dot Texture the victim's class colour
+---@field new Texture glows on an ear collected since the pouch last closed
 ---@field count FontString
----@field glow Texture
 ---@field ear table?
 
 local slots = {} ---@type EarCollector.Slot[]
-local countText, emptyText ---@type FontString, FontString
+local countText ---@type FontString
+local emptyFrame ---@type Frame
 local page = 1
 local focused ---@type table?
+local newSince = GetServerTime() -- ears after this glow until hovered
+local seen = {} ---@type table<table, true> ears hovered since the pouch opened
+
+local function isNew(ear)
+	return ear.at > newSince and not seen[ear]
+end
 
 local function newestFirst()
 	local list, ears = {}, ns.db and ns.db.ears or {}
@@ -88,6 +100,8 @@ end
 local function showTooltip(slot)
 	if slot.ear then
 		Chat.ShowTooltip(slot, "ANCHOR_RIGHT", EarsTab.TooltipLines(slot.ear))
+		seen[slot.ear] = true
+		slot.new:Hide()
 	end
 end
 
@@ -110,25 +124,27 @@ local function newSlot(parent, index)
 	slot.icon:SetPoint("TOPLEFT", 2, -2)
 	slot.icon:SetPoint("BOTTOMRIGHT", -2, 2)
 
-	-- A border in the grade's colour, from four thin textures.
-	slot.edges = {}
-	for _, side in ipairs({ "TOP", "BOTTOM", "LEFT", "RIGHT" }) do
-		local edge = slot:CreateTexture(nil, "OVERLAY")
-		if side == "TOP" or side == "BOTTOM" then
-			edge:SetPoint(side .. "LEFT")
-			edge:SetPoint(side .. "RIGHT")
-			edge:SetHeight(2)
-		else
-			edge:SetPoint("TOP" .. side)
-			edge:SetPoint("BOTTOM" .. side)
-			edge:SetWidth(2)
-		end
-		slot.edges[#slot.edges + 1] = edge
+	slot.border = slot:CreateTexture(nil, "OVERLAY")
+	slot.border:SetAllPoints()
+	slot.border:SetTexture(BORDER)
+
+	slot.new = slot:CreateTexture(nil, "OVERLAY", nil, 1)
+	slot.new:SetAllPoints()
+	slot.new:SetBlendMode("ADD")
+	if C_Texture.GetAtlasInfo(NEW_GLOW) then
+		slot.new:SetAtlas(NEW_GLOW)
+	else
+		slot.new:SetColorTexture(1, 1, 1, 0.25)
 	end
 
-	slot.glow = slot:CreateTexture(nil, "HIGHLIGHT")
-	slot.glow:SetAllPoints()
-	slot.glow:SetColorTexture(1, 0.82, 0.2, 0.25)
+	slot.dot = slot:CreateTexture(nil, "OVERLAY", nil, 2)
+	slot.dot:SetSize(5, 5)
+	slot.dot:SetPoint("TOPLEFT", 4, -4)
+
+	local highlight = slot:CreateTexture(nil, "HIGHLIGHT")
+	highlight:SetAllPoints()
+	highlight:SetTexture(HIGHLIGHT)
+	highlight:SetBlendMode("ADD")
 
 	slot.count = slot:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 	slot.count:SetPoint("BOTTOMRIGHT", -3, 3)
@@ -143,16 +159,23 @@ local function fillSlot(slot, ear)
 	slot:SetAlpha(ear and 1 or 0.6)
 	slot.icon:SetShown(ear ~= nil)
 	slot.count:SetText(ear and (ear.camped or 0) > 0 and tostring(ear.camped + 1) or "")
+	slot.new:SetShown(ear ~= nil and isNew(ear))
 	local quality = ear and ns.Quality(ear.quality)
-	for _, edge in ipairs(slot.edges) do
-		edge:SetShown(ear ~= nil)
-		if quality then
-			edge:SetColorTexture(quality.r, quality.g, quality.b, 1)
-		end
+	slot.border:SetShown(ear ~= nil and ear.quality >= 2)
+	if quality then
+		slot.border:SetVertexColor(quality.r, quality.g, quality.b)
+	end
+	local hex = ear and Chat.ClassHex(ear.class)
+	slot.dot:SetShown(hex ~= nil)
+	if hex then
+		slot.dot:SetColorTexture(Chat.RGB(hex))
 	end
 	if ear then
+		local poor = ear.quality == 0
 		slot.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
-		slot.icon:SetDesaturated(ear.quality == 0)
+		slot.icon:SetDesaturated(poor) -- and dimmed, so a Poor ear doesn't read as an undead one
+		local shade = poor and 0.6 or 1
+		slot.icon:SetVertexColor(shade, shade, shade)
 	end
 	if focused and ear == focused then
 		slot:LockHighlight()
@@ -168,10 +191,17 @@ local function build(panel)
 	for i = 1, Pouch.PER_PAGE do
 		slots[i] = newSlot(panel, i)
 	end
-	emptyText = panel:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-	emptyText:SetPoint("CENTER", panel, "CENTER", 0, 0)
-	emptyText:SetWidth(Pouch.WIDTH - 2 * Pouch.PAD - 20)
-	emptyText:SetText("No ears yet. Kill an enemy player in the open world, with your group or on your own.")
+	-- Above the slots, so it doesn't show through them.
+	emptyFrame = CreateFrame("Frame", nil, panel)
+	emptyFrame:SetAllPoints()
+	emptyFrame:SetFrameLevel(slots[1]:GetFrameLevel() + 5)
+	local heading = emptyFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	heading:SetPoint("CENTER", emptyFrame, "CENTER", 0, 10)
+	heading:SetText("No ears yet")
+	local line = emptyFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	line:SetPoint("TOP", heading, "BOTTOM", 0, -6)
+	line:SetWidth(Pouch.WIDTH - 2 * Pouch.PAD - 40)
+	line:SetText("Kill an enemy player in the open world, with your group or on your own.")
 end
 
 local function refresh()
@@ -182,7 +212,7 @@ local function refresh()
 		fillSlot(slot, ears[first + i])
 	end
 	countText:SetText(Chat.EarCount(#ears, ns.Ears.CountAssists(ears)))
-	emptyText:SetShown(#ears == 0)
+	emptyFrame:SetShown(#ears == 0)
 end
 
 Pouch.AddTab({
@@ -197,6 +227,7 @@ Pouch.AddTab({
 	end,
 	onHide = function()
 		focused = nil
+		newSince, seen = GetServerTime(), {}
 	end,
 })
 
@@ -224,5 +255,5 @@ end
 
 --- The slots and labels, for specs.
 function EarsTab.Widgets()
-	return { slots = slots, count = countText, empty = emptyText }
+	return { slots = slots, count = countText, empty = emptyFrame }
 end

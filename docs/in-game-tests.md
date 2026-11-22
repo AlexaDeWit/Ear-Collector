@@ -154,9 +154,16 @@ This needs "Your deaths" to work.
 7. Drag the pouch somewhere else, `/reload`, and open it again. It's where you
    left it.
 8. Each slot shows the victim's race as an ear (orc, troll, tauren, undead,
-   Skyborne and so on) in one of four skin tones, and the same player always
-   gets the same tone. Poor ears are greyed out. If a slot shows a plain green
-   square, the picture didn't load: note which race.
+   Skyborne and so on) filling the slot, in one of four skin tones, and the
+   same player always gets the same tone. Uncommon and better ears have a frame
+   in their grade colour, like items in your bags; Common and Poor have none.
+   Poor ears are grey and dimmed. A small dot in the corner shows the victim's
+   class colour. If a slot shows a plain green square, the picture didn't load:
+   note which race.
+9. Collect an ear, then open the pouch: its slot glows. Hovering it stops the
+   glow, and so does closing and reopening the pouch.
+10. With no ears yet (a new character), the pouch shows "No ears yet" over the
+   empty grid, easy to read.
 
 ## The pop-up
 

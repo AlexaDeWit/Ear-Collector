@@ -126,6 +126,13 @@ function Chat.Date(t, style)
 	return day
 end
 
+--- "ffRRGGBB" as r, g, b from 0 to 1.
+---@param hex string
+---@return number r, number g, number b
+function Chat.RGB(hex)
+	return tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255, tonumber(hex:sub(7, 8), 16) / 255
+end
+
 --- A class's localized name in its class colour.
 ---@param class string? English token, e.g. "WARRIOR"
 ---@param className string? the localized name, when known

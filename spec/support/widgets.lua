@@ -180,6 +180,15 @@ end
 function widgetMethods:UnlockHighlight()
 	self.highlightLocked = false
 end
+function widgetMethods:SetVertexColor(r, g, b, a)
+	self.vertexColor = { r, g, b, a }
+end
+function widgetMethods:SetFrameLevel(level)
+	self.frameLevel = level
+end
+function widgetMethods:GetFrameLevel()
+	return self.frameLevel or (self.parent and self.parent.GetFrameLevel and self.parent:GetFrameLevel() + 1) or 0
+end
 function widgetMethods:SetAlpha(alpha)
 	self.alpha = alpha
 end
