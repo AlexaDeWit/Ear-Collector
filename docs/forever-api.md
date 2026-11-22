@@ -159,7 +159,10 @@ addons such as Details read them instead of a combat log.
   windows when the interface comes back after Alt+Z.
 - **Chat links.** `|Haddon:<addon>:<data>|h<text>|h` is an addon link. Clicking
   one fires the `EventRegistry` callback `"SetItemRef"` with
-  `(owner, link, text, button, frame)`.
+  `(owner, link, text, button, frame)`. Hovering any link fires
+  `"ChatFrame.OnHyperlinkEnter"` with `(owner, chatFrame, link, text, ...)`, and
+  leaving it `"ChatFrame.OnHyperlinkLeave"` with `(owner, chatFrame)`
+  (`ChatFrameMixin`, `Blizzard_ChatFrameBase/Shared/ChatFrame.lua`).
 - **Escape.** The Escape binding runs `ToggleGameMenu` (`Blizzard_GameMenuEsc`),
   which offers the key to handlers in `GameMenuEscPriority` order: dialogs,
   menus, casting (`SpellStopCasting`), the game menu and settings, Blizzard's
@@ -184,7 +187,8 @@ addons such as Details read them instead of a combat log.
   `Interface\Common\WhiteIconFrame` (`Blizzard_ItemButton`).
 - **Sounds.** `PlaySound(SOUNDKIT.<NAME>, "SFX")`, with names from Forever's
   `SoundKitConstants`, such as `UI_RAID_LOOT_TOAST_LESSER_ITEM_WON`,
-  `UI_EPICLOOT_TOAST`, `UI_LEGENDARY_LOOT_TOAST` and `IG_CHARACTER_INFO_TAB`.
+  `UI_EPICLOOT_TOAST`, `UI_LEGENDARY_LOOT_TOAST`, `IG_CHARACTER_INFO_TAB`,
+  `IG_BACKPACK_OPEN`, `IG_BACKPACK_CLOSE` and `IG_ABILITY_PAGE_TURN`.
 
 ## The Settings screen
 

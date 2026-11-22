@@ -194,7 +194,8 @@ every API return, and repair of saved data on load.
   - Your bags, through `hooksecurefunc` post-hooks on the bag functions. The
     pouch closes with the bags only if the bags opened it, and a merchant, bank,
     mailbox or trade window opening your bags leaves it closed.
-  - Ear links in chat: `|Haddon:EarCollector:ear:<guid>:<time>|h`.
+  - Ear links in chat: `|Haddon:EarCollector:ear:<guid>:<time>|h`. Hovering
+    one shows the ear's tooltip, and clicking it opens the pouch on the ear.
 - **Escape.** The pouch appends its frame name to `UISpecialFrames` once, when
   it's built. Blizzard reads that list inside `securecall`, so the addon's entry
   can't taint the rest of Escape. It's the one write to a Blizzard global the

@@ -47,6 +47,12 @@ local function hideTooltip()
 	GameTooltip:Hide()
 end
 
+local function playSound(name)
+	if SOUNDKIT and SOUNDKIT[name] then
+		PlaySound(SOUNDKIT[name], "SFX")
+	end
+end
+
 local function savePosition()
 	if frame and ns.db then
 		local point, _, relativePoint, x, y = frame:GetPoint(1)
@@ -114,6 +120,7 @@ local function pageButton(direction, point, x)
 	button:SetScript(
 		"OnClick",
 		Errors.Wrap("pouch paging", function()
+			playSound("IG_ABILITY_PAGE_TURN")
 			Pouch.SetPage((Pouch.GetPage()) + direction)
 		end)
 	)
@@ -127,7 +134,8 @@ local function build()
 	-- New frames start shown: hide before OnHide exists so building runs no close handler.
 	f:Hide()
 	f:SetSize(Pouch.WIDTH, Pouch.HEIGHT)
-	f:SetFrameStrata("HIGH")
+	f:SetFrameStrata("MEDIUM") -- like Blizzard's panels, raised above them when clicked
+	f:SetToplevel(true)
 	f:SetClampedToScreen(true)
 	f:SetMovable(true)
 	f:EnableMouse(true)
@@ -155,6 +163,9 @@ local function build()
 	f:SetScript(
 		"OnHide",
 		Errors.Wrap("pouch close", function()
+			if not openedWithBags then
+				playSound("IG_BACKPACK_CLOSE") -- the bags play their own
+			end
 			openedWithBags = false
 			hideTooltip()
 			for _, tab in ipairs(tabs) do
@@ -180,9 +191,7 @@ local function build()
 			"OnClick",
 			Errors.Wrap("pouch tabs", function()
 				hideTooltip()
-				if SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then
-					PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB, "SFX")
-				end
+				playSound("IG_CHARACTER_INFO_TAB")
 				Pouch.SelectTab(i)
 			end)
 		)
@@ -273,7 +282,9 @@ function Pouch.IsShown()
 	return frame ~= nil and frame:IsShown()
 end
 
-function Pouch.Show()
+--- Show the window. `quiet` skips the opening sound, for when the bags play theirs.
+---@param quiet boolean?
+function Pouch.Show(quiet)
 	if not ns.db or buildFailed then
 		return
 	end
@@ -288,6 +299,9 @@ function Pouch.Show()
 	end
 	if frame and not frame:IsShown() then
 		frame:Show()
+		if not quiet then
+			playSound("IG_BACKPACK_OPEN")
+		end
 	end
 	Pouch.Refresh()
 end
@@ -320,7 +334,7 @@ end
 --- Bags opened: show the pouch beside them, remembering that the bags opened it.
 function Pouch.ShowWithBags()
 	if not Pouch.IsShown() then
-		Pouch.Show()
+		Pouch.Show(true)
 		openedWithBags = Pouch.IsShown()
 	end
 end

@@ -27,6 +27,9 @@ return function(state, frames)
 		UI_EPICLOOT_TOAST = 31578,
 		UI_LEGENDARY_LOOT_TOAST = 63971,
 		IG_CHARACTER_INFO_TAB = 841,
+		IG_ABILITY_PAGE_TURN = 836,
+		IG_BACKPACK_OPEN = 862,
+		IG_BACKPACK_CLOSE = 863,
 	}
 	_G.PlaySound = function(soundKitID, channel)
 		state.sounds[#state.sounds + 1] = { id = soundKitID, channel = channel }

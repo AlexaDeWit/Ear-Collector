@@ -57,7 +57,7 @@ describe("pouch tabs", function()
 			assert.are.equal("Ledger", Pouch.ActiveTab())
 			assert.are.equal(2, _G.EarCollectorPouch.selectedTab)
 			assert.is_false(ns.EarsTab.Widgets().slots[1]:IsShown() and ns.EarsTab.Widgets().slots[1].parent:IsShown())
-			assert.are.same({ id = 841, channel = "SFX" }, wow.state().sounds[1])
+			assert.are.same({ id = 841, channel = "SFX" }, wow.state().sounds[2]) -- after the pouch's opening sound
 			tab("Ears"):Click()
 			assert.is_true(ns.EarsTab.Widgets().slots[1].parent:IsShown())
 		end)
