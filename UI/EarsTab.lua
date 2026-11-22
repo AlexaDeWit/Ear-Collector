@@ -90,6 +90,11 @@ function EarsTab.TooltipLines(ear)
 			{ legendary.r, legendary.g, legendary.b }
 		)
 	end
+	if ear.pending then
+		add("Appraising the fight...", GREY)
+	elseif type(ear.fight) == "table" then
+		add(ns.FightSummary.Summary(ear.fight, 4), ear.fight.read and { 1, 1, 1 } or GREY)
+	end
 	if ear.yourLevel then
 		add(("You were level %d"):format(ear.yourLevel), GREY)
 	end

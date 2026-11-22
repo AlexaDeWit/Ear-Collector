@@ -144,26 +144,41 @@ function ns.RecordDeath(db, killer, spell)
 	return death, debt
 end
 
---- Record an ear and announce it. A kill of someone you owe vengeance becomes
---- a Legendary Vengeance ear.
+--- Record an ear and announce it. Its grade comes from the kill and its fight
+--- (Core/Appraisal.lua): a kill in combat is graded and popped up when the
+--- fight ends. A kill of someone you owe vengeance is a Legendary Vengeance ear.
 ---@param db table
 ---@param kill EarCollector.Kill with `by` set
 ---@return table ear
 ---@return boolean isNew
 function ns.Collect(db, kill)
+	local now = GetServerTime()
 	local debt = ns.Deaths.Debt(db, kill.guid)
 	if debt >= ns.Deaths.VENGEANCE then
 		kill.vengeance = debt
 	end
-	local ear, isNew = ns.Ears.Record(db, kill, GetServerTime())
-	-- UI work runs in its own Errors.Call: a UI bug must never switch off detection.
+	kill.appraise = {
+		level = ns.Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange),
+		debt = debt,
+		earlier = ns.Ears.CountFrom(db, kill.guid, now - ns.Appraisal.DAY),
+		assist = kill.by == "assist",
+	}
+	kill.quality = ns.Appraisal.Appraise(kill.appraise).quality -- until the fight is read
+	local ear, isNew = ns.Ears.Record(db, kill, now)
+	-- Grading and UI work run in their own Errors.Call: a bug there must never
+	-- switch off detection. A failed grading keeps the ungraded grade.
+	local waiting = false
+	if isNew then
+		local ok, result = Errors.Call("appraisal", ns.FightFacts.Hold, db, ear, kill)
+		waiting = ok and result == true
+	end
 	if db.settings.announce then
-		Errors.Call("chat", Chat.Announce, ear, isNew)
+		Errors.Call("chat", Chat.Announce, ear, isNew, waiting)
 	end
 	if ns.Pouch then
 		Errors.Call("pouch refresh", ns.Pouch.Refresh)
 	end
-	if isNew and ns.Toast then
+	if isNew and not waiting and ns.Toast then
 		Errors.Call("toast", ns.Toast.Show, ear)
 	end
 	return ear, isNew

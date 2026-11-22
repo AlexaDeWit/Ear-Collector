@@ -82,7 +82,11 @@ function RivalsTab.TooltipLines(rival)
 		add(("Last killed you: %s"):format(ns.Chat.Date(rival.lastDeathAt, "full")), GREY)
 	end
 	local mark = Rivals.Mark(rival)
-	if mark == "Avenge" then
+	local revenge = ("Revenge owed: they've killed you %s since you last killed them. %s"):format(
+		times(rival.debt),
+		"Their next ear is worth more."
+	)
+	if rival.vengeance then
 		add(
 			("Vengeance owed: they've killed you %d times since you last killed them. Their next ear is Legendary."):format(
 				rival.debt
@@ -91,6 +95,11 @@ function RivalsTab.TooltipLines(rival)
 		)
 	elseif mark == "Nemesis" then
 		add("Nemesis: they've killed you more often than you've killed them", MARK_COLORS.Nemesis)
+		if rival.owed then
+			add(revenge, MARK_COLORS.Avenge)
+		end
+	elseif mark == "Avenge" then
+		add(revenge, MARK_COLORS.Avenge)
 	elseif mark == "Prey" then
 		add(
 			("Prey: you've killed them %d or more times, and they've never killed you"):format(Rivals.PREY),

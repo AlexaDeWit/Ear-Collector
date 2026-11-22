@@ -97,6 +97,13 @@ function DamageMeter.EnemyPlayers(sessionIDs)
 	return damaged
 end
 
+--- Your latest fight: { start, finish? } in GetTime(), and its meter sessionID
+--- once it has ended. Nil before your first fight this session.
+---@return table|nil
+function DamageMeter.Fight()
+	return fight
+end
+
 local function check()
 	checkScheduled = false
 	local db = ns.db

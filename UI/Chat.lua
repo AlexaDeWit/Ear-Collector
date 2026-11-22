@@ -163,10 +163,22 @@ function Chat.ParseEarLink(link)
 	return guid, tonumber(at)
 end
 
+-- " Hard-fought: alone against 3, 35 seconds." for an ear whose fight was read.
+local function fightSentence(ear)
+	local fight = ear.fight
+	if type(fight) ~= "table" or not fight.read then
+		return ""
+	end
+	return (" %s."):format(ns.FightSummary.Summary(fight, 3))
+end
+
 ---@param ear table
 ---@param isNew boolean
-function Chat.Announce(ear, isNew)
-	if isNew then
+---@param waiting boolean? graded when the fight ends
+function Chat.Announce(ear, isNew, waiting)
+	if isNew and waiting then
+		Chat.Print(("You collected %s. Appraising the fight..."):format(Chat.EarLink(ear)))
+	elseif isNew then
 		local quality = ns.Quality(ear.quality)
 		local by = ""
 		if ear.by == "group" then
@@ -176,21 +188,30 @@ function Chat.Announce(ear, isNew)
 		end
 		if ear.vengeance then
 			Chat.Print(
-				("Vengeance! You collected %s (%s). They had killed you %d times.%s"):format(
+				("Vengeance! You collected %s (%s). They had killed you %d times.%s%s"):format(
 					Chat.EarLink(ear),
 					quality.name,
 					ear.vengeance,
-					by
+					by,
+					fightSentence(ear)
 				)
 			)
 			return
 		end
-		Chat.Print(("You collected %s (%s).%s"):format(Chat.EarLink(ear), quality.name, by))
+		Chat.Print(("You collected %s (%s).%s%s"):format(Chat.EarLink(ear), quality.name, by, fightSentence(ear)))
 	else
 		local name = Chat.InClassColour(ear.name, ear.class)
 		Chat.Print(("Camped %s again (kill %d). No new ear."):format(name, ear.camped + 1))
 	end
 end
+
+--- The grade of an ear that waited for its fight to end.
+---@param ear table
+function Chat.AnnounceAppraisal(ear)
+	Chat.Print(("Appraised %s: %s.%s"):format(Chat.EarLink(ear), ns.Quality(ear.quality).name, fightSentence(ear)))
+end
+
+Chat.REVENGE_OWED = "Revenge owed: their next ear is worth more."
 
 --- "Grimbash killed you." plus the vengeance tally.
 ---@param death table
@@ -207,8 +228,8 @@ function Chat.AnnounceDeath(death, debt)
 			)
 		)
 	elseif debt > 1 then
-		Chat.Print(("%s killed you (%d times since you last killed them)."):format(who, debt))
+		Chat.Print(("%s killed you (%d times since you last killed them). %s"):format(who, debt, Chat.REVENGE_OWED))
 	else
-		Chat.Print(("%s killed you."):format(who))
+		Chat.Print(("%s killed you. %s"):format(who, Chat.REVENGE_OWED))
 	end
 end

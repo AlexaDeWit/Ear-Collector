@@ -56,6 +56,8 @@ end
 ---@field subzone string?
 ---@field vengeance integer? deaths to this player since you last killed them, when
 --- enough for a Vengeance ear (set by ns.Collect from Deaths.Debt)
+---@field appraise table? the kill's terms for Appraisal.Appraise (set by ns.Collect)
+---@field quality integer? the grade before the fight is read (set by ns.Collect)
 
 -- Grades follow the colour the game gives the victim's level
 -- (GetRelativeDifficultyColor in Blizzard_FrameXMLUtil/Mainline/DifficultyUtil.lua):
@@ -109,6 +111,21 @@ function Ears.Latest(db, guid)
 	return nil
 end
 
+--- How many ears from `guid` were taken at or after `since`.
+---@param db table
+---@param guid string
+---@param since number server time in seconds
+---@return integer
+function Ears.CountFrom(db, guid, since)
+	local count = 0
+	for _, ear in ipairs(db.ears) do
+		if ear.guid == guid and ear.at >= since then
+			count = count + 1
+		end
+	end
+	return count
+end
+
 --- Record a kill. A repeat kill of the same player inside the camping window
 --- adds to that ear's camp count instead of dropping a new ear, and restarts the window.
 --- A Vengeance kill (kill.vengeance set) always drops a new, Legendary ear.
@@ -144,7 +161,7 @@ function Ears.Record(db, kill, now)
 		at = now,
 		lastAt = now,
 		camped = 0,
-		quality = kill.vengeance and 5 or Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange),
+		quality = kill.quality or kill.vengeance and 5 or Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange),
 		vengeance = kill.vengeance,
 	}
 	db.ears[#db.ears + 1] = ear

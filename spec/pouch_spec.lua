@@ -243,6 +243,7 @@ describe("Ear Pouch", function()
 				"Taken at Tarren Mill",
 				"Hillsbrad Foothills",
 				"Killing blow: you",
+				"No fight record",
 				"You were level 60",
 				os.date("%b %d, %Y %H:%M", ns.db.ears[1].at),
 			}, lines)

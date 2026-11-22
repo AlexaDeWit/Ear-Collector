@@ -326,6 +326,7 @@ describe("Assists", function()
 			assert.are.same({
 				"UNIT_DIED: assist candidate",
 				"HONOR: +1 honorable kill(s), 121 lifetime",
+				"APPRAISAL: no fight record; no bands = 0: Uncommon (was Uncommon)",
 				"HONOR: new ear (assist)",
 			}, wow.decisions())
 		end)

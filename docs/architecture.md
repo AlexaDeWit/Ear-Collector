@@ -18,9 +18,10 @@ to the game stays thin.
 | `Core/Context.lua` | Whether a kill here counts; secret-safe reads |
 | `Core/Ears.lua` | Grading and recording ears |
 | `Core/Assists.lua` | Matching honorable kills and damage to deaths |
+| `Core/Appraisal.lua` | An ear's grade from its fight: bands, score, grade buckets |
 | `Core/Deaths.lua` | Recording deaths, reading the recap, matching killers, vengeance |
 | `Core/Ledger.lua`, `Core/Rivals.lua` | Totals and per-player rows for the pouch's tabs |
-| `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), your deaths (`Death`), and what they share (`Shared`) |
+| `Detectors/` | Event handlers: kills (`PartyKill`), assists (`HonorKill`, `DamageMeter`), the fight behind an ear (`FightFacts`), your deaths (`Death`), and what they share (`Shared`) |
 | `UI/Pouch.lua` | The Ear Pouch window, its tab strip and paging |
 | `UI/EarsTab.lua`, `UI/LedgerTab.lua`, `UI/RivalsTab.lua` | The pouch's three tabs |
 | `UI/GradeFilter.lua` | The Ears tab's grade buttons, which hide or show each grade |
@@ -28,6 +29,7 @@ to the game stays thin.
 | `UI/Options.lua` | The page in Options > AddOns |
 | `UI/Access.lua` | Ways to open the pouch: drawer, key binding, bags, chat links |
 | `UI/Chat.lua`, `UI/Slash.lua` | Chat lines, ear links, and the `/ears` commands |
+| `UI/FightSummary.lua` | The words for an ear's fight, for chat lines and tooltips |
 | `UI/Art.lua` | Race to ear-texture mapping |
 | `Bindings.xml` | The "Toggle Ear Pouch" key binding |
 | `Media/Ears/` | Ear textures, painted by `art/paint_ears.py` ([art.md](art.md)) |
@@ -62,13 +64,37 @@ victim's name, surname, class, race and level.
 Battlegrounds, arenas, dungeons, raids and scenarios never count. Zone-wide
 battles and free-for-all areas count only when their options are on.
 
-**Grades.** `Ears.Grade` follows the colour the game gives the victim's level
-([forever-api.md](forever-api.md#kills)): red (5 or more above you) is Epic,
-orange (3 or 4 above) Rare, yellow (4 below to 2 above) Uncommon, green
-Common, and grey Poor. How far below you green reaches comes from
-`UnitQuestTrivialLevelRange("player")` at the kill, which varies with your
-level, and is 9 levels when the game doesn't say. A vengeance kill is
-Legendary.
+**Level colours.** `Ears.Grade` follows the colour the game gives the victim's
+level ([forever-api.md](forever-api.md#kills)): red is 5 or more above you,
+orange 3 or 4, yellow 4 below to 2 above, then green, then grey. How far below
+you green reaches comes from `UnitQuestTrivialLevelRange("player")` at the kill,
+which varies with your level, and is 9 levels when the game doesn't say. Grey
+victims give no honor (`Ears.IsTrivial`).
+
+**Grades.** An ear's grade comes from `Appraisal.Appraise` (design: issue #46):
+- Each signal falls into a named band worth some points (`Appraisal.SIGNALS`):
+  the odds, your damage taken in health bars, the victim's health against
+  yours, the fight's length, a one-sided fight against a smaller, lower foe,
+  the victim's toughness, your healing and absorbs, interrupts and
+  dispels, allies who fell, your own death, the level colour, revenge (deaths
+  owed), earlier ears from the player that day, and an assist where you did
+  little.
+- Being outnumbered and the fight's length count only when you took a quarter of
+  your health or more (`Appraisal.CONTESTED`). A signal the game didn't give is
+  worth nothing, so without a fight record the grade is the level colour's.
+- The total falls into `Appraisal.BUCKETS`, which widen as grades rise. Three
+  deaths owed (`Deaths.VENGEANCE`) is always Legendary. A grey victim is Poor,
+  raised one grade per death owed. Any other ear is at least Common.
+
+**Grading after the fight.** `ns.Collect` gives a new ear its grade from the
+kill alone, then hands it to `FightFacts.Hold`. Out of combat the ear is graded
+at once. In combat it waits: chat says "Appraising the fight...", and when
+combat ends (`PLAYER_REGEN_ENABLED`, then `DamageMeter.SETTLE`) the meter's
+views for that fight are read once, every waiting ear is graded, and each gets
+its chat line and pop-up. If combat goes on for `FightFacts.WAIT` (30 seconds)
+after a kill, its pop-up shows ungraded. The facts and the bands that counted
+are saved on the ear as `fight`, and `/ears debug` logs the arithmetic.
+Camped repeats are never graded.
 
 **Repeat kills.** Killing the same player again within `campWindow` (10 minutes
 by default) adds to that ear's count and restarts the window, instead of
@@ -120,16 +146,17 @@ The death recap is the only record of who killed you
 4. If no player in view matches, the enemy players on the damage meter (those
    you or your group hit) get the same test. No match records nothing.
 
-`Deaths.VENGEANCE` (3) deaths to one player since you last killed them make their
-next ear Legendary, even inside the repeat-kill window. Taking that ear clears
-the debt.
+Each death to a player since you last killed them raises their next ear's
+grade (revenge). `Deaths.VENGEANCE` (3) of them make it Legendary, even inside
+the repeat-kill window. Taking an ear from them clears the debt.
 
 The Rivals tab marks each player with at most one of these, in this order:
 
 | Mark | When |
 |---|---|
-| Avenge | Vengeance is owed |
+| Avenge | Vengeance is owed: three deaths |
 | Nemesis | They killed you twice or more, and more often than you killed them |
+| Avenge | Revenge is owed: one or two deaths |
 | Prey | You killed them three or more times, and they never killed you |
 
 ## Saved data
@@ -142,7 +169,8 @@ The Rivals tab marks each player with at most one of these, in this order:
 - `Database.MigrateAccount` and `Database.MigrateCharacter` repair whatever is
   on disk at `ADDON_LOADED`: missing tables, wrong types, damaged records.
   Saved data can be old, hand-edited or truncated, so code that reads a field
-  still tolerates it missing.
+  still tolerates it missing. An ear still marked `pending` (a reload mid-fight)
+  keeps its grade, and its saved `fight` keeps only numbers and known bands.
 - Schema 1 kept ears account-wide. `Database.MoveShared` moves them to the first
   character that loads, and drops nothing.
 - `ns.db` is a view whose fields are the saved tables themselves
@@ -211,11 +239,11 @@ every API return, and repair of saved data on load.
   screen, or from wherever you drag the stand-in (`UI/ToastMover.lua`, saved in
   `db.ui.toast`), growing away from the screen edge it's anchored to. It's a
   plain bronze panel with the ear framed in its grade colour, and a death gets a
-  red "Ear lost" one. One loot sound plays per
-  burst unless a grander one follows, and Poor ears are silent. It is the
-  addon's own frames on `UIParent`, not Blizzard's alert system, which could
-  spread taint. Animation groups fade it, with no `OnUpdate`. Up to `Toast.MAX`
-  (3) stack. Only new ears get one.
+  red "Ear lost" one. An ear's pop-up waits for its grade after the fight.
+  One loot sound plays per burst unless a grander one follows, and Poor ears are
+  silent. It is the addon's own frames on `UIParent`, not Blizzard's alert
+  system, which could spread taint. Animation groups fade it, with no
+  `OnUpdate`. Up to `Toast.MAX` (3) stack. Only new ears get one.
 - **The options page** uses the Settings API. Checkboxes bind straight to
   `db.settings`. The repeat-kill slider is a proxy setting (minutes on screen,
   seconds saved) whose getter and setter run in `Errors.Call`, because Blizzard

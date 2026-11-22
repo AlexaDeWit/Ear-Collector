@@ -77,6 +77,14 @@ return function(state, frames)
 	_G.IsAnyBagOpen = function()
 		return state.bagsOpen
 	end
+	-- Your health is state.playerMaxHealth; another player's is their info's maxHealth.
+	_G.UnitHealthMax = function(unit)
+		if unit == "player" then
+			return state.playerMaxHealth
+		end
+		local p = state.players[_G.UnitGUID(unit)]
+		return p and p.maxHealth
+	end
 	_G.UnitAffectingCombat = function(unit)
 		return unit == "player" and state.inCombat
 	end
@@ -220,8 +228,24 @@ return function(state, frames)
 					sourceGUID = enemy.guid,
 					name = enemy.name,
 					totalAmount = enemy.amount or 100,
+					isLocalPlayer = false,
 					sourceDisplayType = _G.Enum.DamageMeterSourceDisplayType.Enemy,
 				}
+			end
+		elseif session then
+			-- Your side's sources in the other views: { amount, me = true for you }.
+			for name, value in pairs(_G.Enum.DamageMeterType) do
+				if value == kind then
+					for i, source in ipairs(session.views[name] or {}) do
+						sources[#sources + 1] = {
+							sourceGUID = source.me and state.playerGUID or ("Player-1-%08X"):format(i),
+							name = source.me and "You" or ("Ally" .. i),
+							totalAmount = source.amount,
+							isLocalPlayer = source.me == true,
+							sourceDisplayType = _G.Enum.DamageMeterSourceDisplayType.Ally,
+						}
+					end
+				end
 			end
 		end
 		return { combatSources = sources, maxAmount = 0, totalAmount = 0 }
@@ -256,7 +280,19 @@ return function(state, frames)
 	end
 	_G.Enum = {
 		AddOnRestrictionType = { Combat = 0, Encounter = 1, ChallengeMode = 2, PvPMatch = 3, Map = 4, Chat = 5 },
-		DamageMeterType = { DamageDone = 0, DamageTaken = 7, Deaths = 9, EnemyDamageTaken = 10 },
+		DamageMeterType = {
+			DamageDone = 0,
+			Dps = 1,
+			HealingDone = 2,
+			Hps = 3,
+			Absorbs = 4,
+			Interrupts = 5,
+			Dispels = 6,
+			DamageTaken = 7,
+			AvoidableDamageTaken = 8,
+			Deaths = 9,
+			EnemyDamageTaken = 10,
+		},
 		DamageMeterSessionType = { Overall = 0, Current = 1, Expired = 2 },
 		DamageMeterSourceDisplayType = { None = 0, Ally = 1, Enemy = 2 },
 	}

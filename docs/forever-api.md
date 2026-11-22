@@ -126,10 +126,21 @@ addons such as Details read them instead of a combat log.
 - `PLAYER_REGEN_DISABLED` and `PLAYER_REGEN_ENABLED` fire as you enter and leave
   combat. `UnitAffectingCombat("player")` reports it too.
 
+- Grading reads a fight's `DamageTaken`, `DamageDone`, `HealingDone`,
+  `Absorbs`, `Interrupts`, `Dispels`, `Deaths` and `EnemyDamageTaken` views.
+  Each source's `isLocalPlayer` is `NeverSecret` and marks your own row; its
+  `totalAmount` is your amount (a count for interrupts, dispels and deaths).
+- `UnitHealth` and `UnitHealthPercent` return secrets to addons, so your health
+  during a fight can't be read. `UnitHealthMax` can for you; for an enemy it
+  takes a `UnitTokenPvPRestrictedForAddOns` unit, and a value of 100 or less is
+  taken as a percentage and ignored.
+
 *Needs the game:*
 - whether enemy players appear in open-world PvP with readable GUIDs and names
 - whether the meter counts only your group's damage, which Ear Collector assumes
 - whether it tracks fights while its window is turned off
+- whether the other views fill in for open-world PvP, and what `Deaths` counts
+- whether `UnitHealthMax` gives an enemy player's real health in the open world
 
 ## Races and icons
 
