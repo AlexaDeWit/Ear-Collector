@@ -28,7 +28,12 @@ suggestions.
 
 - **The rules in [`CONTRIBUTING.md`](CONTRIBUTING.md#rules-for-the-code) are
   binding**: no error reaches the player, no taint, no frame-time cost, nothing
-  leaves the player's screen.
+  leaves the player's screen. So are
+  [Keeping the code small](CONTRIBUTING.md#keeping-the-code-small) and
+  [Tests](CONTRIBUTING.md#tests).
+- **Leave it smaller than you found it.** Before calling work done, reread
+  your diff for comments that restate code or docs, helpers copied between
+  files, and files that grew a second concern.
 - **Local verification**: `scripts/check.sh` passes before you call work done.
   A "missing tool" message means `scripts/setup-tools.sh`, which the
   SessionStart hook runs in cloud sessions.
