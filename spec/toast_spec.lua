@@ -170,20 +170,12 @@ describe("loot toast", function()
 		assert.are.equal(3, sounds())
 	end)
 
-	it("frames the ear in its grade colour, on a dark panel with a bronze edge", function()
+	it("draws the v1.2 look: a bronze panel, the ear framed in its grade colour", function()
 		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
 		local toast = Toast.Active()[1]
-		local uncommon, legendary = ns.QUALITY[2], ns.QUALITY[5]
+		local uncommon = ns.QUALITY[2]
+		assert.are.same({ 0.55, 0.44, 0.25, 0.99 }, toast.bg.color)
 		assert.are.same({ uncommon.r, uncommon.g, uncommon.b, 1 }, toast.iconBorder.color)
-		assert.are.same({ 0.6, 0.48, 0.27, 0.9 }, toast.edge.color)
-		assert.is_true(toast.bg.color[1] < 0.1) -- dark
-		-- The edge is behind the panel, so only its rim shows.
-		assert.are.equal("BACKGROUND", toast.edge.layer)
-		assert.are.equal("BACKGROUND", toast.bg.layer)
-		assert.is_true(toast.edge.sublevel < toast.bg.sublevel)
-
-		Toast.Show({ guid = "Player-1-V", name = "Owed", quality = 5, vengeance = 3, at = 1 })
-		assert.are.same({ legendary.r, legendary.g, legendary.b, 0.9 }, Toast.Active()[1].edge.color)
 	end)
 
 	it("pops up a lost ear when an enemy player kills you", function()
@@ -192,7 +184,8 @@ describe("loot toast", function()
 			local toast = Toast.Active()[1]
 			assert.matches("Ear lost", toast.label:GetText())
 			assert.matches("Grimbash|r took your ear", toast.title:GetText())
-			assert.are.same({ 0.75, 0.12, 0.1, 0.9 }, toast.edge.color)
+			assert.are.same({ 0.75, 0.12, 0.1, 1 }, toast.iconBorder.color)
+			assert.is_true(toast.bg.color[1] > 2 * toast.bg.color[2]) -- a red panel
 			if debt == ns.Deaths.VENGEANCE then
 				assert.matches("Vengeance owed", toast.detail:GetText())
 			end
@@ -200,6 +193,15 @@ describe("loot toast", function()
 		Toast.Active()[1]:Click("LeftButton")
 		assert.is_true(ns.Pouch.IsShown())
 		assert.are.equal("Rivals", ns.Pouch.ActiveTab())
+	end)
+
+	it("opens its tooltip away from the screen edge it's anchored to", function()
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		Toast.Active()[1]:Enter()
+		assert.are.equal("ANCHOR_BOTTOM", _G.GameTooltip.anchor) -- near the top of the screen
+		Toast.SetAnchor("BOTTOM", "BOTTOM", 0, 200)
+		Toast.Active()[1]:Enter()
+		assert.are.equal("ANCHOR_TOP", _G.GameTooltip.anchor)
 	end)
 
 	it("says what clicking does at the end of its tooltip", function()

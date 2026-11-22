@@ -206,8 +206,8 @@ every API return, and repair of saved data on load.
 - **The pop-up** (`UI/Toast.lua`) stacks downward from near the top of the
   screen, or from wherever you drag the stand-in (`UI/ToastMover.lua`, saved in
   `db.ui.toast`), growing away from the screen edge it's anchored to. It's a
-  plain dark panel with the ear framed in its grade colour. A Vengeance ear gets
-  an orange edge, a death a red "Ear lost" pop-up. One loot sound plays per
+  plain bronze panel with the ear framed in its grade colour, and a death gets a
+  red "Ear lost" one. One loot sound plays per
   burst unless a grander one follows, and Poor ears are silent. It is the
   addon's own frames on `UIParent`, not Blizzard's alert system, which could
   spread taint. Animation groups fade it, with no `OnUpdate`. Up to `Toast.MAX`

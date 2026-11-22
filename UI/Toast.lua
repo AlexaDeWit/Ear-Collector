@@ -1,4 +1,4 @@
--- The pop-up when you collect an ear (or lose one): a dark panel with the ear
+-- The pop-up when you collect an ear (or lose one): a bronze panel with the ear
 -- framed in its grade colour, its name in that colour, a detail line, and a loot
 -- sound. Pop-ups stack downward from near the top of the screen, or from
 -- wherever you move them (UI/ToastMover.lua). Left-click opens the pouch, right-click dismisses,
@@ -26,15 +26,16 @@ local SOUNDS = {
 	[4] = { name = "UI_EPICLOOT_TOAST", tier = 2 },
 	[5] = { name = "UI_LEGENDARY_LOOT_TOAST", tier = 3 },
 }
-local PANEL, DEATH_PANEL = { 0.06, 0.05, 0.04 }, { 0.18, 0.03, 0.02 }
-local BRONZE, DEATH_RED = { 0.6, 0.48, 0.27 }, { 0.75, 0.12, 0.1 }
+-- The look from v1.0 to v1.2: bronze over a dark backing, which shows as this.
+local PANEL, DEATH_PANEL = { 0.55, 0.44, 0.25 }, { 0.5, 0.11, 0.08 }
+local DEATH_RED = { 0.75, 0.12, 0.1 }
 local HINT_EAR = "Click to open in your pouch. Right-click to dismiss."
 local HINT_DEATH = "Click to see your rivals. Right-click to dismiss."
 
 ---@class EarCollector.Toast : Button
 ---@field bg Texture
----@field edge Texture
 ---@field iconBorder Texture
+---@field iconBg Texture
 ---@field icon Texture
 ---@field label FontString
 ---@field title FontString
@@ -48,6 +49,11 @@ local HINT_DEATH = "Click to see your rivals. Right-click to dismiss."
 local pool = {} ---@type EarCollector.Toast[]
 local active = {} ---@type EarCollector.Toast[] newest first
 local lastSound = { at = -math.huge, tier = 0 }
+
+-- Pop-ups grow away from the screen edge they're anchored to.
+local function growsUp()
+	return Toast.Anchor().point:find("BOTTOM") ~= nil
+end
 
 --- Where the first pop-up sits: where you moved them, or near the top of the screen.
 ---@return { point: string, relativePoint: string, x: number, y: number }
@@ -67,8 +73,7 @@ end
 
 local function layout()
 	local a = Toast.Anchor()
-	-- Pop-ups grow away from the screen edge they're anchored to.
-	local step = (Toast.HEIGHT + Toast.GAP) * (a.point:find("BOTTOM") and 1 or -1)
+	local step = (Toast.HEIGHT + Toast.GAP) * (growsUp() and 1 or -1)
 	for i, toast in ipairs(active) do
 		toast:ClearAllPoints()
 		toast:SetPoint(a.point, UIParent, a.relativePoint, a.x, a.y + (i - 1) * step)
@@ -138,7 +143,7 @@ local function showTooltip(toast)
 		lines = { { text = HINT_DEATH, r = 0.62, g = 0.62, b = 0.62 } }
 	end
 	if lines then
-		Chat.ShowTooltip(toast, "ANCHOR_TOP", lines)
+		Chat.ShowTooltip(toast, growsUp() and "ANCHOR_TOP" or "ANCHOR_BOTTOM", lines)
 	end
 end
 
@@ -149,24 +154,20 @@ local function build()
 	toast:SetFrameStrata("HIGH")
 	toast:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 
-	-- The edge sits a pixel outside the panel and behind it, so only its rim shows.
-	toast.edge = toast:CreateTexture(nil, "BACKGROUND", nil, -1)
-	toast.edge:SetPoint("TOPLEFT", -1, 1)
-	toast.edge:SetPoint("BOTTOMRIGHT", 1, -1)
 	toast.bg = toast:CreateTexture(nil, "BACKGROUND")
-	toast.bg:SetAllPoints()
+	toast.bg:SetPoint("TOPLEFT", -1, 1)
+	toast.bg:SetPoint("BOTTOMRIGHT", 1, -1)
 
-	-- The ear on black, inside a 2-pixel frame.
+	-- The ear on a darker backing, inside a 2-pixel frame.
 	toast.iconBorder = toast:CreateTexture(nil, "BORDER")
 	toast.iconBorder:SetSize(44, 44)
 	toast.iconBorder:SetPoint("LEFT", 5, 0)
-	local iconBg = toast:CreateTexture(nil, "ARTWORK")
-	iconBg:SetPoint("TOPLEFT", toast.iconBorder, "TOPLEFT", 2, -2)
-	iconBg:SetPoint("BOTTOMRIGHT", toast.iconBorder, "BOTTOMRIGHT", -2, 2)
-	iconBg:SetColorTexture(0, 0, 0, 0.85)
+	toast.iconBg = toast:CreateTexture(nil, "ARTWORK")
+	toast.iconBg:SetPoint("TOPLEFT", toast.iconBorder, "TOPLEFT", 2, -2)
+	toast.iconBg:SetPoint("BOTTOMRIGHT", toast.iconBorder, "BOTTOMRIGHT", -2, 2)
 	toast.icon = toast:CreateTexture(nil, "OVERLAY")
-	toast.icon:SetPoint("TOPLEFT", iconBg, "TOPLEFT")
-	toast.icon:SetPoint("BOTTOMRIGHT", iconBg, "BOTTOMRIGHT")
+	toast.icon:SetPoint("TOPLEFT", toast.iconBg, "TOPLEFT")
+	toast.icon:SetPoint("BOTTOMRIGHT", toast.iconBg, "BOTTOMRIGHT")
 
 	toast.label = toast:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	toast.label:SetPoint("TOPLEFT", toast.iconBorder, "TOPRIGHT", 9, -1)
@@ -250,10 +251,10 @@ local function playSound(db, quality)
 	PlaySound(SOUNDKIT[sound.name], "SFX")
 end
 
--- Colour the panel, its edge and the ear's frame ({ r, g, b } each).
-local function colour(toast, panel, edge, frame)
-	toast.bg:SetColorTexture(panel[1], panel[2], panel[3], 0.92)
-	toast.edge:SetColorTexture(edge[1], edge[2], edge[3], 0.9)
+-- Colour the panel and the ear's frame ({ r, g, b } each).
+local function colour(toast, panel, frame)
+	toast.bg:SetColorTexture(panel[1], panel[2], panel[3], 0.99)
+	toast.iconBg:SetColorTexture(panel[1] * 0.3, panel[2] * 0.3, panel[3] * 0.3, 1) -- 70% black over the panel
 	toast.iconBorder:SetColorTexture(frame[1], frame[2], frame[3], 1)
 end
 
@@ -281,8 +282,7 @@ function Toast.Show(ear)
 	local toast = table.remove(pool) or build()
 	toast.ear, toast.death = ear, nil
 	local quality = ns.Quality(ear.quality)
-	local grade = { quality.r, quality.g, quality.b }
-	colour(toast, PANEL, ear.vengeance and grade or BRONZE, grade) -- a Vengeance ear is Legendary
+	colour(toast, PANEL, { quality.r, quality.g, quality.b })
 	toast.icon:SetTexture(Art.EarTexture(ear.race, ear.guid))
 	toast.icon:SetDesaturated(ear.quality == 0)
 	local label = ear.by == "assist" and "Assist collected" or "Ear collected"
@@ -303,7 +303,7 @@ function Toast.ShowDeath(death, debt)
 	end
 	local toast = table.remove(pool) or build()
 	toast.ear, toast.death = nil, death
-	colour(toast, DEATH_PANEL, DEATH_RED, DEATH_RED)
+	colour(toast, DEATH_PANEL, DEATH_RED)
 	toast.icon:SetTexture(Art.EarTexture(death.race, death.guid))
 	toast.icon:SetDesaturated(true)
 	toast.label:SetText("|cffff4a3aEar lost|r")
