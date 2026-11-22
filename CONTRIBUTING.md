@@ -29,7 +29,7 @@ To run your working copy in the game, link the checkout into the client's
 AddOns folder under the name `EarCollector`:
 
 ```bash
-ln -s "$PWD" "/path/to/World of Warcraft/_<flavor>_/Interface/AddOns/EarCollector"
+ln -s "$PWD" "/path/to/WoW Forever/Interface/AddOns/EarCollector"
 ```
 
 Each CI run also attaches an installable zip to its summary page.

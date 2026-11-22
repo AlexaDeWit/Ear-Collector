@@ -40,6 +40,16 @@ To look at full-size renders while you work:
 python3 art/paint_ears.py /tmp/ears 128 --preview /tmp/ears/png
 ```
 
+## The logo
+
+`art/paint_logo.py` paints `docs/logo.png` (512x512) from the same painter: the
+`human-2` ear, the addon's icon, on dark leather in a gold ring. It isn't
+packaged with the addon. To repaint it:
+
+```bash
+python3 art/paint_logo.py docs/logo.png
+```
+
 ## In the addon
 
 - `UI/Art.lua` maps race tokens to files (`Scourge` is `undead`).

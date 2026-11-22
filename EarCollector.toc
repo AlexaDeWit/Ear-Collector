@@ -10,6 +10,7 @@
 ## AddonCompartmentFuncOnEnter: EarCollector_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: EarCollector_OnAddonCompartmentLeave
 ## X-License: MIT
+## X-Website: https://github.com/AlexaDeWit/Ear-Collector
 
 Core\Init.lua
 Core\Errors.lua

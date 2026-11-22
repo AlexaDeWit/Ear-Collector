@@ -6,3 +6,5 @@
 luacov.*
 # Git worktrees that Claude Code sessions and subagents create
 .claude/worktrees/
+# Python bytecode from running the art scripts
+__pycache__/

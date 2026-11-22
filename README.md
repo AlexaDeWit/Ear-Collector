@@ -1,3 +1,5 @@
+<img src="docs/logo.png" alt="Ear Collector logo: a severed ear in a gold ring" width="128" align="right">
+
 # Ear Collector
 
 A World of Warcraft addon for **WoW Forever** that collects an ear from every
@@ -13,12 +15,14 @@ dropped in Diablo II.
 - Everything stays on your screen. Ear Collector never posts to chat or sends
   anything other players can see.
 
+Ear Collector is heavily AI-authored. See [How it's made](#how-its-made).
+
 ## Install
 
 1. Download `EarCollector-<version>.zip` from the
    [releases page](https://github.com/AlexaDeWit/Ear-Collector/releases).
-2. Unzip it into `World of Warcraft/_<flavor>_/Interface/AddOns/`, so that you
-   have `Interface/AddOns/EarCollector/EarCollector.toc`.
+2. Unzip it into the `Interface/AddOns/` folder of your WoW Forever
+   installation, so that you have `Interface/AddOns/EarCollector/EarCollector.toc`.
 3. Start the game, or type `/reload`.
 
 To update, delete the `EarCollector` folder and unzip the new one. Your ears are
@@ -66,6 +70,24 @@ The Rivals tab lists everyone you've taken an ear from or died to. **Avenge**
 means their next ear is Legendary, **Nemesis** means they've killed you more
 often than you've killed them, and **Prey** means you've killed them three times
 or more and they've never killed you.
+
+### What it can't see
+
+WoW Forever doesn't give addons the combat log, so Ear Collector works from the
+game's kill and honor reports and its damage meter.
+
+- An assist counts only when the enemy player dies near you.
+- Who killed you comes from the death recap, matched against the enemy players
+  you could see or had hit. If none of them matches, the death isn't recorded.
+
+## How it's made
+
+Ear Collector is heavily AI-authored. Claude Code, Anthropic's coding agent,
+wrote most of the code, the tests, the documentation, and the scripts that paint
+the ears and the logo. The maintainer decides what it does and how it looks,
+merges every change, and tests it in the game. Every AI-assisted commit carries
+an `Assisted-by:` trailer, and [`CONTRIBUTING.md`](CONTRIBUTING.md) has the
+rules AI-assisted contributions follow.
 
 ## Reporting a bug
 

@@ -9,6 +9,7 @@ ignore:
   - types
   - art
   - docs
+  - Media/Ears/manifest.txt
   - AGENTS.md
   - CLAUDE.md
   - CONTRIBUTING.md

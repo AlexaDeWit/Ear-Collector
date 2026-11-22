@@ -6,7 +6,7 @@
 #
 # It packages the committed files only, leaving out every dotfile and whatever
 # .pkgmeta's ignore list names, and stamps the TOC version with the commit.
-# Unzip it into World of Warcraft/_<flavor>_/Interface/AddOns/.
+# Unzip it into the Interface/AddOns/ folder of your WoW Forever installation.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
