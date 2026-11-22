@@ -55,6 +55,9 @@ local PHRASES = {
 	oneSided = function()
 		return "they never fought back"
 	end,
+	giant = function(f)
+		return ("they had %s your health"):format(times(f.size))
+	end,
 	veryTough = function(f)
 		return ("it took %s their health"):format(times(f.toughness))
 	end,
@@ -93,7 +96,8 @@ local PHRASES = {
 	end,
 }
 PHRASES.nearDeath, PHRASES.hurt = PHRASES.againstAllOdds, PHRASES.againstAllOdds
-PHRASES.longFight, PHRASES.realFight = PHRASES.epicFight, PHRASES.epicFight
+PHRASES.longFight = PHRASES.epicFight
+PHRASES.muchBigger, PHRASES.bigger = PHRASES.giant, PHRASES.giant
 PHRASES.tough, PHRASES.healer = PHRASES.veryTough, PHRASES.carried
 PHRASES.disrupted = PHRASES.disruptor
 

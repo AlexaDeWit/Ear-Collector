@@ -121,6 +121,7 @@ function FightFacts.Read(entry)
 	facts.sideTaken = taken and taken.you + taken.others
 	local victimDamage = enemies and enemies.players[entry.ear.guid]
 	facts.toughness = victimDamage and entry.health and victimDamage / entry.health
+	facts.size = entry.health and health and health > 0 and entry.health / health or nil
 	local interrupts, dispels = view(id, types.Interrupts), view(id, types.Dispels)
 	facts.disrupts = sum(interrupts, dispels, "you")
 	if facts.disrupts then
@@ -142,6 +143,9 @@ local function describe(facts, result)
 	}
 	if f.taken then
 		parts[#parts + 1] = ("took %sx"):format(round(f.taken))
+	end
+	if f.size then
+		parts[#parts + 1] = ("size %sx"):format(round(f.size))
 	end
 	if f.toughness then
 		parts[#parts + 1] = ("toughness %sx"):format(round(f.toughness))
@@ -176,6 +180,7 @@ local function appraise(db, entry)
 		sideTaken = facts.sideTaken,
 		healed = round(facts.healed),
 		toughness = round(facts.toughness),
+		size = round(facts.size),
 		disrupts = facts.disrupts,
 		allyDeaths = facts.allyDeaths,
 		died = facts.died,

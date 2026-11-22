@@ -121,6 +121,7 @@ describe("grading an ear from its fight", function()
 		hardFight({ { guid = GRIMBASH, name = "Grimbash", amount = 10000 } }) -- 2.5 times their 4000 health
 		endFight()
 		assert.are.equal(2.5, ns.db.ears[1].fight.toughness)
+		assert.are.equal(4, ns.db.ears[1].fight.size) -- their 4000 health against your 1000
 		assert.are.equal(6, ns.Appraisal.Appraise({ level = 2 }, ns.db.ears[1].fight).points.veryTough)
 	end)
 
@@ -187,7 +188,7 @@ describe("grading an ear from its fight", function()
 		hardFight()
 		endFight()
 		assert.are.same({
-			"1 enemies, 1 allies, 40 s, took 1.2x; nearDeath +8, longFight +4 = 12: Rare (was Uncommon)",
+			"1 enemies, 1 allies, 40 s, took 1.2x; nearDeath +8, longFight +2 = 10: Rare (was Uncommon)",
 		}, wow.decisions("APPRAISAL"))
 	end)
 end)

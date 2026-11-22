@@ -65,6 +65,7 @@ local FIGHT_NUMBERS = {
 	"sideTaken",
 	"healed",
 	"toughness",
+	"size",
 	"disrupts",
 	"allyDeaths",
 	"debt",

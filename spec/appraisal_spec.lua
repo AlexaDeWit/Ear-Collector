@@ -94,6 +94,34 @@ describe("Appraisal", function()
 		end)
 	end)
 
+	describe("bursts", function()
+		local burst = { enemies = 1, allies = 1, secs = 4, taken = 0, sideTaken = 0 }
+
+		local function withSize(size)
+			local facts = fight(burst)
+			facts.size = size
+			return facts
+		end
+
+		it("reward a quick kill of a bigger foe, who never got to hit back", function()
+			local result = Appraisal.Appraise({ level = YELLOW }, withSize(1.5))
+			assert.are.same({ muchBigger = 9 }, result.points)
+			assert.are.equal(3, result.quality)
+			assert.are.equal(5, Appraisal.Appraise({ level = YELLOW }, withSize(1.25)).points.bigger)
+			assert.are.equal(13, Appraisal.Appraise({ level = YELLOW }, withSize(2)).points.giant)
+		end)
+
+		it("don't count against you on an equal or higher-level foe", function()
+			assert.are.same({}, Appraisal.Appraise({ level = YELLOW }, withSize(1)).points)
+			assert.is_nil(Appraisal.Appraise({ level = RED }, withSize(0.8)).points.oneSided)
+		end)
+
+		it("still count against you on a smaller, lower foe", function()
+			assert.are.equal(-6, Appraisal.Appraise({ level = YELLOW }, withSize(0.8)).points.oneSided)
+			assert.are.equal(-6, Appraisal.Appraise({ level = GREEN }, fight(burst)).points.oneSided)
+		end)
+	end)
+
 	describe("signals", function()
 		it("count being outnumbered only when they fought back", function()
 			local result =
@@ -101,9 +129,12 @@ describe("Appraisal", function()
 			assert.are.same({}, result.why)
 		end)
 
-		it("count fight length only when they fought back", function()
+		it("count fight length only when they fought back, and less than a strong foe", function()
 			local result = Appraisal.Appraise({ level = YELLOW }, fight({ secs = 90, taken = 0.1 }))
 			assert.are.same({}, result.why)
+			local long = Appraisal.Appraise({ level = YELLOW }, fight({ secs = 90, taken = 0.3 }))
+			assert.are.equal(4, long.points.epicFight)
+			assert.is_true(long.points.epicFight < 5) -- the smallest "bigger than you" band
 		end)
 
 		it("count one band per signal: the highest that applies", function()

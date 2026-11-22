@@ -23,6 +23,7 @@ Appraisal.DAY = 24 * 60 * 60 -- earlier ears from the same player within this lo
 ---@field sideTaken number? damage your whole side took (0: they never fought back)
 ---@field healed number? your healing and absorbs, in multiples of your health
 ---@field toughness number? your side's damage to the victim, in multiples of their health
+---@field size number? the victim's maximum health, in multiples of yours
 ---@field disrupts integer? your side's interrupts and dispels
 ---@field allyDeaths integer? others on your side who died in the fight
 ---@field died boolean? you died in the fight
@@ -81,8 +82,8 @@ end
 
 Appraisal.SIGNALS = {
 	{
-		band("overwhelmed", 18, oddsAtLeast(3)),
-		band("badlyOutnumbered", 12, oddsAtLeast(2)),
+		band("overwhelmed", 20, oddsAtLeast(3)),
+		band("badlyOutnumbered", 13, oddsAtLeast(2)),
 		band("outnumbered", 6, oddsAtLeast(1.01)),
 		band("mob", -12, oddsAtMost(1 / 5)),
 		band("zerg", -9, oddsAtMost(1 / 3)),
@@ -94,13 +95,19 @@ Appraisal.SIGNALS = {
 		band("hurt", 3, atLeast("taken", 0.5)),
 	},
 	{
-		band("epicFight", 7, withContest(atLeast("secs", 60))),
-		band("longFight", 4, withContest(atLeast("secs", 30))),
-		band("realFight", 2, withContest(atLeast("secs", 15))),
+		-- A strong opponent counts for more than a long fight: a burst can end a big one in seconds.
+		band("giant", 13, atLeast("size", 2)),
+		band("muchBigger", 9, atLeast("size", 1.5)),
+		band("bigger", 5, atLeast("size", 1.25)),
 	},
 	{
-		band("oneSided", -6, function(f)
-			return f.sideTaken == 0
+		band("epicFight", 4, withContest(atLeast("secs", 60))),
+		band("longFight", 2, withContest(atLeast("secs", 30))),
+	},
+	{
+		-- Only against a smaller, lower foe: a stronger one who never hit back was burst down.
+		band("oneSided", -6, function(f, kill)
+			return f.sideTaken == 0 and (f.size or 0) < 1 and (kill.level or 2) <= 2
 		end),
 	},
 	{ band("veryTough", 6, atLeast("toughness", 2.5)), band("tough", 3, atLeast("toughness", 1.5)) },
@@ -146,7 +153,7 @@ function Appraisal.Appraise(kill, facts)
 	if facts and facts.read then
 		for _, bands in ipairs(Appraisal.SIGNALS) do
 			for _, b in ipairs(bands) do
-				if b.test(facts) then
+				if b.test(facts, kill) then
 					add(parts, b.key, b.points, true)
 					break
 				end

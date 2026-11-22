@@ -62,7 +62,10 @@ Common, Uncommon, Rare, Epic and Legendary. Each of these counts for or against:
 
 - **The odds:** being outnumbered counts for you, outnumbering them counts against.
 - **The danger to you:** how much damage you took, in health bars.
-- **How long the fight lasted**, how tough they were, and whether they fought back.
+- **How strong they were:** their health compared with yours counts for more
+  than how long the fight lasted, so a quick burst on a big target is rewarded.
+- **Whether they fought back:** picking off a smaller, lower player who never
+  hit you counts against you.
 - **Your part:** your healing and shields, your side's interrupts and dispels,
   and allies who fell.
 - **Their level's colour:** red counts for you, green against.

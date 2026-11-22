@@ -73,8 +73,9 @@ victims give no honor (`Ears.IsTrivial`).
 
 **Grades.** An ear's grade comes from `Appraisal.Appraise` (design: issue #46):
 - Each signal falls into a named band worth some points (`Appraisal.SIGNALS`):
-  the odds, your damage taken in health bars, the fight's length, a one-sided
-  fight, the victim's toughness, your healing and absorbs, interrupts and
+  the odds, your damage taken in health bars, the victim's health against
+  yours, the fight's length, a one-sided fight against a smaller, lower foe,
+  the victim's toughness, your healing and absorbs, interrupts and
   dispels, allies who fell, your own death, the level colour, revenge (deaths
   owed), earlier ears from the player that day, and an assist where you did
   little.
