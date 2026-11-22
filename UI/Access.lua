@@ -28,7 +28,7 @@ EarCollector_OnAddonCompartmentEnter = Errors.Wrap("minimap drawer tooltip", fun
 	GameTooltip:SetOwner(button, "ANCHOR_LEFT")
 	GameTooltip:AddLine("Ear Collector")
 	if db then
-		GameTooltip:AddLine(("%d ears, %d assists"):format(#db.ears, Ears.CountAssists(db.ears)), 1, 1, 1)
+		GameTooltip:AddLine(Chat.EarCount(#db.ears, Ears.CountAssists(db.ears)), 1, 1, 1)
 		local latest = db.ears[#db.ears]
 		if latest then
 			GameTooltip:AddLine("Latest: " .. Chat.EarName(latest), 1, 1, 1)

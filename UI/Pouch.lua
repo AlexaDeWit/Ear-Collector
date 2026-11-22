@@ -13,8 +13,9 @@ ns.Pouch = Pouch
 Pouch.COLUMNS, Pouch.ROWS = 8, 5
 Pouch.PER_PAGE = Pouch.COLUMNS * Pouch.ROWS
 Pouch.SLOT, Pouch.GAP, Pouch.PAD = 36, 4, 12
+Pouch.GRID_TOP = 44 -- below the title bar and a line of text
 Pouch.WIDTH = Pouch.PAD * 2 + Pouch.COLUMNS * Pouch.SLOT + (Pouch.COLUMNS - 1) * Pouch.GAP
-Pouch.HEIGHT = 36 + Pouch.ROWS * (Pouch.SLOT + Pouch.GAP) + 34
+Pouch.HEIGHT = Pouch.GRID_TOP + Pouch.ROWS * (Pouch.SLOT + Pouch.GAP) + 34
 
 local FRAME_NAME = addonName .. "Pouch"
 local PAD = Pouch.PAD

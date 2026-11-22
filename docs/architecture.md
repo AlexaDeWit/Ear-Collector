@@ -48,7 +48,7 @@ flowchart LR
     Assists -->|unclaimed| DamageMeter
     DamageMeter -->|you damaged them| Collect
     Collect[ns.Collect] --> Ears[Ears.Record]
-    Collect --> UI[chat line, pouch, toast]
+    Collect --> UI[chat line, pouch, pop-up]
 ```
 
 **Kills.** `Detectors/PartyKill.lua` handles `PARTY_KILL`. It checks the location
@@ -167,7 +167,7 @@ keeps them inside:
   for BugSack.
 - Names stay narrow so one failure can't switch off something else:
   - `ns.Collect` and `ns.RecordDeath` run the chat line, the pouch refresh and
-    the toast under their own names, so a UI bug can't stop kill detection.
+    the pop-up under their own names, so a UI bug can't stop kill detection.
   - Each `/ears` command has its own name. `/ears errors` and `/ears help` are
     never switched off.
   - Reading the damage meter has its own name, so a change in the meter can't
@@ -202,7 +202,7 @@ every API return, and repair of saved data on load.
   keyboard propagation is restricted in combat, and a post-hook on
   `ToggleGameMenu` can't stop the game menu opening
   ([details](forever-api.md#interface-hooks)).
-- **The toast** is the addon's own frames on `UIParent`, not Blizzard's alert
+- **The pop-up** (`UI/Toast.lua`) is the addon's own frames on `UIParent`, not Blizzard's alert
   system, which could spread taint. Animation groups fade it, with no
   `OnUpdate`. Up to `Toast.MAX` (3) stack. Only new ears get one.
 - **The options page** uses the Settings API. Checkboxes bind straight to
@@ -213,7 +213,7 @@ every API return, and repair of saved data on load.
 
 ## Nothing leaves your screen
 
-Chat lines go to your own chat window through `print`, and toasts and sounds
+Chat lines go to your own chat window through `print`, and pop-ups and sounds
 play only on your client. The addon never calls `SendChatMessage`,
 `C_ChatInfo.SendAddonMessage`, `DoEmote` or anything else other players could
 see or hear, so it can't break anyone's immersion on a roleplaying realm.

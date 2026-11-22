@@ -32,12 +32,6 @@ local function pageCount(total)
 	return math.max(1, math.ceil(total / Pouch.PER_PAGE))
 end
 
-local function classColored(ear)
-	local name = ear.className or (ear.class and LOCALIZED_CLASS_NAMES_MALE[ear.class]) or ear.class or "Unknown class"
-	local hex = Chat.ClassHex(ear.class)
-	return hex and ("|c%s%s|r"):format(hex, name) or name
-end
-
 --- An ear's tooltip, as lines: { text, r, g, b } or { left, right, r, g, b }.
 ---@param ear table
 ---@return table[]
@@ -54,7 +48,7 @@ function EarsTab.TooltipLines(ear)
 		add(("%s %s"):format(ear.name, ear.surname), GREY)
 	end
 	local race = Chat.RaceIcon(ear.race, ear.sex) .. (ear.raceName or ear.race or "")
-	add((("Level %s %s %s"):format(ear.level or "??", race, classColored(ear)):gsub("  ", " ")))
+	add((("Level %s %s %s"):format(ear.level or "??", race, Chat.ClassName(ear.class, ear.className)):gsub("  ", " ")))
 	add(" ")
 	if ear.subzone then
 		add(("Taken at %s"):format(ear.subzone))
@@ -67,7 +61,7 @@ function EarsTab.TooltipLines(ear)
 	if ear.by == "group" then
 		add(("Killing blow: %s (your group)"):format(ear.killer or "a groupmate"))
 	elseif ear.by == "assist" then
-		add("Assist: honor credit, killing blow from outside your group", { 0.17, 0.85, 0.17 })
+		add("Assist: killing blow from outside your group", { 0.17, 0.85, 0.17 })
 	else
 		add("Killing blow: you")
 	end
@@ -82,9 +76,12 @@ function EarsTab.TooltipLines(ear)
 		add(("You were level %d"):format(ear.yourLevel), GREY)
 	end
 	if ear.camped and ear.camped > 0 then
-		add(("Camped: %d more kill%s within the window"):format(ear.camped, ear.camped > 1 and "s" or ""), GREY)
+		local minutes = math.floor((ns.db and ns.db.settings.campWindow or 600) / 60 + 0.5)
+		local within = Chat.Count(minutes, "minute")
+		local kills = ear.camped == 1 and "kill" or "kills"
+		add(("Camped: %d more %s within %s"):format(ear.camped, kills, within), GREY)
 	end
-	add(date("%b %d, %Y %H:%M", ear.at), GREY)
+	add(Chat.Date(ear.at, "full"), GREY)
 	return lines
 end
 
@@ -103,7 +100,7 @@ local function newSlot(parent, index)
 	local step = Pouch.SLOT + Pouch.GAP
 	local column, row = (index - 1) % Pouch.COLUMNS, math.floor((index - 1) / Pouch.COLUMNS)
 	slot:SetSize(Pouch.SLOT, Pouch.SLOT)
-	slot:SetPoint("TOPLEFT", parent, "TOPLEFT", Pouch.PAD + column * step, -(36 + row * step))
+	slot:SetPoint("TOPLEFT", parent, "TOPLEFT", Pouch.PAD + column * step, -(Pouch.GRID_TOP + row * step))
 
 	local bg = slot:CreateTexture(nil, "BACKGROUND")
 	bg:SetAllPoints()
@@ -184,7 +181,7 @@ local function refresh()
 	for i, slot in ipairs(slots) do
 		fillSlot(slot, ears[first + i])
 	end
-	countText:SetText(("%d ears, %d assists"):format(#ears, ns.Ears.CountAssists(ears)))
+	countText:SetText(Chat.EarCount(#ears, ns.Ears.CountAssists(ears)))
 	emptyText:SetShown(#ears == 0)
 end
 

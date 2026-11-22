@@ -73,11 +73,12 @@ local function release(toast)
 	layout()
 end
 
---- One line under the name: level, race and class, then who landed the blow.
+--- One line under the name: the grade, level, race and class, then who landed
+--- the blow. The label already says "Assist", except on a Vengeance ear.
 ---@param ear table
 ---@return string
 function Toast.Detail(ear)
-	local parts, who = {}, {}
+	local parts, who = { ns.Quality(ear.quality).name }, {}
 	for _, part in ipairs({
 		ear.level and ("Level %d"):format(ear.level) or false,
 		ear.raceName or ear.race or false,
@@ -92,7 +93,7 @@ function Toast.Detail(ear)
 	end
 	if ear.by == "group" then
 		parts[#parts + 1] = ("Killing blow: %s"):format(ear.killer or "your group")
-	elseif ear.by == "assist" then
+	elseif ear.by == "assist" and ear.vengeance then
 		parts[#parts + 1] = "Assist"
 	end
 	if ear.vengeance then
@@ -153,8 +154,9 @@ local function build()
 	toast.title:SetJustifyH("LEFT")
 	toast.detail = toast:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 	toast.detail:SetPoint("BOTTOMLEFT", iconBg, "BOTTOMRIGHT", 9, 1)
-	toast.detail:SetPoint("RIGHT", toast, "RIGHT", -8, 0)
+	toast.detail:SetPoint("BOTTOMRIGHT", toast, "BOTTOMRIGHT", -8, 7)
 	toast.detail:SetJustifyH("LEFT")
+	toast.detail:SetWordWrap(false)
 
 	toast.appear = toast:CreateAnimationGroup()
 	local fadeIn = toast.appear:CreateAnimation("Alpha") --[[@as Alpha]]

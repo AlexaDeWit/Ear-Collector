@@ -77,7 +77,11 @@ function Rivals.List(ears, deaths)
 		row.nemesis = row.killedYou >= Rivals.NEMESIS and row.killedYou > row.kills
 		row.prey = row.kills >= Rivals.PREY and row.killedYou == 0
 	end
+	-- Avenge first: it's the mark you can act on. Then most encounters.
 	table.sort(rows, function(a, b)
+		if a.owed ~= b.owed then
+			return a.owed
+		end
 		local ae, be = a.kills + a.killedYou, b.kills + b.killedYou
 		if ae ~= be then
 			return ae > be

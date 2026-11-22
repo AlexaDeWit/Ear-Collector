@@ -126,7 +126,7 @@ who killed you.
 This needs "Your deaths" to work.
 
 1. Die to an enemy player in the open world. Chat says `<name> killed you.`, and
-   they appear on the pouch's Rivals tab with 1 under Deaths.
+   they appear on the pouch's Rivals tab with 1 under Lost.
 2. Die to the same player three times without killing them. Chat says
    `Vengeance owed`, and their Rivals row shows "Avenge" in orange.
 3. Kill them. The ear is orange (Legendary), the pop-up says "Vengeance!" and
@@ -161,14 +161,15 @@ This needs "Your deaths" to work.
 ## The pop-up
 
 1. Collect an ear. A pop-up appears near the top of the screen with the ear,
-   the name in its grade colour, level, race and class (and who landed the blow,
-   or "Assist"), and a loot sound. A Rare or better ear plays the epic loot
-   sound.
+   the name in its grade colour, and one line under it with the grade, level,
+   race and class (and who landed the blow) that doesn't overlap the name. An
+   assist says "Assist collected" at the top. A loot sound plays, and a Rare or
+   better ear plays the epic loot sound.
 2. It fades after about 4 seconds. Hovering keeps it up and shows the ear's
    tooltip.
 3. Left-click opens the pouch on that ear. Right-click dismisses it.
 4. Several ears at once stack, up to three.
-5. `/ears sound off` mutes it, and `/ears toast off` stops it.
+5. `/ears sound off` mutes it, and `/ears popup off` stops it.
 
 ## Escape
 
@@ -209,7 +210,7 @@ log). This test checks that closing the pouch with Escape never shows up there.
    tooltip when you hover over it.
 2. `/ears options` opens the same page, and so does right-clicking Ear Collector
    in the minimap addon drawer. Left-clicking it still opens the pouch.
-3. Untick "Show a toast" and collect an ear: no pop-up, but the ear is
+3. Untick "Show a pop-up" and collect an ear: no pop-up, but the ear is
    collected. Tick it again.
 4. Type `/ears bags off`, then reopen the page: "Open with your bags" is
    unticked.
@@ -228,10 +229,12 @@ log). This test checks that closing the pouch with Escape never shows up there.
 1. Open the pouch. Three tabs sit under it: Ears, Ledger and Rivals. Clicking
    one plays the tab sound and switches pages.
 2. The Ledger shows four boxes (Ears, Last 7 days, Assists, Ears lost), a bar
-   split by grade with a coloured legend, your top classes with bars in class
-   colours, and your top zones. Long zone names are cut short, not wrapped.
-3. Rivals lists one row per player, most kills first, with the date you last
-   killed them. Hovering a row shows a tooltip, and clicking it jumps to their
+   split by grade with a coloured legend on one line, your top classes with bars
+   in class colours, your top zones, and Totals (Players, Kills with repeats).
+   Long zone names are cut short, not wrapped.
+3. Rivals lists one row per player: anyone marked "Avenge" first, then most
+   encounters, with "Lost" and "Last met" columns and the count of rivals in
+   the bottom bar. Hovering a row shows a tooltip, and clicking it jumps to their
    latest ear on the Ears tab.
 4. With more than ten rivals, the page buttons and the mouse wheel page through
    them. The Ledger hides the page buttons.
