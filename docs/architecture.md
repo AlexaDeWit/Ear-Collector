@@ -29,7 +29,7 @@ to the game stays thin.
 | `UI/Options.lua` | The page in Options > AddOns |
 | `UI/Access.lua` | Ways to open the pouch: drawer, key binding, bags, chat links |
 | `UI/Chat.lua`, `UI/Slash.lua` | Chat lines, ear links, and the `/ears` commands |
-| `UI/Reasons.lua` | Each reason for a grade in words: its tooltip line and story clause |
+| `UI/Reasons.lua` | Each reason for a grade in words: its tooltip line and its part in the story |
 | `UI/FightSummary.lua` | The words for an ear's grade: the reason lines, the story, the pop-up's reason |
 | `UI/Art.lua` | Race to ear-texture mapping |
 | `Bindings.xml` | The "Toggle Ear Pouch" key binding |
@@ -75,11 +75,15 @@ victims give no honor (`Ears.IsTrivial`).
 **Grades.** An ear's grade comes from `Appraisal.Appraise` (design: issue #46):
 - Each signal falls into a named band worth some points (`Appraisal.SIGNALS`):
   the odds, your damage taken in health bars, the victim's health against
-  yours, the fight's length, a one-sided fight against a smaller, lower foe,
-  the victim's toughness, your healing and absorbs, interrupts and dispels,
-  group members who fell, your own death, the level colour, revenge (deaths
-  owed), earlier ears from the player that day, and an assist where the meter
-  shows you took little damage and healed little.
+  yours, the fight's length or a kill within `Appraisal.BURST` (8) seconds, a
+  one-sided fight against a smaller, lower foe, the victim's toughness, your
+  healing and absorbs, interrupts and dispels, group members who fell, your own
+  death, the level (orange, red and green by colour, and within yellow
+  `Appraisal.LEVEL_STEP` per level, no lower than `Appraisal.LEVEL_FLOOR`),
+  revenge (deaths owed), earlier ears from the player that day, and an assist
+  where the meter shows you took little damage and healed little.
+- A burst doesn't count against someone lower than you (unless they had your
+  health or more), nor when you had them outnumbered two to one.
 - Being outnumbered and the fight's length count only when you took a quarter of
   your health or more (`Appraisal.CONTESTED`). A signal the game didn't give is
   worth nothing, so without a fight record the grade is the level colour's.
@@ -96,17 +100,22 @@ combat ends (`PLAYER_REGEN_ENABLED`, then `DamageMeter.SETTLE`) the meter's
 views for that fight are read once, every waiting ear is graded, and each gets
 its chat line and pop-up. If combat goes on for `FightFacts.WAIT` (30 seconds)
 after a kill, its pop-up shows ungraded. Every new ear saves how it was graded
-as `fight` (`Appraisal.Record`): the bands that counted, each one's points, and
-the rule (`vengeance` or `grey`) when one set the grade instead of the score.
+as `fight` (`Appraisal.Record`): the bands that counted, each one's points, the
+level gap, and the rule (`vengeance` or `grey`) when one set the grade instead
+of the score.
 Once the fight is read, its facts join them. `/ears debug` logs the arithmetic.
 Camped repeats are never graded.
 
 **Wording.** `FightSummary` builds the words from that saved record, with each
-reason's own words from `Reasons`. Under
-"Why it's <grade>", each reason gets a line with + or - and one to three
-squares for how much it counted. A story of one or two sentences closes the
-tooltip and follows the grade in chat. The pop-up names the strongest reason.
-A new band needs its line and story clause in `Reasons`, in this voice:
+reason's own words from `Reasons`. Under "Why it's <grade>", every reason that
+counted gets a line with + or - and one to three squares for how much, so the
+list accounts for the whole grade. The gold story closes the tooltip and
+follows the grade in chat, and it's there to be fun: it tells the most
+memorable part of the kill (a grudge settled, or the strongest reasons pointing
+the same way), and there's none when the kill has nothing worth telling, such as
+a small markdown alone. The pop-up names the strongest reason. A new band needs
+a line and a story part in `Reasons` (a fragment, and a punchline for when it
+stands alone), in this voice:
 
 - Use a player's units: health bars, "1v3", levels, time in combat.
 - Claim only what the band's test proves. Round amounts down and say "over" or
@@ -115,7 +124,8 @@ A new band needs its line and story clause in `Reasons`, in this voice:
 - No list line starts with a digit, since after a sign it reads as a stat.
 - "Group member", never "ally", which reads as an Alliance player. "They" for
   the victim.
-- No jabs, verdicts or slogans: the facts carry the drama.
+- Punchy and concrete in the story, never mocking the victim, and never a guess
+  at what they saw or meant: the facts carry the drama.
 
 **Repeat kills.** Killing the same player again within `campWindow` (10 minutes
 by default) adds to that ear's count and restarts the window, instead of

@@ -216,8 +216,7 @@ describe("deaths and vengeance", function()
 			assert.are.equal(5, ear.quality)
 			assert.are.equal(3, ear.vengeance)
 			assert.matches(
-				"|r Vengeance! You collected .*%(Legendary%)%. "
-					.. "They had taken your ear three times in a row%. You finally have theirs%.$",
+				"|r Vengeance! You collected .*%(Legendary%)%. Three times they took your ear%. Not this time%.$",
 				wow.state().printed[#wow.state().printed]
 			)
 			local toast = ns.Toast.Active()[1]

@@ -34,7 +34,7 @@ function FightSummary.Lines(ear)
 	if type(fight) ~= "table" then
 		return {}
 	end
-	local out, list = {}, Reasons.List(fight)
+	local out, list = {}, Reasons.List(fight, ear)
 	local function add(text, kind, strength)
 		out[#out + 1] = { text = text, kind = kind, strength = strength }
 	end
@@ -83,47 +83,19 @@ function FightSummary.Lines(ear)
 	return out
 end
 
+-- "Twice they took your ear." Their kills on you since your last ear from them,
+-- so "last time" for one is exact.
 local function history(n)
 	if n == 1 then
-		return "They had taken your ear."
+		return "They took your ear last time."
 	end
-	return ("They had taken your ear %s in a row."):format(n == 2 and "twice" or word(n) .. " times")
+	return ("%s they took your ear."):format(n == 2 and "Twice" or capital(word(n)) .. " times")
 end
 
-local function clause(r, fight, ear)
-	local ok, subject, predicate = pcall(r.band.clause, fight, ear)
-	if ok and type(subject) == "string" and type(predicate) == "string" then
-		return { subject = subject, predicate = predicate, order = r.band.order, up = r.points > 0 }
-	end
-end
-
--- Clauses that point the same way, joined: "You were outnumbered two to one and
--- took more than a full health bar". `said` tracks whether "health bar" came up,
--- so a later "nearly two health bars" can end at "nearly two".
-local function join(group, said)
-	table.sort(group, function(a, b)
-		return a.order < b.order
-	end)
-	local text
-	for i, c in ipairs(group) do
-		local predicate = c.predicate
-		if said.bars and predicate:find(" health bars$") then
-			predicate = predicate:gsub(" health bars$", "")
-		end
-		said.bars = said.bars or predicate:find("health bar") ~= nil
-		if i == 1 then
-			text = c.subject .. " " .. predicate
-		elseif c.subject == group[1].subject then
-			text = text .. " and " .. predicate
-		else
-			text = text .. ", and " .. lower(c.subject) .. " " .. predicate
-		end
-	end
-	return text
-end
-
---- One or two sentences that tell the kill, built from its strongest reasons.
---- Nil when there's nothing to tell.
+--- The gold line: the most memorable part of the kill, told to be fun. The
+--- list above it accounts for the grade, so the story picks what's worth
+--- telling: the history of a grudge, or the strongest reasons pointing the same
+--- way. Nil when there's nothing worth telling. Every word comes from the record.
 ---@param ear table
 ---@return string|nil
 function FightSummary.Story(ear)
@@ -131,54 +103,47 @@ function FightSummary.Story(ear)
 	if ear.pending or type(fight) ~= "table" then
 		return nil
 	end
-	local list, debt = Reasons.List(fight), deaths(ear, fight)
+	local debt = deaths(ear, fight)
 	if fight.rule == "vengeance" then
-		return history(debt) .. " You finally have theirs."
+		return history(debt) .. " Not this time."
 	end
-	local clauses, avenged = {}, false
-	for _, r in ipairs(list) do
+	local telling, avenged = {}, false
+	for _, r in ipairs(Reasons.List(fight, ear)) do
 		avenged = avenged or r.key == "revenge"
-		local c = r.band.clause and clause(r, fight, ear)
-		if c then
-			c.kind = r.band.kind
-			clauses[#clauses + 1] = c
+		if r.part and fight.rule ~= "grey" then
+			telling[#telling + 1] = r
 		end
 	end
-	if fight.rule == "grey" then
-		return avenged and history(debt) .. " Now you have theirs." or nil
-	elseif avenged then
-		for _, c in ipairs(clauses) do
-			if c.kind ~= "help" then
-				local joiner = c.kind == "easy" and ", but " or ", though "
-				return ("%s Now you have theirs%s%s %s."):format(history(debt), joiner, lower(c.subject), c.predicate)
+	if avenged then
+		for _, r in ipairs(telling) do
+			if r.points > 0 then
+				return ("%s %s, and now it's yours."):format(history(debt), capital(r.part))
 			end
 		end
-		return history(debt) .. " Now you have theirs."
+		return history(debt) .. " Now it's yours."
 	end
-	local named = { clauses[1], clauses[2] }
-	if #named == 0 then
-		return nil
-	elseif named[2] and named[1].up == named[2].up then
-		for i = 3, #clauses do
-			if clauses[i].up ~= named[1].up then
-				named[3] = clauses[i]
-				break
-			end
+	local first = telling[1]
+	if not first or (first.points < 0 and first.strength < 2) then
+		return nil -- a small markdown alone is no story
+	end
+	local second
+	for i = 2, #telling do
+		if (telling[i].points > 0) == (first.points > 0) then
+			second = telling[i]
+			break
 		end
 	end
-	if #named == 1 and named[1].up and named[1].order <= 5 and type(fight.secs) == "number" and fight.secs < 10 then
-		return ("It was over in seconds, though %s %s."):format(lower(named[1].subject), named[1].predicate)
+	if not second then
+		return first.solo
+	elseif first.points < 0 then
+		return ("%s. %s."):format(capital(first.part), capital(second.part))
 	end
-	local first, second = {}, {}
-	for _, c in ipairs(named) do
-		table.insert(c.up == named[1].up and first or second, c)
+	local burst = first.key == "burst" and first or second.key == "burst" and second
+	if burst then
+		local other = burst == first and second or first
+		return capital(other.part) .. ", and gone in seconds."
 	end
-	local said = {}
-	local text = join(first, said)
-	if #second > 0 then
-		text = text .. ", but " .. lower(join(second, said))
-	end
-	return capital(text) .. "."
+	return ("%s, %s, and the ear is still yours."):format(capital(first.part), second.part)
 end
 
 --- The strongest reason, for the pop-up's detail line. Nil when none counted.
@@ -191,7 +156,7 @@ function FightSummary.Short(ear)
 	elseif fight.rule == "vengeance" then
 		return ("Avenged %d deaths"):format(deaths(ear, fight))
 	end
-	for _, r in ipairs(Reasons.List(fight)) do
+	for _, r in ipairs(Reasons.List(fight, ear)) do
 		if fight.rule ~= "grey" or r.key == "revenge" then
 			return r.line
 		end

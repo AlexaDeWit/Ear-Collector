@@ -105,20 +105,63 @@ describe("Appraisal", function()
 
 		it("reward a quick kill of a bigger foe, who never got to hit back", function()
 			local result = Appraisal.Appraise({ level = YELLOW }, withSize(1.5))
-			assert.are.same({ muchBigger = 9 }, result.points)
+			assert.are.same({ muchBigger = 9, burst = 4 }, result.points)
 			assert.are.equal(3, result.quality)
 			assert.are.equal(5, Appraisal.Appraise({ level = YELLOW }, withSize(1.25)).points.bigger)
 			assert.are.equal(13, Appraisal.Appraise({ level = YELLOW }, withSize(2)).points.giant)
 		end)
 
-		it("don't count against you on an equal or higher-level foe", function()
-			assert.are.same({}, Appraisal.Appraise({ level = YELLOW }, withSize(1)).points)
+		it("count for you on an equal or higher-level foe", function()
+			assert.are.same({ burst = 4 }, Appraisal.Appraise({ level = YELLOW }, withSize(1)).points)
 			assert.is_nil(Appraisal.Appraise({ level = RED }, withSize(0.8)).points.oneSided)
 		end)
 
 		it("still count against you on a smaller, lower foe", function()
 			assert.are.equal(-6, Appraisal.Appraise({ level = YELLOW }, withSize(0.8)).points.oneSided)
 			assert.are.equal(-6, Appraisal.Appraise({ level = GREEN }, fight(burst)).points.oneSided)
+		end)
+	end)
+
+	describe("levels within yellow", function()
+		it("count each level above you for you, and below you against you, to a floor", function()
+			local points = {}
+			for gap = 2, -4, -1 do
+				local result = Appraisal.Appraise({ level = YELLOW, gap = gap })
+				points[#points + 1] = result.points.above or result.points.below or 0
+			end
+			assert.are.same({ 4, 2, 0, -2, -4, -6, -6 }, points)
+		end)
+
+		it("save the gap with the grade", function()
+			local kill = { level = YELLOW, gap = 2 }
+			assert.are.equal(2, Appraisal.Record(kill, Appraisal.Appraise(kill)).gap)
+		end)
+	end)
+
+	describe("a burst", function()
+		local quick = { enemies = 1, allies = 1, secs = 6, taken = 0, sideTaken = 0 }
+
+		it("counts a kill within seconds of combat starting", function()
+			assert.are.equal(4, Appraisal.Appraise({ level = YELLOW, gap = 0 }, fight(quick)).points.burst)
+			local edge = fight(quick)
+			edge.secs = Appraisal.BURST
+			assert.are.equal(4, Appraisal.Appraise({ level = YELLOW }, edge).points.burst)
+			local slow = fight(quick)
+			slow.secs = Appraisal.BURST + 1
+			assert.is_nil(Appraisal.Appraise({ level = YELLOW }, slow).points.burst)
+		end)
+
+		it("doesn't count when you had them outnumbered two to one", function()
+			local zerg = fight(quick)
+			zerg.allies = 2
+			assert.is_nil(Appraisal.Appraise({ level = YELLOW }, zerg).points.burst)
+		end)
+
+		it("doesn't count on someone lower, unless they had your health or more", function()
+			assert.is_nil(Appraisal.Appraise({ level = YELLOW, gap = -1 }, fight(quick)).points.burst)
+			local big = fight(quick)
+			big.size = 1.2
+			assert.are.equal(4, Appraisal.Appraise({ level = YELLOW, gap = -1 }, big).points.burst)
 		end)
 	end)
 
