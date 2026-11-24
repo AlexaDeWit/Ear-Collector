@@ -204,7 +204,7 @@ local BANDS = {
 	burst = band(function()
 		return "Down in seconds"
 	end, function()
-		return "gone in seconds"
+		return "gone in a moment"
 	end),
 	oneSided = band(function(f)
 		return capital(side(f)) .. " took no damage"

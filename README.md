@@ -85,7 +85,7 @@ no honor, are Poor unless revenge raises them.
 
 Hover an ear to see why it has its grade: each reason with a + or -, and
 squares for how much it counted. When the kill has a story worth telling, a
-gold line tells it: "Two levels above you, and gone in seconds." or "Three times
+gold line tells it: "Two levels above you, and gone in a moment." or "Three times
 they took your ear. Not this time."
 
 Killing the same player again within 10 minutes adds to that ear instead of

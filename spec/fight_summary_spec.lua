@@ -67,7 +67,7 @@ describe("the words for an ear's grade", function()
 			local e = ear({ level = 2 }, fought({ secs = 5, taken = 0.1, sideTaken = 0.1, size = 2.1, toughness = 1 }))
 			assert.are.equal(4, e.quality)
 			assert.are.same({ "+ Twice your health ###", "+ Down in seconds #" }, lines(e))
-			assert.are.equal("Twice your health, and gone in seconds.", FightSummary.Story(e))
+			assert.are.equal("Twice your health, and gone in a moment.", FightSummary.Story(e))
 			assert.are.equal("Twice your health", FightSummary.Short(e))
 		end)
 
@@ -139,7 +139,7 @@ describe("the words for an ear's grade", function()
 				"- Assist, took little damage #",
 				"Just short of Rare",
 			}, lines(e))
-			assert.are.equal("Two levels above you, and gone in seconds.", FightSummary.Story(e))
+			assert.are.equal("Two levels above you, and gone in a moment.", FightSummary.Story(e))
 		end)
 
 		it("no gold line for a small markdown alone", function()

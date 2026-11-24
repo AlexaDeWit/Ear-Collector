@@ -141,7 +141,7 @@ function FightSummary.Story(ear)
 	local burst = first.key == "burst" and first or second.key == "burst" and second
 	if burst then
 		local other = burst == first and second or first
-		return capital(other.part) .. ", and gone in seconds."
+		return capital(other.part) .. ", and gone in a moment."
 	end
 	return ("%s, %s, and the ear is still yours."):format(capital(first.part), second.part)
 end
