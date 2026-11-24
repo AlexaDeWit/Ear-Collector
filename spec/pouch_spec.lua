@@ -269,7 +269,7 @@ describe("Ear Pouch", function()
 				table.concat({ square:format("26:255:26"), square:format("26:255:26"), square:format("74:77:84") }, " "),
 				reason.right
 			)
-			assert.are.equal('"Three levels above you, and the ear is yours."', lines[#lines].text)
+			assert.are.equal('"They outlevelled me, and it didn\'t save them."', lines[#lines].text)
 		end)
 
 		it("names group killers, assists, camping and unknown levels", function()

@@ -66,10 +66,7 @@ describe("grading an ear from its fight", function()
 			})
 			assert.are.equal(
 				1,
-				wow.printed(
-					"Appraised .*Grimbash's Ear.*: Rare%. Over a full health bar gone, 40 seconds of fighting, "
-						.. "and the ear is still yours%.$"
-				)
+				wow.printed('Appraised .*Grimbash\'s Ear.*: Rare%. "They hit me hard%. I hit back harder%."$')
 			)
 			assert.are.equal(1, #ns.Toast.Active())
 			assert.are.equal("|cff0070ddGrimbash's Ear|r", ns.Toast.Active()[1].title:GetText())

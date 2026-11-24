@@ -1,11 +1,10 @@
 -- The words for an ear's grade, from its saved record (Appraisal.Record): the
--- lines under "Why it's <grade>", the story that closes the tooltip and follows
--- the grade in chat, and the strongest reason for the pop-up. Each reason's own
--- words are in UI/Reasons.lua.
+-- lines under "Why it's <grade>", and the strongest reason for the pop-up. Each
+-- reason's own words are in UI/Reasons.lua; the story is UI/Tales.lua.
 local _, ns = ...
 
 local Reasons = ns.Reasons
-local word, capital, lower = Reasons.Word, Reasons.Capital, Reasons.Lower
+local capital, lower = Reasons.Capital, Reasons.Lower
 
 local FightSummary = {}
 ns.FightSummary = FightSummary
@@ -81,69 +80,6 @@ function FightSummary.Lines(ear)
 		add(("Just short of %s"):format(nextGrade.name), "note")
 	end
 	return out
-end
-
--- "Twice they took your ear." Their kills on you since your last ear from them,
--- so "last time" for one is exact.
-local function history(n)
-	if n == 1 then
-		return "They took your ear last time."
-	end
-	return ("%s they took your ear."):format(n == 2 and "Twice" or capital(word(n)) .. " times")
-end
-
---- The gold line: the most memorable part of the kill, told to be fun. The
---- list above it accounts for the grade, so the story picks what's worth
---- telling: the history of a grudge, or the strongest reasons pointing the same
---- way. Nil when there's nothing worth telling. Every word comes from the record.
----@param ear table
----@return string|nil
-function FightSummary.Story(ear)
-	local fight = ear.fight
-	if ear.pending or type(fight) ~= "table" then
-		return nil
-	end
-	local debt = deaths(ear, fight)
-	if fight.rule == "vengeance" then
-		return history(debt) .. " Not this time."
-	end
-	local telling, avenged = {}, false
-	for _, r in ipairs(Reasons.List(fight, ear)) do
-		avenged = avenged or r.key == "revenge"
-		if r.part and fight.rule ~= "grey" then
-			telling[#telling + 1] = r
-		end
-	end
-	if avenged then
-		for _, r in ipairs(telling) do
-			if r.points > 0 then
-				return ("%s %s, and now it's yours."):format(history(debt), capital(r.part))
-			end
-		end
-		return history(debt) .. " Now it's yours."
-	end
-	local first = telling[1]
-	if not first or (first.points < 0 and first.strength < 2) then
-		return nil -- a small markdown alone is no story
-	end
-	local second
-	for i = 2, #telling do
-		if (telling[i].points > 0) == (first.points > 0) then
-			second = telling[i]
-			break
-		end
-	end
-	if not second then
-		return first.solo
-	elseif first.points < 0 then
-		return ("%s. %s."):format(capital(first.part), capital(second.part))
-	end
-	local burst = first.key == "burst" and first or second.key == "burst" and second
-	if burst then
-		local other = burst == first and second or first
-		return capital(other.part) .. ", and gone in a moment."
-	end
-	return ("%s, %s, and the ear is still yours."):format(capital(first.part), second.part)
 end
 
 --- The strongest reason, for the pop-up's detail line. Nil when none counted.

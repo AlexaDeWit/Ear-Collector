@@ -30,7 +30,8 @@ to the game stays thin.
 | `UI/Access.lua` | Ways to open the pouch: drawer, key binding, bags, chat links |
 | `UI/Chat.lua`, `UI/Slash.lua` | Chat lines, ear links, and the `/ears` commands |
 | `UI/Reasons.lua` | Each reason for a grade in words: its tooltip line and its part in the story |
-| `UI/FightSummary.lua` | The words for an ear's grade: the reason lines, the story, the pop-up's reason |
+| `UI/FightSummary.lua` | The lines under an ear's grade, and the pop-up's reason |
+| `UI/Tales.lua` | The gold line: the kill in the player's own words |
 | `UI/Art.lua` | Race to ear-texture mapping |
 | `Bindings.xml` | The "Toggle Ear Pouch" key binding |
 | `Media/Ears/` | Ear textures, painted by `art/paint_ears.py` ([art.md](art.md)) |
@@ -106,26 +107,38 @@ of the score.
 Once the fight is read, its facts join them. `/ears debug` logs the arithmetic.
 Camped repeats are never graded.
 
-**Wording.** `FightSummary` builds the words from that saved record, with each
-reason's own words from `Reasons`. Under "Why it's <grade>", every reason that
+**Wording.** `FightSummary` lists the reasons from that saved record, with each
+reason's words from `Reasons`. Under "Why it's <grade>", every reason that
 counted gets a line with + or - and one to three squares for how much, so the
-list accounts for the whole grade. The gold story closes the tooltip and
-follows the grade in chat, and it's there to be fun: it tells the most
-memorable part of the kill (a grudge settled, or the strongest reasons pointing
-the same way), and there's none when the kill has nothing worth telling, such as
-a small markdown alone. The pop-up names the strongest reason. A new band needs
-a line and a story part in `Reasons` (a fragment, and a punchline for when it
-stands alone), in this voice:
+list accounts for the whole grade, in these terms:
 
 - Use a player's units: health bars, "1v3", levels, time in combat.
 - Claim only what the band's test proves. Round amounts down and say "over" or
   "nearly", never "nearly died" for damage taken, and "your side" for a count
   that includes your group.
-- No list line starts with a digit, since after a sign it reads as a stat.
+- No line starts with a digit, since after a sign it reads as a stat.
 - "Group member", never "ally", which reads as an Alliance player. "They" for
   the victim.
-- Punchy and concrete in the story, never mocking the victim, and never a guess
-  at what they saw or meant: the facts carry the drama.
+
+The pop-up names the strongest reason. The gold line (`Tales`) closes the
+tooltip and follows the grade in chat, in quotes. It's the kill in the player's
+own words, the way they'd tell it to a friend afterwards: "They had the edge on
+me. They never had the time." The list has the facts, so the tale has the
+feeling:
+
+- First person, past tense: "me" alone, "us" with your group.
+- Degrees, not numbers or levels: "They had me well outnumbered", "They were
+  well out of my league". Ears go unmentioned; the tooltip already says it's one.
+- The strongest reason picks the tale, and a few pairings have their own (an
+  edge and a burst, outnumbered and outlevelled, a tanky foe and your healing).
+  A grudge settled takes it over, by degree of spite: a slight, a grudge, a
+  vendetta.
+- Lines may colour what the ear saved, never invent an event (no fleeing, no
+  ambush) or say what anyone thought or felt. A line that says you came through
+  it never shows when you died.
+- Nothing worth telling, no tale: an even kill, a small markdown, a lower level.
+- Where a kind of tale has several lines, the ear itself picks one, so it always
+  reads the same and different ears vary.
 
 **Repeat kills.** Killing the same player again within `campWindow` (10 minutes
 by default) adds to that ear's count and restarts the window, instead of
