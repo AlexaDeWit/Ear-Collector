@@ -172,12 +172,12 @@ function Chat.ParseEarLink(link)
 	return guid, tonumber(at)
 end
 
--- " You took more than a full health bar and died too.": the ear's story, or why
--- there's none when the meter had no record of the fight.
+-- ' "They hit me hard. I hit back harder."': the kill in the player's own words,
+-- quoted since chat's own voice is "you"; or why there's none with no record.
 local function story(ear)
-	local text = ns.FightSummary.Story(ear)
+	local text = ns.Tales.Story(ear)
 	if text then
-		return " " .. text
+		return (' "%s"'):format(text)
 	end
 	local fight = ear.fight
 	return type(fight) == "table" and not fight.read and " No record of the fight." or ""

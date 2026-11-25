@@ -73,7 +73,7 @@ leave in the files.
    level, race and class. Under "Why it's <grade>", each reason has a green +
    or a red - and one to three squares on the right, for example
    "+ Took more than a full health bar". Then where you killed them, and last, a
-   gold sentence in quotes about the fight. If the squares are hard to tell
+   gold line in quotes, telling the fight in your own words. If the squares are hard to tell
    apart, or the sentence wraps into a tall, narrow column, take a screenshot.
    If it says "No record of the fight", say so.
 4. In a group, let a groupmate land the killing blow on an enemy player. The line

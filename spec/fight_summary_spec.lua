@@ -1,5 +1,6 @@
--- The words for an ear's grade. The samples are the copy the maintainer ratified,
--- built from real gradings, so a change to the wording or the rules shows here.
+-- The lines under an ear's grade. The samples are the copy the maintainer
+-- approved, built from real gradings, so a change to the wording or the rules
+-- shows here. The story is spec/tales_spec.lua.
 local wow = require("spec.support.wow")
 
 describe("the words for an ear's grade", function()
@@ -43,7 +44,7 @@ describe("the words for an ear's grade", function()
 		return out
 	end
 
-	describe("the ratified samples", function()
+	describe("the samples", function()
 		it("Legendary: revenge for two, against a higher level", function()
 			local e = ear(
 				{ level = 4, debt = 2 },
@@ -52,21 +53,17 @@ describe("the words for an ear's grade", function()
 			)
 			assert.are.same({
 				"+ Avenged 2 deaths ###",
-				"+ Far above your level ###",
+				"+ Six levels above you ###",
 				"+ More health than you #",
 				"+ Took more than half a health bar #",
 			}, lines(e))
-			assert.are.equal(
-				"They had taken your ear twice in a row. Now you have theirs, though they were six levels above you.",
-				FightSummary.Story(e)
-			)
 			assert.are.equal("Avenged 2 deaths", FightSummary.Short(e))
 		end)
 
-		it("Rare: five seconds on a big target, just short of Epic", function()
+		it("Epic: five seconds on a big target", function()
 			local e = ear({ level = 2 }, fought({ secs = 5, taken = 0.1, sideTaken = 0.1, size = 2.1, toughness = 1 }))
-			assert.are.same({ "+ Twice your health ###", "Just short of Epic" }, lines(e))
-			assert.are.equal("It was over in seconds, though they had twice your health.", FightSummary.Story(e))
+			assert.are.equal(4, e.quality)
+			assert.are.same({ "+ Twice your health ###", "+ Down in seconds #" }, lines(e))
 			assert.are.equal("Twice your health", FightSummary.Short(e))
 		end)
 
@@ -81,18 +78,12 @@ describe("the words for an ear's grade", function()
 				"- Second ear from them in a day #",
 				"+ In combat for 45 seconds #",
 			}, lines(e))
-			assert.are.equal(
-				"You were outnumbered two to one and took more than a full health bar, "
-					.. "but it was your second ear from them in a day.",
-				FightSummary.Story(e)
-			)
 			assert.are.equal("Outnumbered 1v2", FightSummary.Short(e))
 		end)
 
 		it("Common: five of you against one", function()
 			local e = ear({ level = 2 }, fought({ allies = 5, secs = 4, taken = 0, sideTaken = 0, size = 0.9 }))
 			assert.are.same({ "- Outnumbered them 5v1 ##", "- Your side took no damage ##" }, lines(e))
-			assert.are.equal("It was five of you against one, and your side took no damage.", FightSummary.Story(e))
 			assert.are.equal("Outnumbered them 5v1", FightSummary.Short(e))
 		end)
 
@@ -119,17 +110,31 @@ describe("the words for an ear's grade", function()
 				"+ Interrupts and dispels: 4 #",
 				"+ Lost a group member #",
 			}, lines(e))
-			assert.are.equal(
-				"It took three health bars to bring them down, and you healed nearly two.",
-				FightSummary.Story(e)
-			)
 			assert.are.equal("Three health bars to kill", FightSummary.Short(e))
 		end)
 
-		it("Uncommon: nothing counted, so no story", function()
+		it("Uncommon: your assist two levels up, burst down in seconds", function()
+			local e = ear(
+				{ level = 2, gap = 2, assist = true },
+				fought({ allies = 1, secs = 6, taken = 0, sideTaken = 0 }),
+				{ level = 56, yourLevel = 54, by = "assist" }
+			)
+			assert.are.same({
+				"+ Down in seconds #",
+				"+ Two levels above you #",
+				"- Assist, took little damage #",
+				"Just short of Rare",
+			}, lines(e))
+		end)
+
+		it("a small markdown alone", function()
+			local e = ear({ level = 2, assist = true }, fought({ secs = 20, taken = 0.1 }))
+			assert.are.same({ "- Assist, took little damage #" }, lines(e))
+		end)
+
+		it("Uncommon: nothing counted", function()
 			local e = ear({ level = 2 }, fought({}))
 			assert.are.same({ "Nothing raised or lowered it" }, lines(e))
-			assert.is_nil(FightSummary.Story(e))
 			assert.is_nil(FightSummary.Short(e))
 		end)
 
@@ -152,17 +157,12 @@ describe("the words for an ear's grade", function()
 				FightSummary.Lines(e)[3].kind,
 				FightSummary.Lines(e)[4].kind,
 			})
-			assert.are.equal(
-				"They had taken your ear three times in a row. You finally have theirs.",
-				FightSummary.Story(e)
-			)
 			assert.are.equal("Avenged 3 deaths", FightSummary.Short(e))
 		end)
 
 		it("no record of the fight", function()
 			local e = ear({ level = 2 })
 			assert.are.same({ "No record of the fight" }, lines(e))
-			assert.is_nil(FightSummary.Story(e))
 			assert.is_nil(FightSummary.Short(e))
 		end)
 
@@ -170,7 +170,6 @@ describe("the words for an ear's grade", function()
 			local e = ear({ level = 0, debt = 1 }, fought({ allies = 3, taken = 0, sideTaken = 0, size = 0.5 }))
 			assert.are.equal(1, e.quality)
 			assert.are.same({ "Grey to you: no honor", "+ Avenged your death ##" }, lines(e))
-			assert.are.equal("They had taken your ear. Now you have theirs.", FightSummary.Story(e))
 			assert.are.equal("Avenged your death", FightSummary.Short(e))
 		end)
 
@@ -178,7 +177,6 @@ describe("the words for an ear's grade", function()
 			local e =
 				ear({ level = 2 }, fought({ secs = 25, taken = 1.2, sideTaken = 1.2, died = true, toughness = 1 }))
 			assert.are.same({ "+ Took more than a full health bar ##", "+ You died too #" }, lines(e))
-			assert.are.equal("You took more than a full health bar and died too.", FightSummary.Story(e))
 		end)
 	end)
 
@@ -236,54 +234,23 @@ describe("the words for an ear's grade", function()
 			}, said)
 		end)
 
+		it("name the level gap", function()
+			local function level(gap, why)
+				local fight = { read = true, why = { why }, points = { [why] = 2 }, gap = gap }
+				return FightSummary.Lines({ quality = 2, fight = fight })[1].text
+			end
+			assert.are.same(
+				{ "A level above you", "Two levels below you", "Six levels above you" },
+				{ level(1, "above"), level(-2, "below"), level(6, "red") }
+			)
+		end)
+
 		it("count repeats and deaths in words a player uses", function()
 			assert.are.equal("Third ear from them in a day", line("repeat", { earlier = 2 }))
 			assert.are.equal("Fourth ear from them in a day", line("repeat", { earlier = 3 }))
 			assert.are.equal("Avenged your death", line("revenge", { debt = 1 }))
 			assert.are.equal("Lost 2 group members", line("alliesFell", { allyDeaths = 2 }))
 			assert.are.equal("Interrupts and dispels: 1", line("disrupted", { disrupts = 1 }))
-		end)
-	end)
-
-	describe("stories", function()
-		it("put numbers over ten in digits", function()
-			local e = ear({ level = 2 }, fought({ enemies = 11, allies = 4, sideTaken = 9 }))
-			assert.matches("^You were outnumbered 11 to 4", FightSummary.Story(e))
-		end)
-
-		it("say a level gap in words, or how far off when the levels are missing", function()
-			local e = ear({ level = 4 }, fought({}), { yourLevel = 53 })
-			assert.are.equal("They were seven levels above you.", FightSummary.Story(e))
-			e.level = nil
-			assert.are.equal("They were far above your level.", FightSummary.Story(e))
-		end)
-
-		it("only say a kill was over in seconds when it was, and was about the fight's danger", function()
-			local e = ear({ level = 2 }, fought({ secs = 12, size = 2.1 }))
-			assert.are.equal("They had twice your health.", FightSummary.Story(e))
-			e = ear({ level = 2 }, fought({ secs = 5, healed = 1.6 }))
-			assert.are.equal("You healed over a full health bar.", FightSummary.Story(e))
-		end)
-
-		it("say but after revenge when the next reason lowered the grade", function()
-			local e = ear({ level = 2, debt = 1 }, fought({ allies = 5, taken = 0.4, sideTaken = 3 }))
-			assert.are.equal(
-				"They had taken your ear. Now you have theirs, but it was five of you against one.",
-				FightSummary.Story(e)
-			)
-		end)
-
-		it("lead with what lowered the grade when it counted most", function()
-			local e = ear({ level = 2 }, fought({ allies = 5, secs = 30, taken = 1.2, sideTaken = 2 }))
-			assert.are.equal(
-				"It was five of you against one, but you took more than a full health bar.",
-				FightSummary.Story(e)
-			)
-		end)
-
-		it("never let your part lower a revenge story", function()
-			local e = ear({ level = 2, debt = 1 }, fought({ healed = 1.6 }))
-			assert.are.equal("They had taken your ear. Now you have theirs.", FightSummary.Story(e))
 		end)
 	end)
 
@@ -328,19 +295,16 @@ describe("the words for an ear's grade", function()
 		it("say when the grade waits on the fight", function()
 			local e = ear({ level = 2 }, nil, { pending = true })
 			assert.are.same({ "Appraised when you leave combat" }, lines(e))
-			assert.is_nil(FightSummary.Story(e))
 			assert.is_nil(FightSummary.Short(e))
 		end)
 
 		it("leave out bands from a newer version and facts a damaged save lost", function()
 			local e = { quality = 2, fight = { read = true, why = { "nearDeath", "fromANewerVersion" }, points = {} } }
 			assert.are.same({ "Nothing raised or lowered it" }, lines(e))
-			assert.is_nil(FightSummary.Story(e))
 		end)
 
 		it("show nothing for an ear with no record of how it was graded", function()
 			assert.are.same({}, FightSummary.Lines({ quality = 2 }))
-			assert.is_nil(FightSummary.Story({ quality = 2 }))
 		end)
 	end)
 end)

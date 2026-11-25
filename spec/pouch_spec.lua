@@ -262,14 +262,14 @@ describe("Ear Pouch", function()
 				why = why or (line.text == "Why it's |cff0070ddRare|r" and i)
 			end
 			local reason = lines[why + 1]
-			assert.are.equal("+ Above your level", reason.left)
+			assert.are.equal("+ Three levels above you", reason.left)
 			assert.are.same({ 0.1, 1, 0.1 }, { reason.lr, reason.lg, reason.lb })
 			local square = "|TInterface\\Buttons\\WHITE8X8:7:7:0:0:8:8:0:8:0:8:%s|t"
 			assert.are.equal(
 				table.concat({ square:format("26:255:26"), square:format("26:255:26"), square:format("74:77:84") }, " "),
 				reason.right
 			)
-			assert.are.equal('"They were three levels above you."', lines[#lines].text)
+			assert.are.equal('"They outlevelled me, and it didn\'t save them."', lines[#lines].text)
 		end)
 
 		it("names group killers, assists, camping and unknown levels", function()

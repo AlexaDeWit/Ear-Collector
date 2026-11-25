@@ -157,8 +157,10 @@ function ns.Collect(db, kill)
 	if debt >= ns.Deaths.VENGEANCE then
 		kill.vengeance = debt
 	end
+	local known = type(kill.level) == "number" and type(kill.yourLevel) == "number"
 	kill.appraise = {
 		level = ns.Ears.Grade(kill.level, kill.yourLevel, kill.trivialRange),
+		gap = known and kill.level - kill.yourLevel or nil,
 		debt = debt,
 		earlier = ns.Ears.CountFrom(db, kill.guid, now - ns.Appraisal.DAY),
 		assist = kill.by == "assist",

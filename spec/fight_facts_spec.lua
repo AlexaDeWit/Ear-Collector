@@ -66,9 +66,7 @@ describe("grading an ear from its fight", function()
 			})
 			assert.are.equal(
 				1,
-				wow.printed(
-					"Appraised .*Grimbash's Ear.*: Rare%. You took more than a full health bar and were in combat for 40 seconds%.$"
-				)
+				wow.printed('Appraised .*Grimbash\'s Ear.*: Rare%. "They hit me hard%. I hit back harder%."$')
 			)
 			assert.are.equal(1, #ns.Toast.Active())
 			assert.are.equal("|cff0070ddGrimbash's Ear|r", ns.Toast.Active()[1].title:GetText())
@@ -200,6 +198,13 @@ describe("grading an ear from its fight", function()
 		wow.fireEvent("PARTY_KILL", ME, KORGA)
 		assert.are.same({ 5, "vengeance" }, { ns.db.ears[1].quality, ns.db.ears[1].fight.rule })
 		assert.are.same({ 0, "grey" }, { ns.db.ears[2].quality, ns.db.ears[2].fight.rule })
+	end)
+
+	it("counts each level a yellow victim is above you", function()
+		wow.state().players[GRIMBASH].level = 62
+		wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+		local fight = ns.db.ears[1].fight
+		assert.are.same({ 2, 4 }, { fight.gap, fight.points.above })
 	end)
 
 	it("lowers a second ear from the same player that day", function()

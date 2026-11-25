@@ -125,7 +125,7 @@ function EarsTab.TooltipLines(ear)
 		add(("Camped: %d more %s within %s"):format(ear.camped, kills, within), GREY)
 	end
 	add(Chat.Date(ear.at, "full"), GREY)
-	local story = ns.FightSummary.Story(ear)
+	local story = ns.Tales.Story(ear)
 	if story then
 		add(('"%s"'):format(story), GOLD)
 	end

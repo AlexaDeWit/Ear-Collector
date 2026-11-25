@@ -79,6 +79,7 @@ local FIGHT_NUMBERS = {
 	"size",
 	"disrupts",
 	"allyDeaths",
+	"gap",
 	"debt",
 	"earlier",
 	"score",

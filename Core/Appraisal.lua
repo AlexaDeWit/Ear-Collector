@@ -12,6 +12,9 @@ ns.Appraisal = Appraisal
 -- The lowest score for each grade, Uncommon up. Each step is wider than the last.
 Appraisal.BUCKETS = { [2] = -5, [3] = 6, [4] = 16, [5] = 30 }
 Appraisal.CONTESTED = 0.25 -- your damage taken, in health bars, that shows a real fight
+Appraisal.BURST = 8 -- seconds into combat by which a kill counts as a burst
+Appraisal.LEVEL_STEP = 2 -- points for each level between you within yellow, up or down
+Appraisal.LEVEL_FLOOR = -6 -- the most a yellow foe below you can cost
 Appraisal.DAY = 24 * 60 * 60 -- earlier ears from the same player within this lower the score
 
 ---@class EarCollector.FightFacts
@@ -104,6 +107,16 @@ Appraisal.SIGNALS = {
 	{
 		band("epicFight", 4, withContest(atLeast("secs", 60))),
 		band("longFight", 2, withContest(atLeast("secs", 30))),
+		-- Down in seconds: a feat, but not on someone lower than you (unless they had
+		-- your health or more), nor when you had them outnumbered two to one.
+		band("burst", 4, function(f, kill)
+			local lower = type(kill.gap) == "number" and kill.gap < 0 or (kill.level or 2) < 2
+			local r = odds(f)
+			return type(f.secs) == "number"
+				and f.secs <= Appraisal.BURST
+				and not (lower and not (type(f.size) == "number" and f.size >= 1))
+				and not (r and r <= 1 / 2)
+		end),
 	},
 	{
 		-- Only against a smaller, lower foe: a stronger one who never hit back was burst down.
@@ -145,7 +158,8 @@ function Appraisal.Bucket(score)
 end
 
 --- Score a kill.
----@param kill { level: integer, debt: integer?, earlier: integer?, assist: boolean? } level: Ears.Grade's 0..4
+---@param kill { level: integer, gap: integer?, debt: integer?, earlier: integer?, assist: boolean? }
+--- level: Ears.Grade's 0..4; gap: their level less yours
 ---@param facts EarCollector.FightFacts? nil before the fight is read
 ---@return EarCollector.Appraisal
 function Appraisal.Appraise(kill, facts)
@@ -161,9 +175,12 @@ function Appraisal.Appraise(kill, facts)
 			end
 		end
 	end
-	local level = LEVEL[kill.level]
+	local level, gap = LEVEL[kill.level], kill.gap
 	if level then
 		add(parts, level[1], level[2], false)
+	elseif kill.level == 2 and type(gap) == "number" and gap ~= 0 then -- yellow: each level counts
+		local points = math.max(Appraisal.LEVEL_FLOOR, Appraisal.LEVEL_STEP * gap)
+		add(parts, gap > 0 and "above" or "below", points, false)
 	end
 	if REVENGE[debt] then
 		add(parts, "revenge", REVENGE[debt], false)
@@ -210,12 +227,13 @@ end
 --- What an ear saves about its grade, before (or without) its fight's facts. It
 --- keeps each band's points and the rule, so the ear says the same after the
 --- bands are retuned.
----@param kill { debt: integer?, earlier: integer? } the terms Appraise was given
+---@param kill { gap: integer?, debt: integer?, earlier: integer? } the terms Appraise was given
 ---@param result EarCollector.Appraisal
 ---@return table
 function Appraisal.Record(kill, result)
 	return {
 		read = false,
+		gap = kill.gap,
 		debt = kill.debt,
 		earlier = kill.earlier,
 		score = result.score,

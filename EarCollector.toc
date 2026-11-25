@@ -27,6 +27,7 @@ Core\Appraisal.lua
 UI\Chat.lua
 UI\Reasons.lua
 UI\FightSummary.lua
+UI\Tales.lua
 UI\Art.lua
 Detectors\Shared.lua
 Detectors\DamageMeter.lua

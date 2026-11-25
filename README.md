@@ -64,11 +64,14 @@ Common, Uncommon, Rare, Epic and Legendary. Each of these counts for or against:
 - **The danger to you:** how much damage you took, in health bars.
 - **How strong they were:** their health compared with yours counts for more
   than how long the fight lasted, so a quick burst on a big target is rewarded.
+- **How fast they fell:** bringing them down within seconds counts for you,
+  unless they were lower than you and smaller, or you had them outnumbered.
 - **Whether they fought back:** picking off a smaller, lower player who never
   hit you counts against you.
 - **Your part:** your healing and shields, your side's interrupts and dispels,
   and group members who fell.
-- **Their level's colour:** red counts for you, green against.
+- **Their level:** every level above you counts for you, and every level below
+  against, most of all for orange and red, or green.
 - **Revenge:** each time they've killed you since you last killed them. Three
   times makes their next ear Legendary.
 - **Repeats:** a second or third ear from the same player in a day counts a
@@ -80,10 +83,10 @@ says "Appraising the fight...", then the pop-up shows the grade. With no record
 of the fight, the grade follows the victim's level colour. Grey victims, who give
 no honor, are Poor unless revenge raises them.
 
-Hover an ear to see why it has its grade: each reason with a + or -, squares
-for how much it counted, and a sentence about the fight, such as "You were
-outnumbered two to one and took more than a full health bar, but it was your
-second ear from them in a day."
+Hover an ear to see why it has its grade: each reason with a + or -, and
+squares for how much it counted. When the kill has a story worth telling, a
+gold line tells it in your own words: "They had the edge on me. They never had
+the time." or "They should have quit while they were ahead."
 
 Killing the same player again within 10 minutes adds to that ear instead of
 dropping a new one. The options set the window.
