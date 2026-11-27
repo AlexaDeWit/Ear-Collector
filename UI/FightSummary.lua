@@ -1,5 +1,5 @@
 -- The words for an ear's grade, from its saved record (Appraisal.Record): the
--- lines under "Why it's <grade>", and the strongest reason for the pop-up. Each
+-- lines under the grade, and the strongest reason for the pop-up. Each
 -- reason's own words are in UI/Reasons.lua; the story is UI/Tales.lua.
 local _, ns = ...
 
@@ -20,7 +20,7 @@ local function sign(points)
 	return points > 0 and "+ " or "- "
 end
 
---- The lines under "Why it's <grade>": { text, kind, strength? }, where kind is
+--- The lines under the grade: { text, kind, strength? }, where kind is
 --- "up" or "down" (with 1 to 3 for strength), "vengeance", "context" (a reason
 --- that didn't count) or "note".
 ---@param ear table

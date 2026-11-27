@@ -108,7 +108,7 @@ Once the fight is read, its facts join them. `/ears debug` logs the arithmetic.
 Camped repeats are never graded.
 
 **Wording.** `FightSummary` lists the reasons from that saved record, with each
-reason's words from `Reasons`. Under "Why it's <grade>", every reason that
+reason's words from `Reasons`. Under who they were, set apart by blank lines, every reason that
 counted gets a line with + or - and one to three squares for how much, so the
 list accounts for the whole grade, in these terms:
 

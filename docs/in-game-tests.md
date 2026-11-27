@@ -70,7 +70,7 @@ leave in the files.
    with your report.
 3. Hover over the ear's name in that line, or find the ear in the pouch
    (`/ears`). The tooltip shows the victim's full name, surname included, their
-   level, race and class. Under "Why it's <grade>", each reason has a green +
+   level, race and class. Below that, after a blank line, each reason has a green +
    or a red - and one to three squares on the right, for example
    "+ Took more than a full health bar". Then where you killed them, and last, a
    gold line in quotes, telling the fight in your own words. If the squares are hard to tell
