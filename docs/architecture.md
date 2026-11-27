@@ -171,11 +171,14 @@ A death no credit named is unclaimed, and the damage meter decides it
   assists.
 - The meter's data is secret in combat, so unclaimed deaths wait until combat
   ends. A death after your fight is checked as soon as it's unclaimed.
-- Each death is judged against the fight it happened in, and that fight's meter
-  session is noted when combat ends, so a new fight doesn't hide an old one. A
-  fight has a session of its own only if the newest one changed since the last
-  fight ended (or since you logged in); otherwise it has none, and its kills
-  are graded by the kill alone.
+- Each death is judged against the fight it happened in, and so is each kill's
+  grade (`DamageMeter.SessionOf`). A fight's meter session is the one the meter
+  reports updating during it, or up to `DamageMeter.LATE` (5) seconds after.
+  Failing that, it's the newest session, if that's newer than the newest when
+  the fight began. It's worked out when the fight is read, because the meter
+  may list a fight's session a moment after combat ends, and settled when the
+  next fight begins, so a new fight never lends an old one its session. A fight
+  with no session of its own grades its kills by the kill alone.
 - Your group's own kills are never unclaimed, so they can't become assists too.
 
 ## Deaths and vengeance

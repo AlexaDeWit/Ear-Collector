@@ -131,6 +131,12 @@ addons such as Details read them instead of a combat log.
   `ConditionalSecret`), `totalAmount`, `sourceDisplayType` and `factionGroup`.
 - `deathRecapID` and `deathTimeSeconds` are filled in for deaths on the `Deaths`
   view only, so they don't say whether an enemy died.
+- `DAMAGE_METER_COMBAT_SESSION_UPDATED(type, sessionID)` fires as the meter
+  updates a session, so during a fight it names that fight's session.
+  `GetAvailableCombatSessions()` lists each session's `sessionID`, `name` and
+  `durationSeconds`. *Needs the game:* whether the event's `sessionID` is
+  readable in combat, and how long after combat ends a fight's session joins
+  the list.
 - `C_DamageMeter.IsDamageMeterAvailable()` returns whether the player can use
   the meter. Blizzard's meter window shows only while the `damageMeterEnabled`
   setting is on.

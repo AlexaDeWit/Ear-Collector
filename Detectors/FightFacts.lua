@@ -96,7 +96,7 @@ function FightFacts.Read(entry)
 	if not Readable(available) or available ~= true then
 		return { read = false }
 	end
-	local id = entry.fight.sessionID
+	local id = DamageMeter.SessionOf(entry.fight)
 	if not id then
 		return { read = false } -- the meter kept no record of this fight
 	end

@@ -146,6 +146,46 @@ describe("grading an ear from its fight", function()
 			assert.is_false(ns.db.ears[1].fight.read)
 		end)
 
+		it("grades from a record the meter adds just after combat ends", function()
+			wow.startCombat()
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			wow.endCombat()
+			hardFight() -- the meter lists the fight a moment later
+			wow.advance(ns.DamageMeter.SETTLE)
+			assert.is_true(ns.db.ears[1].fight.read)
+		end)
+
+		it("grades from the record the meter reports updating, even when it isn't new", function()
+			hardFight() -- the session the meter goes on to update for this fight
+			wow.startCombat()
+			wow.fireEvent("DAMAGE_METER_COMBAT_SESSION_UPDATED", 0, 1)
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			endFight()
+			assert.is_true(ns.db.ears[1].fight.read)
+		end)
+
+		it("ignores a report long after the fight, or one it can't read", function()
+			hardFight()
+			wow.startCombat()
+			wow.fireEvent("DAMAGE_METER_COMBAT_SESSION_UPDATED", 0, wow.secret())
+			wow.fireEvent("PARTY_KILL", ME, GRIMBASH)
+			wow.endCombat()
+			wow.advance(ns.DamageMeter.LATE + 1)
+			wow.fireEvent("DAMAGE_METER_COMBAT_SESSION_UPDATED", 0, 1)
+			assert.is_false(ns.db.ears[1].fight.read)
+			assert.is_nil(ns.DamageMeter.SessionOf(ns.DamageMeter.Fight()))
+			assert.are.equal(0, #ns.db.errors)
+		end)
+
+		it("keeps a fight's record once the next fight begins", function()
+			aFight()
+			local first = ns.DamageMeter.Fight()
+			wow.startCombat()
+			hardFight() -- the new fight's session
+			assert.are.equal(1, ns.DamageMeter.SessionOf(first))
+			assert.are.equal(2, ns.DamageMeter.SessionOf(ns.DamageMeter.Fight())) -- the new fight's own
+		end)
+
 		it("doesn't take a record from before you logged in for your first fight", function()
 			wow.meterFight({ { guid = KORGA, name = "Korga" } }, { DamageTaken = { { amount = 1500, me = true } } })
 			wow.fireEvent("PLAYER_ENTERING_WORLD", false, true)
