@@ -12,9 +12,9 @@ ns.DamageMeter = DamageMeter
 
 DamageMeter.SETTLE = 0.5 -- seconds after combat ends before reading the meter
 DamageMeter.QUEUE_SIZE = 20 -- unclaimed deaths waiting for a check, at most
+DamageMeter.LATE = 5 -- seconds after combat ends that the meter may still update the fight's session
 
-local fight -- your latest fight: { start, finish } in GetTime(), and its meter sessionID
-local noted -- the newest meter session when your last fight ended (or at login)
+local fight -- your latest fight: { start, finish } in GetTime(), and how to find its meter session
 local queue = {} -- unclaimed deaths waiting for the meter
 local checkScheduled = false
 
@@ -98,11 +98,34 @@ function DamageMeter.EnemyPlayers(sessionIDs)
 	return damaged
 end
 
---- Your latest fight: { start, finish? } in GetTime(), and its meter sessionID
---- once it has ended. Nil before your first fight this session.
+--- Your latest fight: { start, finish? } in GetTime(). Nil before your first
+--- fight this session. Its meter session comes from DamageMeter.SessionOf.
 ---@return table|nil
 function DamageMeter.Fight()
 	return fight
+end
+
+local function newestSession()
+	local meter = C_DamageMeter
+	return meter and latestSessionID(meter.GetAvailableCombatSessions()) or nil
+end
+
+--- The meter session that recorded `f`: the one the meter reported updating
+--- during it, or else the newest session if it's newer than the newest when the
+--- fight began. The meter may add a fight's session a moment after combat ends,
+--- so this is asked when the fight is read. Nil when the meter kept no record.
+---@param f table? a fight from DamageMeter.Fight
+---@return number|nil
+function DamageMeter.SessionOf(f)
+	if not f then
+		return nil
+	elseif f.settled then
+		return f.sessionID
+	elseif f.reported then
+		return f.reported
+	end
+	local newest = newestSession()
+	return newest ~= f.before and newest or nil
 end
 
 local function check()
@@ -115,8 +138,9 @@ local function check()
 	queue = {}
 	local sessionIDs = {}
 	for _, death in ipairs(deaths) do
-		if death.fight and death.fight.sessionID then
-			sessionIDs[death.fight.sessionID] = true
+		local id = DamageMeter.SessionOf(death.fight)
+		if id then
+			sessionIDs[id] = true
 		end
 	end
 	local damaged, reason = DamageMeter.EnemyPlayers(sessionIDs)
@@ -170,29 +194,25 @@ function DamageMeter.Queue(deaths)
 	end
 end
 
-local function newestSession()
-	local meter = C_DamageMeter
-	return meter and latestSessionID(meter.GetAvailableCombatSessions()) or nil
-end
-
-ns.On("PLAYER_ENTERING_WORLD", function()
-	if not Context.InCombat() then
-		noted = newestSession()
+ns.On("PLAYER_REGEN_DISABLED", function()
+	if fight then -- settle the last fight's session before this one can be mistaken for it
+		fight.sessionID, fight.settled = DamageMeter.SessionOf(fight), true
 	end
+	fight = { start = GetTime(), before = newestSession() }
 end)
 
-ns.On("PLAYER_REGEN_DISABLED", function()
-	fight = { start = GetTime() }
+-- The meter names the session it's updating, so during a fight (or just after)
+-- that's the fight's own.
+ns.On("DAMAGE_METER_COMBAT_SESSION_UPDATED", function(_, sessionID)
+	local recent = fight and (not fight.finish or GetTime() - fight.finish <= DamageMeter.LATE)
+	if recent and Readable(sessionID) and type(sessionID) == "number" then
+		fight.reported = sessionID
+	end
 end)
 
 ns.On("PLAYER_REGEN_ENABLED", function()
 	if fight and not fight.finish then
 		fight.finish = GetTime()
-		-- The session list isn't secret, so the fight's session can be noted now.
-		-- If the newest is the one noted before, the meter kept no record of this fight.
-		local newest = newestSession()
-		fight.sessionID = newest ~= noted and newest or nil
-		noted = newest
 	end
 	if #queue > 0 then
 		schedule()
