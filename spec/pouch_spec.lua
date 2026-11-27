@@ -240,7 +240,6 @@ describe("Ear Pouch", function()
 				"Grimbash Ironhide",
 				"Level 60 |A:raceicon-orc-male:14:14|a Orc |cffc69b6dWarrior|r",
 				" ",
-				"Why it's |cff1eff00Uncommon|r",
 				"No record of the fight",
 				" ",
 				"Taken at Tarren Mill",
@@ -257,11 +256,7 @@ describe("Ear Pouch", function()
 			local ear = ns.db.ears[1]
 			ear.fight.read = true -- as if the meter had a record, so no "No record" line
 			local lines = ns.EarsTab.TooltipLines(ear)
-			local why
-			for i, line in ipairs(lines) do
-				why = why or (line.text == "Why it's |cff0070ddRare|r" and i)
-			end
-			local reason = lines[why + 1]
+			local reason = lines[6] -- after who they were, and a blank line
 			assert.are.equal("+ Three levels above you", reason.left)
 			assert.are.same({ 0.1, 1, 0.1 }, { reason.lr, reason.lg, reason.lb })
 			local square = "|TInterface\\Buttons\\WHITE8X8:7:7:0:0:8:8:0:8:0:8:%s|t"

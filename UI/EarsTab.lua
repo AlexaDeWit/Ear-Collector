@@ -66,7 +66,7 @@ local function squares(n, colour)
 end
 
 --- An ear's tooltip, as lines: { text, r, g, b } or { left, right, r, g, b, lr?, lg?, lb? }.
---- Under who they were, "Why it's <grade>" lists what counted; the story closes it.
+--- Under who they were, set apart by blank lines, what counted; the story closes it.
 ---@param ear table
 ---@return table[]
 function EarsTab.TooltipLines(ear)
@@ -86,7 +86,6 @@ function EarsTab.TooltipLines(ear)
 	local why = ns.FightSummary.Lines(ear)
 	if #why > 0 then
 		add(" ")
-		add(("Why it's |c%s%s|r"):format(quality.color, quality.name), GOLD)
 		for _, line in ipairs(why) do
 			if line.strength then
 				local c = KINDS[line.kind]
