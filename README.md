@@ -78,8 +78,8 @@ Common, Uncommon, Rare, Epic and Legendary. Each of these counts for or against:
   little less.
 
 The fight is read from the game's damage meter, which addons can only see once
-combat ends. So an ear taken in a fight is graded when the fight ends: chat
-says "Appraising the fight...", then the pop-up shows the grade. With no record
+combat ends. So an ear taken in a fight waits quietly, with nothing to distract
+you mid-fight, and once combat ends, chat and the pop-up show it graded. With no record
 of the fight, the grade follows the victim's level colour. Grey victims, who give
 no honor, are Poor unless revenge raises them.
 
