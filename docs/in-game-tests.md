@@ -63,11 +63,12 @@ leave in the files.
 1. Kill any mob. Chat shows a line that starts with `PARTY_KILL` and ends with
    `not a player`. That shows the game tells the addon about your kills.
 2. Kill an enemy player in the open world, landing the killing blow yourself.
-   Chat shows a line ending in `new ear (you)`, then
-   `You collected <name>'s Ear. Appraising the fight...`. When you leave
-   combat, chat says `Appraised <name>'s Ear: <grade>.` and a sentence about the
+   Chat shows a line ending in `new ear (you)`, and nothing else while you're
+   still fighting. When you leave combat, chat says
+   `You collected <name>'s Ear (<grade>).`, often with a line in quotes about the
    fight, and the pop-up appears. A line starting `APPRAISAL` shows the arithmetic: send it
-   with your report.
+   with your report. If it says `no fight record`, the reason in brackets is what
+   to send.
 3. Hover over the ear's name in that line, or find the ear in the pouch
    (`/ears`). The tooltip shows the victim's full name, surname included, their
    level, race and class. Below that, after a blank line, each reason has a green +
@@ -210,9 +211,8 @@ This needs "Your deaths" to work, and enemy nameplates on (press V).
 
 ## The pop-up
 
-1. Collect an ear. Once the fight ends, a pop-up fades in near the top of the
-   screen, in the middle: a bronze panel. If the fight goes on for more than 30
-   seconds after the kill, it appears then, saying "Appraising the fight". It shows the ear framed in its grade colour, the name in that colour, and one line under it with the
+1. Collect an ear. Once the fight ends, and not before, a pop-up fades in near
+   the top of the screen, in the middle: a bronze panel. It shows the ear framed in its grade colour, the name in that colour, and one line under it with the
    grade and the strongest reason, such as "Epic · Outnumbered 1v2". With no
    reason, that line has the level, race and class instead. It says "Ear
    collected" at the top, or "Assist collected" for an assist.

@@ -96,11 +96,14 @@ victims give no honor (`Ears.IsTrivial`).
 kill alone, then hands it to `FightFacts.Hold`. Out of combat the ear is graded
 at once, from your last fight only if it ended within `Assists.RECENT` (60
 seconds), so a kill your group makes while you aren't fighting isn't graded from
-an old fight. In combat it waits: chat says "Appraising the fight...", and when
-combat ends (`PLAYER_REGEN_ENABLED`, then `DamageMeter.SETTLE`) the meter's
-views for that fight are read once, every waiting ear is graded, and each gets
-its chat line and pop-up. If combat goes on for `FightFacts.WAIT` (30 seconds)
-after a kill, its pop-up shows ungraded. Every new ear saves how it was graded
+an old fight. In combat it waits in silence, however long the fight runs, so
+nothing distracts you mid-fight: no chat line, no pop-up. A camped repeat in
+combat goes unsaid too. When combat ends (`PLAYER_REGEN_ENABLED`, then
+`DamageMeter.SETTLE`) the meter's views for that fight are read once, every
+waiting ear is graded, and each gets its chat line and pop-up. When the fight's
+own session can't be told (a brawl that comes and goes, kept as one session by
+the meter), the meter's current fight serves, if the victim is in it. With
+`/ears debug` on, an ear with no record logs why. Every new ear saves how it was graded
 as `fight` (`Appraisal.Record`): the bands that counted, each one's points, the
 level gap, and the rule (`vengeance` or `grey`) when one set the grade instead
 of the score.

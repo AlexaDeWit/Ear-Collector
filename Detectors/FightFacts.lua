@@ -1,8 +1,8 @@
 -- Fight facts: what the game tells an addon about the fight an ear came from,
 -- for Core/Appraisal.lua. At the kill it notes how long the fight had run and
 -- the victim's health; the damage meter is read when the fight ends, since it's
--- secret in combat. An ear taken in combat waits here, then is graded and
--- announced. One taken out of combat is graded at once.
+-- secret in combat. An ear taken in combat waits here in silence, then is
+-- graded and announced when combat ends. One taken out of combat is graded at once.
 local _, ns = ...
 
 local Appraisal, Assists, Context, DamageMeter, Errors = ns.Appraisal, ns.Assists, ns.Context, ns.DamageMeter, ns.Errors
@@ -11,7 +11,6 @@ local Readable = Context.Readable
 local FightFacts = {}
 ns.FightFacts = FightFacts
 
-FightFacts.WAIT = 30 -- seconds in combat after a kill before its pop-up shows ungraded
 FightFacts.PENDING = 20 -- ears waiting for their fight to end, at most
 
 local pending = {} ---@type table[] { ear, kill, fight, secs, health, shown }
@@ -48,11 +47,18 @@ local function victimHealth(guid)
 	return nil
 end
 
+local CURRENT = "current" -- the meter's own fight in progress or just ended, not a listed session
+
 -- One meter view of a fight: your amount, everyone else's, how many sources
 -- had one, and the enemy players among them. Nil when it can't be read.
 local function view(sessionID, kind)
-	local meter = C_DamageMeter
-	local session = meter.GetCombatSessionFromID(sessionID, kind)
+	local meter, types = C_DamageMeter, Enum.DamageMeterSessionType
+	local session
+	if sessionID == CURRENT then
+		session = types and meter.GetCombatSessionFromType(types.Current, kind)
+	else
+		session = meter.GetCombatSessionFromID(sessionID, kind)
+	end
 	local sources = Readable(session) and type(session) == "table" and session.combatSources
 	if not Readable(sources) or type(sources) ~= "table" then
 		return nil
@@ -89,23 +95,33 @@ end
 ---@return EarCollector.FightFacts
 function FightFacts.Read(entry)
 	local meter, types = C_DamageMeter, Enum.DamageMeterType
-	if not entry.fight or not meter or not types or Context.InCombat() then
-		return { read = false }
+	if not entry.fight or not meter or not types then
+		return { read = false, missing = "no fight" }
+	elseif Context.InCombat() then
+		return { read = false, missing = "in combat" }
 	end
 	local available = meter.IsDamageMeterAvailable()
 	if not Readable(available) or available ~= true then
-		return { read = false }
+		return { read = false, missing = "meter unavailable" }
 	end
 	local id = DamageMeter.SessionOf(entry.fight)
 	if not id then
-		return { read = false } -- the meter kept no record of this fight
+		-- In a brawl that comes and goes, the meter can keep one session across
+		-- several of your fights. Its current fight serves, if the victim is in it
+		-- (or the meter hides who everyone is).
+		local current = view(CURRENT, types.EnemyDamageTaken)
+		local players = current and current.count > 0 and current.players
+		id = players and (players[entry.ear.guid] or next(players) == nil) and CURRENT or nil
+	end
+	if not id then
+		return { read = false, missing = "no session" }
 	end
 	local enemies, taken = view(id, types.EnemyDamageTaken), view(id, types.DamageTaken)
 	local done, healing, absorbs = view(id, types.DamageDone), view(id, types.HealingDone), view(id, types.Absorbs)
 	local deaths = view(id, types.Deaths)
 	local recorded = (enemies and enemies.count or 0) + (taken and taken.count or 0) + (healing and healing.count or 0)
 	if recorded == 0 then
-		return { read = false } -- nothing on the meter for this fight
+		return { read = false, missing = "nothing recorded" }
 	end
 	local facts = { read = true, secs = entry.secs }
 	local count = 0
@@ -160,7 +176,7 @@ local function describe(facts, result)
 		bands[#bands + 1] = ("%s %+d"):format(key, result.points[key])
 	end
 	return ("%s; %s = %d"):format(
-		f.read and table.concat(parts, ", ") or "no fight record",
+		f.read and table.concat(parts, ", ") or ("no fight record (%s)"):format(f.missing or "?"),
 		#bands > 0 and table.concat(bands, ", ") or "no bands",
 		result.score
 	)
@@ -201,12 +217,12 @@ end
 
 local function announce(db, entry)
 	if db.settings.announce then
-		Errors.Call("chat", ns.Chat.AnnounceAppraisal, entry.ear)
+		Errors.Call("chat", ns.Chat.Announce, entry.ear, true)
 	end
 	if ns.Pouch then
 		Errors.Call("pouch refresh", ns.Pouch.Refresh)
 	end
-	if not entry.shown and ns.Toast then
+	if ns.Toast then
 		Errors.Call("toast", ns.Toast.Show, entry.ear)
 	end
 end
@@ -226,14 +242,6 @@ local function settle()
 end
 
 local settleWrapped = Errors.Wrap("fight facts", settle)
-
--- Still fighting after FightFacts.WAIT: show the pop-up at the ungraded grade.
-local function showUngraded(entry)
-	if entry.ear.pending and not entry.shown and ns.Toast then
-		entry.shown = true
-		ns.Toast.Show(entry.ear, "Appraising the fight")
-	end
-end
 
 --- Grade a new ear from its fight: at once out of combat, else when the fight
 --- ends. Runs inside ns.Collect.
@@ -260,12 +268,6 @@ function FightFacts.Hold(db, ear, kill)
 		local oldest = table.remove(pending, 1)
 		oldest.ear.pending = nil -- keeps its ungraded grade
 	end
-	C_Timer.After(
-		FightFacts.WAIT,
-		Errors.Wrap("fight facts", function()
-			showUngraded(entry)
-		end)
-	)
 	return true
 end
 

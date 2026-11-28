@@ -185,11 +185,8 @@ end
 
 ---@param ear table
 ---@param isNew boolean
----@param waiting boolean? graded when the fight ends
-function Chat.Announce(ear, isNew, waiting)
-	if isNew and waiting then
-		Chat.Print(("You collected %s. Appraising the fight..."):format(Chat.EarLink(ear)))
-	elseif isNew then
+function Chat.Announce(ear, isNew)
+	if isNew then
 		local quality = ns.Quality(ear.quality)
 		local by = ""
 		if ear.by == "group" then
@@ -208,12 +205,6 @@ function Chat.Announce(ear, isNew, waiting)
 		local name = Chat.InClassColour(ear.name, ear.class)
 		Chat.Print(("Camped %s again (kill %d). No new ear."):format(name, ear.camped + 1))
 	end
-end
-
---- The grade of an ear that waited for its fight to end.
----@param ear table
-function Chat.AnnounceAppraisal(ear)
-	Chat.Print(("Appraised %s: %s.%s"):format(Chat.EarLink(ear), ns.Quality(ear.quality).name, story(ear)))
 end
 
 Chat.REVENGE_OWED = "Revenge owed: their next ear is worth more."

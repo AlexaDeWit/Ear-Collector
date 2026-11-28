@@ -175,8 +175,11 @@ function ns.Collect(db, kill)
 		local ok, result = Errors.Call("appraisal", ns.FightFacts.Hold, db, ear, kill)
 		waiting = ok and result == true
 	end
-	if db.settings.announce then
-		Errors.Call("chat", Chat.Announce, ear, isNew, waiting)
+	-- Nothing is said in combat: an ear waiting on its fight is announced when it
+	-- ends, and a camped repeat goes unsaid.
+	local quiet = waiting or (not isNew and Context.InCombat())
+	if db.settings.announce and not quiet then
+		Errors.Call("chat", Chat.Announce, ear, isNew)
 	end
 	if ns.Pouch then
 		Errors.Call("pouch refresh", ns.Pouch.Refresh)
